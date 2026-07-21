@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "aegis.manifest.v1",
+  "id": "etherfi-reference-2026-07-20",
+  "asOfUtc": "2026-07-20T23:59:59.000Z",
+  "classification": "recorded-public-state",
+  "blocks": {
+    "ethereum": {
+      "chainId": 1,
+      "number": 25577369,
+      "hash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7"
+    },
+    "optimism": {
+      "chainId": 10,
+      "number": 154496611,
+      "hash": "0xd0d2fac2a7226ae8f2cb37ab71a697d9202422c771782c5eb0e9ff8a324f5185"
+    }
+  },
+  "sourceCommits": {
+    "core": "b4a0968087b178bc346cdf6bee6c0597bf4c42c7",
+    "cashV3": "247faab2206cb651e2e81b2331404eed841145b8",
+    "crosschain": "e30c859c08a0fb44b4732e44b040f144094638ed"
+  },
+  "contracts": {
+    "ethereum": {
+      "liquidityPool": {
+        "proxy": "0x308861A430be4cce5502d0A12724771Fc6DaF216",
+        "implementation": "0x17a16747d03006c9754548ac0d0aff48783a4a45"
+      },
+      "eeth": {
+        "proxy": "0x35fA164735182de50811E8e2E824cFb9B6118ac2",
+        "implementation": "0xd1901dd36cbf4a81386d0162df2707f7ddb60527"
+      },
+      "weeth": {
+        "proxy": "0xCd5fE23C85820F7B72D0926FC9b05b43E359b7ee",
+        "implementation": "0xa6ca0607190d03cf16fe6f2865cf40c3d160ccf3"
+      },
+      "withdrawRequestNft": {
+        "proxy": "0x7d5706f6ef3F89B3951E23e557CDFBC3239D4E2c",
+        "implementation": "0x41617d01362770ebaac10311ab899fbc8a4e4a7e"
+      },
+      "oracle": {
+        "proxy": "0x57AaF0004C716388B21795431CD7D5f9D3Bb6a41",
+        "implementation": "0x0565c8ea133ff27ba9d471330a52068a268a2b9e"
+      },
+      "upgradeTimelock": "0x9f26d4C958fD811A1F59B01B86Be7dFFc9d20761"
+    },
+    "optimism": {
+      "cashModule": {
+        "proxy": "0x7Ca0b75E67E33c0014325B739A8d019C4FE445F0",
+        "implementation": "0xcc99520c8db1643f8f7770cf91a8d246e70f5db2"
+      },
+      "debtManager": {
+        "proxy": "0x0078C5a459132e279056B2371fE8A8eC973A9553",
+        "implementation": "0x0392347936b84fd2d9de67f178f1d8e0bfc14a19"
+      },
+      "priceProvider": {
+        "proxy": "0x44dd2372FE7B97C4B4D6a7d4DeCf72466485BAcB",
+        "implementation": "0x5c37f6a9ce6cb2ee82b8e5c1c38b0fd799350152"
+      }
+    }
+  },
+  "limitations": [
+    "Addresses are identities only when paired with chain ID and block hash.",
+    "Recorded contract values in the demonstration fixture are not current production telemetry.",
+    "A manifest match is configuration evidence, not a protocol-wide safety guarantee."
+  ]
+}
