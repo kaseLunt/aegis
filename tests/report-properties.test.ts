@@ -79,6 +79,29 @@ describe("hash sensitivity (property)", () => {
       expect(reportHash(p)).not.toBe(before);
     });
   }
+
+  test("changing a referenced policy hash changes the reportHash", () => {
+    const base = loadJson("golden-02-set-normalization.json") as J;
+    const before = reportHash(base);
+    const p = clone(base);
+    (p.policyRefs as J[])[0].contentHash = `sha256:${"b".repeat(64)}`;
+    expect(reportHash(p)).not.toBe(before);
+  });
+
+  test("changing a verification's freshness changes the reportHash", () => {
+    const base = loadJson("golden-01-minimal.json") as J;
+    const mk = (aggregate: string): J => {
+      const p = clone(base);
+      p.verifications = [{
+        invariantId: "a.check", evaluatorVersion: "1", state: "unknown", severity: "info",
+        claimKind: "observed", statement: "t", evidence: [], expectedEvidenceIds: [],
+        actualEvidenceIds: [], derivationInputIds: [],
+        freshness: { aggregate, assessments: [] }, limitations: [],
+      }];
+      return p;
+    };
+    expect(reportHash(mk("current"))).not.toBe(reportHash(mk("stale")));
+  });
 });
 
 describe("determinism and platform-text immunity", () => {

@@ -3,7 +3,7 @@ id: W1
 type: work
 title: Canonical report core — schemas, JCS canonicalization, SHA-256 report identity
 phase: P1
-status: active
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0]
@@ -20,6 +20,7 @@ invalidated_by:
   - roadmap/work/W1-canonical-report-core.md
 review_when: phase:P1:exit
 updated: 2026-07-21
+evidence_fingerprint: sha256:ceb2841cef87ab52
 ---
 
 # W1 — Canonical report core
@@ -65,6 +66,13 @@ npm run test:property
   BYTE-IDENTICAL to Codex blind derivation incl. 1973/2870/2908-byte payloads; mutation
   check (evidence-sort disabled) kills 4/5 tests, restore passes; full suite 14/14; lint
   clean on project code.
+- 2026-07-22: slices 4-6 — strict schema layer (11 tests: byte lengths, sha256 64-hex,
+  enums); normalization surfaces (7 tests, vectors-first: verification/fact ordering,
+  role-ID sets, freshness assessments, limitations); M0 identifiers superseded by real
+  content addressing (sha256 over JCS bytes; killed a latent localeCompare nondeterminism
+  bug caught by a failing test first); charter-required hash-sensitivity for freshness and
+  referenced policy hashes added. 59/59 tests; lint clean; production build passes (UI
+  renders new id shape — build-verified, not browser-verified).
 - 2026-07-22: slices 2-3 — RED 7 failing rejection tests, GREEN three-phase validation
   (schema/referential/domain_normalization) passing all M-01..M-06 with vector-exact codes,
   phases, and input-order paths; property suite: 50-run set-shuffle invariance, 10-field
@@ -73,14 +81,10 @@ npm run test:property
   4 property/golden tests; 35/35 green.
 
 ## Handoff
-- next: slices 1-3 DONE (goldens/ordering; M-01..M-06 typed rejections + referential
-  validation + cardinality; property suite incl. CRLF fixture — 35 tests, all
-  mutation-checked). Remaining cycles: (c) strict schema layer `validateReport` (32/20-byte
-  lengths, sha256 64-hex, enum membership — full-length fixtures, RED first), (e) vectors
-  THEN implementation for unexercised normalization surfaces (verification/fact array
-  sorting by (invariantId|factId, evaluatorVersion), role-ID set sorting, freshness
-  assessments, limitations by (code,text)), then wire reportHash into engine output and
-  supersede M0 lib/aegis/canonical.ts report identifiers.
+- next: COMPLETE — all acceptance clauses met (59 tests). Follow-on for W2/W3: consume
+  jcsSerialize/canonicalBytes/validateReport from lib/aegis/report/canonical; the strict
+  schema layer is validateReport, the vector layer is canonicalBytes; never add a second
+  JCS implementation. Cross-surface hash agreement (CLI/API/CI/web) is W5 scope.
 - read_first: docs/ENGINEERING_SPEC.md §Canonical domain types + §Canonicalization and
   hashing + §Tests; roadmap/insights/INS-001 (bytes-in-memory rule); WR6 vectors when they
   land (golden vectors are authored blind — do NOT adjust them to match implementation;

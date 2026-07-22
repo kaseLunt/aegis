@@ -1,6 +1,6 @@
 ---
 active_phase: P1
-active_task: W1
+active_task: none
 updated: 2026-07-21
 ---
 
@@ -13,7 +13,9 @@ updated: 2026-07-21
 **Health:** 🟢 on track
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W1 — canonical report core** — fable-main, single owner (critical path).
+**none** — W1 ACHIEVED (canonical spine real: 59 tests, golden byte-agreement, typed
+rejections, strict schema, content-addressed identifiers). Next: W2 manifest/trust and W3
+providers/quorum — owner call on sequencing (serial by fable-main vs chartering both).
 Lanes: WR1/WR2/WR3/WR6 closed. WR4 + WR5 delivered, critiqued (Codex), dispositions
 applied; both open with round-2 scopes, deferred to M3/M4 planning (several EXTEND items
 need real archive/trace providers). Timelock delay three-way adjudicated: 259,200s; the
@@ -33,8 +35,7 @@ W0C parked pending owner action (Blockers).
   source register, interview brief) — authority hierarchy in `docs/README.md`.
 
 ## Next up
-1. W1 first slice: triage WR6 SPEC-QUESTIONs into spec clarifications, then canonical types
-   + JSON Schema + JCS + reportHash with the golden vectors as acceptance targets.
+1. Open W2 (manifest/trust) and/or W3 (providers/quorum) — both depend only on W1.
 2. Manifest-owner open items: live rate-limit value (3k vs 10k weETH/4h), executor pin,
    historical setPeer tx. WR4/WR5 round 2 at M3/M4 planning.
 3. R-001 residual (owner, low urgency): enable branch protection requiring the "Control plane"

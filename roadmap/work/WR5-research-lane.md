@@ -3,7 +3,7 @@ id: WR5
 type: work
 title: Rehearse case selection (public proposal or historical Safe/timelock execution)
 phase: P1
-status: active
+status: committed
 evidence_target: "Correct"
 priority: 2
 depends_on: []

@@ -238,6 +238,100 @@ function validateNormalizationPhase(p: JsonObject): void {
   }
 }
 
+// --- Strict schema layer (spec v1.2: byte lengths, sha256 identifiers, enums) -----------
+// Real payloads pass through this; abbreviated test vectors exercise only the structural
+// layer above. All failures report phase schema_validation.
+
+const ENUM = {
+  sourceMode: ["live", "recorded", "simulation"],
+  boundaryKind: ["execution_block", "consensus_state", "source_snapshot"],
+  evidenceKind: ["rpc_call", "storage_read", "event_log", "transaction", "manifest", "source_snapshot", "audit", "simulation"],
+  provenanceClass: [
+    "observed_public_state", "observed_external_source", "code_property",
+    "reviewed_research_rationale", "declared_configuration", "derived_result",
+    "reference_scenario", "modeled_counterfactual",
+  ],
+  finality: ["finalized", "safe", "confirmations", "unconfirmed"],
+  policyTrustState: ["trusted", "untrusted", "invalid"],
+} as const;
+
+const SHA256_STRICT = /^sha256:[0-9a-f]{64}$/;
+
+function checkEnum(path: string, v: unknown, allowed: readonly string[]): void {
+  if (!allowed.includes(str(v))) fail("schema_validation", "invalid_enum_member", path, str(v));
+}
+
+function checkSha256Strict(path: string, v: unknown): void {
+  if (typeof v !== "string" || !SHA256_STRICT.test(v)) {
+    fail("schema_validation", "invalid_sha256_identifier", path, str(v));
+  }
+}
+
+function checkHexBytes(path: string, v: unknown, exactBytes?: number): void {
+  const s = str(v);
+  if (!HEX_RE.test(s) || (exactBytes !== undefined ? s.length !== 2 + 2 * exactBytes : s.length % 2 !== 0)) {
+    fail("schema_validation", "invalid_hex_length", path, s);
+  }
+}
+
+function checkBoundaryStrict(path: string, v: unknown): void {
+  const b = obj(v);
+  checkEnum(`${path}/kind`, b.kind, ENUM.boundaryKind);
+  if (b.kind === "execution_block") {
+    const block = obj(b.block);
+    checkHexBytes(`${path}/block/hash`, block.hash, 32);
+    checkHexBytes(`${path}/block/parentHash`, block.parentHash, 32);
+    checkEnum(`${path}/block/finality`, block.finality, ENUM.finality);
+  } else if (b.kind === "consensus_state") {
+    const c = obj(b.consensus);
+    checkHexBytes(`${path}/consensus/blockRoot`, c.blockRoot, 32);
+    if (c.stateRoot !== undefined) checkHexBytes(`${path}/consensus/stateRoot`, c.stateRoot, 32);
+  } else {
+    checkSha256Strict(`${path}/snapshot/contentHash`, obj(b.snapshot).contentHash);
+  }
+}
+
+function validateStrictSchemaPhase(p: JsonObject): void {
+  checkSha256Strict("/manifestHash", p.manifestHash);
+  checkSha256Strict("/requestHash", p.requestHash);
+  checkEnum("/sourceMode", p.sourceMode, ENUM.sourceMode);
+  const pt = obj(p.policyTrust);
+  checkEnum("/policyTrust/state", pt.state, ENUM.policyTrustState);
+  checkSha256Strict("/policyTrust/manifestHash", pt.manifestHash);
+  if (Array.isArray(p.policyRefs)) {
+    p.policyRefs.forEach((r, i) => checkSha256Strict(`/policyRefs/${i}/contentHash`, obj(r).contentHash));
+  }
+  if (Array.isArray(p.observationBoundaries)) {
+    p.observationBoundaries.forEach((b, i) => checkBoundaryStrict(`/observationBoundaries/${i}`, b));
+  }
+  for (const [base, arr] of evidenceArrays(p)) {
+    arr.forEach((e, i) => {
+      const ref = obj(e);
+      checkSha256Strict(`${base}/${i}/id`, ref.id);
+      checkSha256Strict(`${base}/${i}/rawResultHash`, ref.rawResultHash);
+      checkEnum(`${base}/${i}/kind`, ref.kind, ENUM.evidenceKind);
+      checkEnum(`${base}/${i}/provenanceClass`, ref.provenanceClass, ENUM.provenanceClass);
+      checkEnum(`${base}/${i}/sourceMode`, ref.sourceMode, ENUM.sourceMode);
+      if (ref.address !== undefined) checkHexBytes(`${base}/${i}/address`, ref.address, 20);
+      if (ref.calldata !== undefined) checkHexBytes(`${base}/${i}/calldata`, ref.calldata);
+      checkBoundaryStrict(`${base}/${i}/boundary`, ref.boundary);
+    });
+  }
+}
+
+// Full validation for production payloads: structural schema, strict schema (lengths,
+// identifiers, enums), referential integrity, canonical form.
+export function validateReport(payload: unknown): void {
+  if (!isObject(payload)) {
+    fail("schema_validation", "missing_mandatory_field", "/", "payload is not an object");
+  }
+  const p = payload as JsonObject;
+  validateSchemaPhase(p);
+  validateStrictSchemaPhase(p);
+  validateReferentialPhase(p);
+  validateNormalizationPhase(p);
+}
+
 // Runs the three phases against the ORIGINAL payload (paths refer to input positions).
 export function validateReportStructure(payload: unknown): void {
   if (!isObject(payload)) {
@@ -286,7 +380,45 @@ export function normalizeReport(payload: unknown): unknown {
         cmpString(str(obj(a).version), str(obj(b).version)),
     );
   }
+  if (Array.isArray(p.limitations)) p.limitations = sortLimitations(p.limitations);
+  if (Array.isArray(p.verifications)) {
+    p.verifications = [...p.verifications]
+      .sort((a, b) =>
+        cmpString(str(obj(a).invariantId), str(obj(b).invariantId)) ||
+        cmpString(str(obj(a).evaluatorVersion), str(obj(b).evaluatorVersion)))
+      .map(normalizeResultItem);
+  }
+  if (Array.isArray(p.facts)) {
+    p.facts = [...p.facts]
+      .sort((a, b) =>
+        cmpString(str(obj(a).factId), str(obj(b).factId)) ||
+        cmpString(str(obj(a).evaluatorVersion), str(obj(b).evaluatorVersion)))
+      .map(normalizeResultItem);
+  }
   return p;
+}
+
+// Spec clarification 6: limitations sort by (code, text).
+const sortLimitations = (arr: unknown[]): unknown[] =>
+  [...arr].sort((a, b) =>
+    cmpString(str(obj(a).code), str(obj(b).code)) || cmpString(str(obj(a).text), str(obj(b).text)));
+
+// Within a Verification or EvidenceFact: evidence by id, role-ID lists as sorted sets,
+// freshness assessments by (policyId, boundary key), limitations by (code, text).
+function normalizeResultItem(v: unknown): unknown {
+  if (!isObject(v)) return v;
+  if (Array.isArray(v.evidence)) v.evidence = sortEvidence(v.evidence);
+  for (const list of ROLE_LISTS) {
+    if (Array.isArray(v[list])) v[list] = sortScalarSet(v[list] as unknown[]);
+  }
+  if (Array.isArray(v.limitations)) v.limitations = sortLimitations(v.limitations);
+  const freshness = v.freshness;
+  if (isObject(freshness) && Array.isArray(freshness.assessments)) {
+    freshness.assessments = [...freshness.assessments].sort((a, b) =>
+      cmpString(str(obj(a).policyId), str(obj(b).policyId)) ||
+      cmpTuple(boundaryKey(obj(a).boundary), boundaryKey(obj(b).boundary)));
+  }
+  return v;
 }
 
 // RFC 8785 serialization. Object members sort by UTF-16 code units (JS default string
@@ -311,6 +443,13 @@ function jcs(value: unknown): string {
     return `{${entries.join(",")}}`;
   }
   throw new CanonicalizationError("domain_normalization", "unsupported_value_type", "", typeof value);
+}
+
+// Generic RFC 8785 serialization for arbitrary JSON values (no report validation, no
+// domain normalization). The single JCS implementation in the codebase — everything that
+// needs canonical JSON bytes delegates here.
+export function jcsSerialize(value: unknown): string {
+  return jcs(value);
 }
 
 export function canonicalBytes(payload: unknown): Uint8Array {

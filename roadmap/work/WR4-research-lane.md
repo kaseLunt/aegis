@@ -3,7 +3,7 @@ id: WR4
 type: work
 title: Rewind case selection (one real reconstructable configuration change)
 phase: P1
-status: active
+status: committed
 evidence_target: "Correct"
 priority: 2
 depends_on: []
