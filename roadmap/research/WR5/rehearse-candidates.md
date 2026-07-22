@@ -441,3 +441,32 @@ checklist before any of it becomes expected policy or a shipped fixture.
    direction" a harder claim to isolate than candidates A/D/H's narrowly-scoped calls. They
    remain available as additional candidates if the team wants a broader-blast-radius batch
    for later Rehearse coverage.
+
+## Post-critique disposition (integrator, 2026-07-22)
+
+An independent completeness critic (Codex, INS-003; full report in
+`completeness-critique.md`) reviewed this deliverable. Standing corrections, superseding the
+wording above where they conflict:
+
+1. **Timelock delay corrected (critic #1):** every "16,200s" reading above is a hex
+   truncation; the schedule calls carry 0x3f480 = **259,200s (72h)** (three-way adjudication:
+   WR1 decode, integrator byte-decode, critic). Corrected inferences: schedule->execute gap
+   337,104s still exceeds 72h (H remains plausibly ready pending isOperationReady at parent
+   state); historical bound is minDelay <= 259,200s; current 864,000s implies "raised from at
+   most 3 days to 10 days". The historical delay is bounded, never equated.
+2. **Verdicts downgraded:** A -> "promising lead; prefix replayability, complete envelope,
+   sender semantics, execution-epoch identity/ABI, storage-level isolation, and
+   affected-assertion mapping outstanding". D -> strongest OP-side alternative; the
+   "permanently prevents bypass" claim is withdrawn; OP replay (rollup fork rules, deposit
+   txs, OP tx types) unassessed. H -> conditional on operation-ID equality, full 4-target
+   decode, MultiSend identity, parent-state readiness. I -> bonus only.
+3. **"No public unsigned proposal exists" narrowed** to: none found in the executed/queue
+   endpoints of the three Safe transaction services queried at retrieval time; scheduled-but-
+   unexecuted timelock operations and governance artifacts were not searched.
+4. **Accepted gaps (critic #16, #17):** census is route-bounded, not exhaustive; stateful
+   simulation and independent provider quorum are M4 implementation gates.
+5. **Round-2 scope (EXTEND):** critic #2-#15 — notably event/target-first search of both
+   timelocks' execution streams, module/relayed execution shapes, envelope inventories,
+   execution-epoch code identity for every touched contract, operation-ID derivations, OP
+   replay analysis, per-chain archive/trace probes, and a per-claim provenance ledger with
+   exact URLs + response hashes.
