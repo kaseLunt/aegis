@@ -52,6 +52,14 @@ function requireAddress(path: string, v: unknown): void {
 function requireDecimal(path: string, v: unknown): void {
   if (typeof v !== "string" || !DECIMAL_STRICT.test(v)) bad("noncanonical_unsigned_decimal", path, String(v));
 }
+function requireUniqueMembers(path: string, arr: unknown[], key: (v: unknown) => string): void {
+  const seen = new Set<string>();
+  for (const v of arr) {
+    const k = key(v);
+    if (seen.has(k)) bad("duplicate_set_member", path, k);
+    seen.add(k);
+  }
+}
 
 export interface LoadedManifest {
   manifest: JsonObject;
@@ -126,9 +134,24 @@ export function loadManifest(raw: unknown): LoadedManifest {
   raw.chainIds.forEach((c, i) => {
     if (typeof c !== "number" || !Number.isInteger(c)) bad("invalid_chain_id", `/chainIds/${i}`, String(c));
   });
+  requireUniqueMembers("/chainIds", raw.chainIds, (c) => String(c));
+  // Set-like string fields: members must be strings (mixed types would tie under String
+  // coercion in normalizeManifest's sort, making the hash input-order-dependent), unique.
+  for (const field of ["invariantIds", "uncovered"] as const) {
+    const arr = Array.isArray(raw[field]) ? (raw[field] as unknown[]) : [];
+    arr.forEach((v, i) => {
+      if (typeof v !== "string") bad("invalid_set_member", `/${field}/${i}`, typeof v);
+    });
+    requireUniqueMembers(`/${field}`, arr, (v) => String(v));
+  }
   requireSha256("/contentHash", raw.contentHash); // shape-check the embedded hash
   const policyRefs = Array.isArray(raw.policyRefs) ? raw.policyRefs : [];
   policyRefs.forEach((r, i) => requireSha256(`/policyRefs/${i}/contentHash`, obj(r).contentHash));
+  // policyRefs are a set keyed by (kind, id, version): duplicate identities are rejected
+  // rather than sorted, so normalizeManifest's sort key is always a total order and two
+  // refs differing only in contentHash cannot ride on input order.
+  requireUniqueMembers("/policyRefs", policyRefs, (r) =>
+    JSON.stringify([String(obj(r).kind), String(obj(r).id), String(obj(r).version)]));
   if (!Array.isArray(raw.targets) || raw.targets.length < 1) {
     throw new ManifestError("missing_mandatory_field", "/targets", "at least one target required");
   }
@@ -145,6 +168,7 @@ export function loadManifest(raw: unknown): LoadedManifest {
     if (t.expectedImplementation !== undefined) requireAddress(`/targets/${i}/expectedImplementation`, t.expectedImplementation);
     if (typeof t.chainId !== "number" || !Number.isInteger(t.chainId)) bad("invalid_chain_id", `/targets/${i}/chainId`, String(t.chainId));
   });
+  requireUniqueMembers("/targets", raw.targets, (t) => String(obj(t).targetId));
   // Validity window: structure, minimal decimals, and from <= to per chain.
   const validity = obj(raw.validity);
   for (const end of ["fromBlock", "toBlock"] as const) {
@@ -179,6 +203,28 @@ function deepFreeze<T>(v: T): T {
   return v;
 }
 
+// The manifest byte boundary (INS-001): callers read files in BINARY mode and hand bytes
+// here; decoding is strict in-memory UTF-8 so platform text handling never touches hashed
+// bytes. Content identity is over JCS bytes of the parsed content, so JSON whitespace
+// (CRLF vs LF) cannot change the hash, while undecodable or malformed bytes are typed load
+// failures. R-003: JSON.parse collapses duplicate keys; the duplicate-aware strict parser
+// is deferred until this boundary accepts untrusted bytes (W3/W5 API surface).
+export function loadManifestBytes(bytes: Uint8Array): LoadedManifest {
+  let text: string;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    throw new ManifestError("invalid_utf8", "/", "manifest bytes are not valid UTF-8");
+  }
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch (e) {
+    throw new ManifestError("malformed_json", "/", e instanceof Error ? e.message : String(e));
+  }
+  return loadManifest(raw);
+}
+
 // The trust decision: set membership against the deployment-configured policy, nothing
 // else. The caller-supplied contentHash is NOT trusted — it is recomputed from the manifest
 // content here, so a forged LoadedManifest {content, approvedHash} or content mutated after
@@ -199,6 +245,41 @@ export function evaluateTrust(loaded: LoadedManifest, policy: ManifestTrustPolic
   };
 }
 
+// The report payload's policyTrust block (ENGINEERING_SPEC AssurancePayload.policyTrust) —
+// the same shape W1's validateReport enforces. Evidence refs are caller-supplied: adapters
+// perform I/O and construct EvidenceRefs; this module fabricates none. The refs are opaque
+// here (unknown[]) so report vocabulary never leaks into manifest contracts.
+export interface PolicyTrustBlock {
+  state: "trusted" | "untrusted" | "invalid";
+  trustPolicyId: string;
+  manifestHash: string;
+  reasonCodes: string[];
+  evidence: unknown[];
+}
+
+// Wires manifest loading + trust evaluation into the payload block. A manifest that fails
+// to load is `invalid` and is NEVER evaluated for trust (spec: an invalid policy is not
+// evaluated) — the block then anchors to the sha256 of the exact rejected bytes so the
+// report still identifies which document was refused, with the typed failure as reason code.
+export function policyTrustFromBytes(
+  bytes: Uint8Array,
+  policy: ManifestTrustPolicy,
+  evidence: readonly unknown[],
+): PolicyTrustBlock {
+  try {
+    return { ...evaluateTrust(loadManifestBytes(bytes), policy), evidence: [...evidence] };
+  } catch (e) {
+    if (!(e instanceof ManifestError)) throw e;
+    return {
+      state: "invalid",
+      trustPolicyId: policy.trustPolicyId,
+      manifestHash: `sha256:${createHash("sha256").update(bytes).digest("hex")}`,
+      reasonCodes: [e.code],
+      evidence: [...evidence],
+    };
+  }
+}
+
 export interface ApplicabilityResult {
   applicable: boolean;
   reasonCodes: string[];
@@ -211,9 +292,23 @@ interface ExecutionBoundaryLike {
 
 // Applicability of a loaded manifest at an execution boundary (adversarial test 6: an
 // expired or inapplicable manifest must surface as such, never silently apply).
-export function checkApplicability(loaded: LoadedManifest, boundary: ExecutionBoundaryLike): ApplicabilityResult {
+// deploymentEnvironment is deployment configuration (like ManifestTrustPolicy), never
+// caller-of-report input. The boundary is validated before any window comparison:
+// cmpDecimal is only sound for minimal decimals, so a zero-padded boundary number would
+// otherwise compare as larger than every shorter bound and silently apply (fail-open) —
+// malformed input is a typed failure instead (D-004 fail-closed).
+export function checkApplicability(
+  loaded: LoadedManifest,
+  boundary: ExecutionBoundaryLike,
+  deploymentEnvironment: string,
+): ApplicabilityResult {
+  if (typeof boundary.block.chainId !== "number" || !Number.isInteger(boundary.block.chainId)) {
+    bad("invalid_chain_id", "/boundary/block/chainId", String(boundary.block.chainId));
+  }
+  requireDecimal("/boundary/block/number", boundary.block.number);
   const reasonCodes: string[] = [];
   const m = loaded.manifest;
+  if (m.environment !== deploymentEnvironment) reasonCodes.push("environment_mismatch");
   const chainIds = Array.isArray(m.chainIds) ? m.chainIds : [];
   if (!chainIds.includes(boundary.block.chainId)) reasonCodes.push("chain_not_covered");
   const validity = isObject(m.validity) ? m.validity : {};

@@ -3,7 +3,7 @@ id: W2
 type: work
 title: Manifest model + trust root (approved-hash policy, content addressing, applicability)
 phase: P1
-status: active
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W1]
@@ -20,7 +20,7 @@ invalidated_by:
   - roadmap/work/W2-manifest-trust.md
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:1a65636079b19a6c
+evidence_fingerprint: sha256:714dccf69c6dedc6
 ---
 
 # W2 — Manifest model + trust root
@@ -62,16 +62,23 @@ npm test
 ```
 
 ## Handoff
-- next: slice 1 + spine-review hardening DONE (P0#1 trust binding via recompute+freeze,
-  P0#3 full schema, P1#5 normalize-before-hash; 90/90 incl. spine-review-fixes). Remaining:
-  loader-from-bytes (binary, R-003 duplicate-aware parse deferred to untrusted boundary);
-  wire policyTrust output shape into the report payload block; slice 1 (orig) (13 tests: content addressing excl. embedded hash, integrity, trust
-  set-membership incl. fabricated-reviewer adversarial case, applicability windows/chains;
-  trust-everything mutation kills 3 tests). Remaining: manifest fixture files under
-  data/manifests/ + loader-from-bytes (binary read, INS-001); property tests (key-order
-  hash invariance via fast-check, reviewer-field non-authentication sweep); wire
-  policyTrust evaluation output shape to the report payload's policyTrust block; W1 Codex
-  review disposition may add work here.
+- next: W2 COMPLETE — all slices landed and adversarial-review round 2 dispositioned.
+  Shipped: manifest schema + content addressing + trust root (slice 1); spine-review
+  hardening (P0#1 recompute+freeze, P0#3 full schema, P1#5 normalize-before-hash);
+  loadManifestBytes (strict in-memory UTF-8, typed invalid_utf8/malformed_json; R-003
+  duplicate-aware parse still deferred to the W3/W5 untrusted boundary); sealed
+  data/manifests/reference-code-identity.json fixture; policyTrustFromBytes wiring
+  (trusted/untrusted/invalid blocks proven against W1 strict validateReport); property
+  tests (key-order invariance, 21 per-site hash-sensitivity mutators, isolated
+  author-only/reviewers-only non-authentication sweeps, unicode/latin1-collision);
+  review round 2 fixes: fail-closed boundary validation in checkApplicability
+  (noncanonical decimals + chainId types throw), environment_mismatch applicability
+  (deploymentEnvironment comparand — deployment config, like ManifestTrustPolicy),
+  duplicate/mixed-type set-member rejection (chainIds/invariantIds/uncovered/policyRefs
+  identity/targetIds), nesting depth cap 1024 in assertJsonDomain (typed
+  nesting_depth_exceeded; killed a real RangeError escape probed at depth ~10k).
+  Follow-ups live elsewhere: W4 consumes the manifest at identity-verification time;
+  [[IDEA-002]] (invalid-block manifestHash domain separation) queued for W3/W5 spec review.
 - read_first: docs/ENGINEERING_SPEC.md §Manifest model + §Manifest trust root;
   docs/THREAT_MODEL.md manifest-poisoning row + adversarial tests 6 and 30;
   lib/aegis/report/canonical.ts (delegate, never duplicate).
@@ -83,3 +90,15 @@ npm test
 ## Evidence
 - 2026-07-22: TDD slice 1 — RED 13 (module missing), GREEN 13/13; full suite 72/72; lint
   clean; trust-everything mutation killed by 3 tests incl. adversarial test 30 form.
+- 2026-07-22: spine-review hardening — 90/90 incl. spine-review-fixes.
+- 2026-07-22: loader + fixture + wiring + property slices — RED observed per slice
+  (5 loader / 5 wiring failures for the right reason), GREEN at 105/105; fixture sealed
+  sha256:d460baab…, CRLF-immunity + tamper-fails-closed pinned.
+- 2026-07-22: adversarial review round 2 (4 lenses, 3-skeptic verification; conclusions
+  in-session after panel usage cap): 2 confirmed findings fixed TDD (P1 boundary
+  fail-open — "0024999999" silently applied, now typed noncanonical_unsigned_decimal;
+  P2 environment applicability — environment_mismatch reason code added); RangeError
+  depth escape verified real by probe and fixed at root (assertJsonDomain cap, 3 tests);
+  set-member dedup 6 tests; test-quality gaps closed (author-only/reviewers-only sweeps,
+  unicode, tamper-with-approved-hash e2e, fixture trust eval, deterministic mutators).
+  Final: `npm test` 144/144, lint clean, doctor OK.

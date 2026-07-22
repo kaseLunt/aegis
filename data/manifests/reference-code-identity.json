@@ -6,6 +6,7 @@
   "author": "aegis-reference-fixtures",
   "reviewers": ["reference-scenario-not-a-live-approval"],
   "createdAt": "2026-07-22T00:00:00Z",
+  "contentHash": "sha256:d460baabf97ed6a18a64b75210b3bd413146da516c3a8a9cceb492802bdc9d1a",
   "chainIds": [1, 10],
   "validity": {
     "fromBlock": { "chainId": 1, "number": "25000000" },

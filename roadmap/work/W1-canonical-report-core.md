@@ -19,8 +19,8 @@ invalidated_by:
   - package-lock.json
   - roadmap/work/W1-canonical-report-core.md
 review_when: phase:P1:exit
-updated: 2026-07-21
-evidence_fingerprint: sha256:a35502f9f0c05396
+updated: 2026-07-22
+evidence_fingerprint: sha256:ac61fa8987130504
 ---
 
 # W1 — Canonical report core
@@ -60,6 +60,11 @@ npm run test:property
 ```
 
 ## Evidence
+- 2026-07-22: W2 adversarial review added a deterministic nesting cap (1024, typed
+  nesting_depth_exceeded) to assertJsonDomain — a raw RangeError escaped the typed-error
+  contract at depth ~10k (empirically probed). Canonical bytes for valid payloads are
+  unchanged; re-verified by full suite 144/144 incl. all golden byte-agreement vectors;
+  re-stamped.
 - 2026-07-22: Codex cross-vendor review (roadmap/reviews/W1W2-spine-codex-review.md) found
   P0#2 (reportHash skipped strict validation) + P1#4/#6/#7 in this module; all fixed TDD,
   strict/structural entry points split, re-attested. Honest note: "achieved" reflected

@@ -39,7 +39,17 @@ const cmpString = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0)
 // silently become {} / be dropped and merge two different inputs to one hash — rejected.
 const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 
-export function assertJsonDomain(value: unknown, path = "", seen: WeakSet<object> = new WeakSet()): void {
+// Deterministic nesting cap (W2 adversarial review): past ~9k levels the recursive walkers
+// (jcs, structuredClone, deepFreeze) overflow the stack and a raw RangeError escapes the
+// typed-error contract — and the overflow depth varies by platform/stack state. The guard
+// runs first on every entry point, so rejection happens at the same depth everywhere and
+// nothing downstream ever recurses deeper than this.
+const MAX_NESTING_DEPTH = 1024;
+
+export function assertJsonDomain(value: unknown, path = "", seen: WeakSet<object> = new WeakSet(), depth = 0): void {
+  if (depth > MAX_NESTING_DEPTH) {
+    fail("domain_normalization", "nesting_depth_exceeded", path || "/", `deeper than ${MAX_NESTING_DEPTH}`);
+  }
   if (value === null || typeof value === "boolean") return;
   if (typeof value === "number") {
     if (!Number.isFinite(value)) fail("domain_normalization", "nonfinite_number", path || "/");
@@ -58,7 +68,7 @@ export function assertJsonDomain(value: unknown, path = "", seen: WeakSet<object
   if (Array.isArray(o)) {
     o.forEach((v, i) => {
       if (v === undefined) fail("domain_normalization", "undefined_array_member", `${path}/${i}`);
-      assertJsonDomain(v, `${path}/${i}`, seen);
+      assertJsonDomain(v, `${path}/${i}`, seen, depth + 1);
     });
   } else {
     if (Object.getPrototypeOf(o) !== Object.prototype && Object.getPrototypeOf(o) !== null) {
@@ -74,7 +84,7 @@ export function assertJsonDomain(value: unknown, path = "", seen: WeakSet<object
       if (LONE_SURROGATE.test(k)) fail("domain_normalization", "lone_surrogate", `${path}/${k} (key)`);
       const v = (o as JsonObject)[k];
       if (v === undefined) fail("domain_normalization", "undefined_property", `${path}/${k}`);
-      assertJsonDomain(v, `${path}/${k}`, seen);
+      assertJsonDomain(v, `${path}/${k}`, seen, depth + 1);
     }
   }
   seen.delete(o);

@@ -7,6 +7,7 @@ import {
   CanonicalizationError,
   canonicalBytes,
   canonicalBytesStructural,
+  jcsSerialize,
   reportHash,
 } from "../lib/aegis/report/canonical";
 import {
@@ -14,6 +15,7 @@ import {
   evaluateTrust,
   loadManifest,
   manifestContentHash,
+  policyTrustFromBytes,
 } from "../lib/aegis/manifest/trust";
 
 const VEC = join(__dirname, "..", "roadmap", "research", "WR6", "vectors");
@@ -179,5 +181,59 @@ describe("P1#6/#7 JSON domain rejection", () => {
     const p = loadJson("golden-01-minimal.json");
     (p as J).extra = { toJSON: () => 1 } as unknown;
     expect(() => canonicalBytesStructural(p)).toThrow(CanonicalizationError);
+  });
+});
+
+// --- Adversarial review (W2): recursion depth capped, never a raw RangeError ------------
+// At depth ~10k, JSON.parse succeeds but the jcs recursion overflows and a raw RangeError
+// escaped policyTrustFromBytes / manifestContentHash (probed empirically). The domain
+// guard now rejects past a deterministic nesting cap BEFORE any deeper recursion runs, so
+// every entry point fails typed at the same depth on every platform.
+describe("adversarial review: nesting depth cap (fail closed, no RangeError escape)", () => {
+  const nested = (depth: number): unknown => JSON.parse("[".repeat(depth) + "0" + "]".repeat(depth));
+
+  const deepManifestBytes = (depth: number): Uint8Array => {
+    const m = fullManifest();
+    const json = JSON.stringify(m);
+    return new TextEncoder().encode(
+      `${json.slice(0, -1)},"deep":${"[".repeat(depth)}0${"]".repeat(depth)}}`,
+    );
+  };
+
+  test("jcsSerialize rejects past the cap with nesting_depth_exceeded, accepts at the cap", () => {
+    expect(() => jcsSerialize(nested(1024))).not.toThrow();
+    let caught: unknown;
+    try {
+      jcsSerialize(nested(1025));
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(CanonicalizationError);
+    expect((caught as CanonicalizationError).code).toBe("nesting_depth_exceeded");
+  });
+
+  test("manifestContentHash on an over-deep manifest fails typed, not RangeError", () => {
+    const m = fullManifest();
+    m.deep = nested(10_000);
+    let caught: unknown;
+    try {
+      manifestContentHash(m);
+    } catch (e) {
+      caught = e;
+    }
+    expect(caught).toBeInstanceOf(CanonicalizationError);
+    expect((caught as CanonicalizationError).code).toBe("nesting_depth_exceeded");
+  });
+
+  test("policyTrustFromBytes returns a typed invalid block at every depth — nothing escapes", () => {
+    for (const depth of [2_000, 10_000, 50_000, 200_000]) {
+      const block = policyTrustFromBytes(
+        deepManifestBytes(depth),
+        { trustPolicyId: "tp", approvedHashes: [] },
+        [],
+      );
+      expect(block.state).toBe("invalid");
+      expect(["non_json_manifest", "malformed_json"]).toContain(block.reasonCodes[0]);
+    }
   });
 });
