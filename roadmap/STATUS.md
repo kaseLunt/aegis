@@ -1,6 +1,6 @@
 ---
 active_phase: P0
-active_task: W0A
+active_task: none
 updated: 2026-07-21
 ---
 
@@ -13,10 +13,12 @@ updated: 2026-07-21
 **Health:** 🟢 on track
 
 ## Current task (WIP = 1)
-**W0A — Adopt orchestrator directive (right-sized)** — *in progress*
-Advances: P0 · VISION "AI-assisted engineering maturity". Handoff lives in the work item.
+**none** — P0 work complete; awaiting owner go-ahead to open P1 (phase transition = HITL).
 
 ## Recently completed
+- **W0A — orchestrator directive adopted, right-sized** (commit 9c9e9ec): ladder-drift +
+  handoff doctor checks, pre-commit scope gate, one-command capture, standing rules §13–20 —
+  see [[D-004]], [[INS-001]].
 - **W0 — control plane stood up** (commit 5165890): cockpit, doctor, git+CI gates, session
   protocol in CLAUDE.md/AGENTS.md — see [[D-001]], [[D-003]].
 - Doc canon in place: `docs/` (product spec, threat model, engineering spec, roadmap M0–M10,

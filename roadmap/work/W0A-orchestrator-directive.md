@@ -3,7 +3,7 @@ id: W0A
 type: work
 title: Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis
 phase: P0
-status: active
+status: achieved
 evidence_target: "Correct"
 priority: 1
 depends_on: [W0]
@@ -53,15 +53,18 @@ python roadmap/tools/new.py idea "title here"
 ```
 
 ## Handoff
-- next: doctor checks landed (ladder + handoff, negative-tested via the drift they caught);
-  remaining: scope gate (.githooks/pre-commit + roadmap/tools/scope_gate.py), new.py capture
-  command, RULES.md/CLAUDE.md/AGENTS.md standing rules, D-004 + INS-001, close-out commit.
-- read_first: roadmap/tools/doctor.py (new checks at top + worklike branch),
-  .githooks/pre-commit, roadmap/RULES.md, roadmap/decisions/D-003-docs-canon-authority.md.
-- hazards: doctor objs tuples are now 3-ary (rel, fm, text) — unpack sites must match;
-  Windows console is cp1252 — doctor reconfigures stdout/stderr to UTF-8, keep that;
+- next: COMPLETE (commit 9c9e9ec). Follow-on: open P1 and activate W1 (owner call).
+- read_first: roadmap/RULES.md §13–20, roadmap/tools/{doctor,scope_gate,new}.py,
+  roadmap/decisions/D-004-*.md.
+- hazards: doctor objs tuples are 3-ary (rel, fm, text) — unpack sites must match;
+  tools reconfigure stdout/stderr to UTF-8 (cp1252 consoles) — keep that;
   scope gate must always allow roadmap/** or capture becomes impossible mid-task.
 
 ## Evidence
 - 2026-07-21: ladder-consistency check caught 6 real hand-set cells on first run
   (organic negative test); handoff + emoji-crash fixes verified by doctor re-run.
+- 2026-07-21: handoff check mutation-tested (renamed heading / missing key / thin body all
+  FAIL, restore passes) after first mutation exposed substring laxity — check tightened.
+- 2026-07-21: scope gate: in-scope exit 0, out-of-scope exit 1 with root-cause report,
+  override exit 0; ran live on commit 9c9e9ec.
+- 2026-07-21: new.py produced D-004 and INS-001 with valid frontmatter (doctor green).
