@@ -3,7 +3,7 @@ id: W0D
 type: work
 title: Parallelism prep — claims model, lane charters, doctrine (D-006)
 phase: P0
-status: active
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0B]
@@ -14,11 +14,12 @@ allowed_paths:
   - .githooks/**
   - CLAUDE.md
   - AGENTS.md
-review_when: phase:P1:entry
+review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
   - roadmap/work/W0D-parallelism-prep.md
 updated: 2026-07-21
+evidence_fingerprint: sha256:520f3c8a587e2f45
 ---
 
 # W0D — Parallelism prep
@@ -53,9 +54,8 @@ python roadmap/tools/claim.py list
 ```
 
 ## Handoff
-- next: claims model + doctor + gate + selftest landed; WR1–WR6 chartered as committed
-  items; W0C parked (owner-blocked on repo deletion); remaining: owner decides lane launch
-  and P1/W1 opening; on launch, open a claim per lane agent and activate its item.
+- next: COMPLETE (commit e0cbf8f; owner approved full launch). P1 opened; W1 active under
+  fable-main; WR1–WR6 active under wr1–wr6 claims with background agents running.
 - read_first: roadmap/decisions/D-006-*.md, roadmap/tools/claim.py, the claims section in
   roadmap/tools/doctor.py, roadmap/tools/scope_gate.py (AEGIS_AGENT branch).
 - hazards: claims live under roadmap/claims/ and are read from the STAGED index by the gate
@@ -65,4 +65,5 @@ python roadmap/tools/claim.py list
   acquisition for the same values (D-006 independence rule).
 
 ## Evidence
-(pending — filled at close)
+- 2026-07-21: doctor + 19/19 selftests green locally; CI on push e0cbf8f.
+- 2026-07-21: owner approved: launch all six lanes; open P1; W1 single-owner = fable-main.

@@ -4,7 +4,7 @@ type: insight
 title: Platform text handling must never touch hashed bytes (CRLF class)
 status: active
 informs: [W1, H0]
-review_when: phase:P1:entry
+review_when: phase:P2:entry
 updated: 2026-07-21
 ---
 

@@ -12,7 +12,7 @@ informs: [H0]
 allowed_paths:
   - roadmap/**
   - .githooks/**
-review_when: phase:P1:entry
+review_when: now
 invalidated_by:
   - .githooks/**
   - roadmap/work/W0C-identity-scrub.md

@@ -20,9 +20,9 @@ invalidated_by:
   - roadmap/tools/**
   - .githooks/**
   - roadmap/work/W0B-swarm-hardening.md
-review_when: phase:P1:entry
+review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:a2e2fdc08ce9e605
+evidence_fingerprint: sha256:6e84c0e668450aee
 ---
 
 # W0B — Control-plane hardening (external review response)

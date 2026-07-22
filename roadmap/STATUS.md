@@ -1,6 +1,6 @@
 ---
-active_phase: P0
-active_task: W0D
+active_phase: P1
+active_task: W1
 updated: 2026-07-21
 ---
 
@@ -9,12 +9,13 @@ updated: 2026-07-21
 > Updated on transitions (start / scope change / finish), enforced at CI/PR. One current task.
 > Full rules: `SYSTEM.md` · `RULES.md`.
 
-**Active phase:** P0 — Foundation (control plane + honest M0 baseline)
+**Active phase:** P1 — M1 canonical evidence spine (P0→P1 review: owner ratification 2026-07-21)
 **Health:** 🟢 on track
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W0D — parallelism prep (claims model + lane charters)** — *in progress* (claim:
-fable-main). W0C parked pending owner action (see Blockers).
+**W1 — canonical report core** — single owner fable-main (critical path, [[D-006]]).
+Parallel lanes: WR1–WR6 research agents running under claims wr1–wr6.
+W0C parked pending owner action (see Blockers).
 
 ## Recently completed
 - **W0B — control-plane hardening per external review** (commit 6bf2c03): staged-index scope

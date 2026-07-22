@@ -3,7 +3,7 @@ id: WR6
 type: work
 title: Adversarial vectors (designed blind to W1 implementation)
 phase: P1
-status: committed
+status: active
 evidence_target: "Correct"
 priority: 2
 depends_on: []
@@ -11,7 +11,7 @@ blocked_by: []
 informs: [H0]
 allowed_paths:
   - roadmap/research/WR6/**
-review_when: phase:P1:entry
+review_when: phase:P1:exit
 updated: 2026-07-21
 ---
 
@@ -39,3 +39,10 @@ reorg sequences, and identity-mismatch scenarios.
 ## Non-goals
 - No manifest promotion (requires the SOURCE_REGISTER checklist + owner review).
 - No production code, no live-RPC-derived "expected" values.
+
+## Handoff
+- next: background research agent launched 2026-07-21; deliverables land under this lane's
+  allowed path; orchestrator reviews, commits under AEGIS_AGENT=<lane agent>, then closes.
+- read_first: this charter; docs/SOURCE_REGISTER.md (source-class limits).
+- hazards: provenance required on every claim; no live-RPC 'expected' values; explorer
+  labels are discovery only; WR6 additionally must stay blind to lib/ and W1 products.

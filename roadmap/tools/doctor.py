@@ -176,7 +176,10 @@ def due(rw):
         return rw[5:] <= today
     if rw.startswith('phase:'):
         p = rw.split(':')
-        return len(p) == 3 and p[1] == ap
+        if len(p) != 3 or not ap:
+            return False
+        # entry fires during its phase; exit fires once a LATER phase is active (review owed).
+        return (p[2] == 'entry' and p[1] == ap) or (p[2] == 'exit' and ap > p[1])
     return False
 
 

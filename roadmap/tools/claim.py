@@ -83,6 +83,14 @@ def main():
             lines += [f'  - {p}' for p in paths]
         lines += [f'lease_expires: {iso(now() + datetime.timedelta(hours=hours))}',
                   f'updated: {iso(now())}', '---', '', f'# Claim: {agent} -> {task}', '']
+        if os.path.exists(path):
+            old = open(path, encoding='utf-8').read()
+            if 'status: active' in old:
+                print(f"agent '{agent}' already has an ACTIVE claim -- release it first ({path})")
+                return 1
+            arch = os.path.join(ROADMAP, 'archive', 'claims')
+            os.makedirs(arch, exist_ok=True)
+            os.replace(path, os.path.join(arch, f"CLAIM-{agent}-{iso(now()).replace(':', '')}.md"))
         try:
             fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         except FileExistsError:
