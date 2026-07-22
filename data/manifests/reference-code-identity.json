@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1",
+  "manifestVersion": "reference-code-identity@v1",
+  "protocol": "etherfi",
+  "environment": "reference",
+  "author": "aegis-reference-fixtures",
+  "reviewers": ["reference-scenario-not-a-live-approval"],
+  "createdAt": "2026-07-22T00:00:00Z",
+  "chainIds": [1, 10],
+  "validity": {
+    "fromBlock": { "chainId": 1, "number": "25000000" },
+    "toBlock": null
+  },
+  "policyRefs": [
+    {
+      "kind": "finality",
+      "id": "fin-reference",
+      "version": "1",
+      "contentHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "kind": "provider_quorum",
+      "id": "pq-reference",
+      "version": "1",
+      "contentHash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "targets": [
+    {
+      "targetId": "reference-eip1967-proxy",
+      "chainId": 1,
+      "address": "0xcccccccccccccccccccccccccccccccccccccccc",
+      "identityStrategy": "eip1967",
+      "expectedImplementation": "0xdddddddddddddddddddddddddddddddddddddddd",
+      "expectedRuntimeCodeHash": "sha256:3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    {
+      "targetId": "reference-direct",
+      "chainId": 10,
+      "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "identityStrategy": "direct",
+      "expectedRuntimeCodeHash": "sha256:4444444444444444444444444444444444444444444444444444444444444444"
+    }
+  ],
+  "invariantIds": ["deployment.code_identity"],
+  "uncovered": ["consensus-layer state", "reciprocal route activity"]
+}
