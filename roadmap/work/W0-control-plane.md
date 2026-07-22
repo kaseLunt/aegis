@@ -3,7 +3,7 @@ id: W0
 type: work
 title: Stand up the repo-native control plane for agent-swarm coordination
 phase: P0
-status: active
+status: achieved
 evidence_target: "Correct"
 priority: 1
 depends_on: []
@@ -49,4 +49,6 @@ python roadmap/tools/doctor.py
 ```
 
 ## Evidence
-- 2026-07-21: installer ran clean; doctor OK (0 errors, 0 warnings). Commit pending.
+- 2026-07-21: installer ran clean; doctor OK (0 errors, 0 warnings).
+- 2026-07-21: commit 5165890 — cockpit + hooks + CI + session protocol committed; pre-commit
+  doctor gate executed and passed (13/13 roadmap files tracked).

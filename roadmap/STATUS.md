@@ -1,6 +1,6 @@
 ---
 active_phase: P0
-active_task: W0
+active_task: none
 updated: 2026-07-21
 ---
 
@@ -13,19 +13,18 @@ updated: 2026-07-21
 **Health:** 🟢 on track
 
 ## Current task (WIP = 1)
-**W0 — Stand up the control plane** — *in progress (scaffold installed, wiring + commit pending)*
-Advances: P0 · VISION "AI-assisted engineering maturity" (an agent swarm needs a durable,
-evidence-derived coordination surface).
+**none** — W0 achieved; awaiting owner go-ahead to open P1 (phase transition = HITL).
 
 ## Recently completed
-- Adopted the control plane (`SYSTEM.md`) — see [[D-001]].
+- **W0 — control plane stood up** (commit 5165890): cockpit, doctor, git+CI gates, session
+  protocol in CLAUDE.md/AGENTS.md — see [[D-001]], [[D-003]].
 - Doc canon in place: `docs/` (product spec, threat model, engineering spec, roadmap M0–M10,
   source register, interview brief) — authority hierarchy in `docs/README.md`.
 
 ## Next up
-1. Close W0: commit `roadmap/`, hooks, CI workflow; verify doctor + SessionStart hook.
-2. Open P1 (M1 — canonical evidence spine): commit W1 (canonical report core), draft W2–W5
+1. Open P1 (M1 — canonical evidence spine): activate W1 (canonical report core), draft W2–W5
    work orders.
+2. Start route research capture (`docs/SOURCE_REGISTER.md` blockers) in parallel as ideas/insights.
 
 ## Blockers
 None.
