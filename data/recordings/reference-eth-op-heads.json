@@ -67,6 +67,22 @@
       "capturedAt": "2026-07-21T00:00:04Z"
     },
     {
+      "providerId": "alchemy",
+      "chainId": 10,
+      "method": "eth_getBlockByNumber",
+      "params": ["154496599", false],
+      "result": {
+        "chainId": 10,
+        "number": "154496599",
+        "hash": "0x3333333333333333333333333333333333333333333333333333333333333333",
+        "parentHash": "0x4444444444444444444444444444444444444444444444444444444444444444",
+        "timestamp": "2026-07-20T23:59:39Z",
+        "finality": "finalized"
+      },
+      "rawResponseSha256": "sha256:16d1926bbb1463cfde79e861f8bc5f74cdd4b3eb8edd4a035df820f8642bcd0c",
+      "capturedAt": "2026-07-21T00:00:06Z"
+    },
+    {
       "providerId": "quicknode",
       "chainId": 10,
       "method": "eth_getBlockByNumber",

@@ -87,10 +87,19 @@ npm test
   recordedAdapter: declared_absent finalized tag → null (never a guess), missing
   recording → typed recording_missing; providers.ts: Alchemy+QuickNode declared-only
   capabilities, keyEnvVar names, QUORUM_PAIR_1; sealed reference-eth-op-heads bundle).
-  Next: slice 3b — wire selection→quorum→policyTrust into one engine pass over the
-  recorded bundle (two-provider ETH agreement; OP mixed-mode alchemy-finalized vs
-  quicknode-fallback comparison semantics need a decision: compare at matching numbers
-  only), emitting observation boundaries + evidence shapes for W1's payload.
+  Slice 3b DONE (lib/aegis/chain/engine.ts — establishBoundary: every provider proposes
+  a pin (finalized head, or depth target when tag declared absent), engine pins the
+  conservative MINIMUM and re-fetches all providers AT it, quorum over consensus-content
+  hashes with `finality` STRIPPED before hashing (request-derived annotation, not
+  response content — a live adapter must instead thread its captured raw-response hash
+  through; probe-step work); quorum failure → unresolved with observations preserved,
+  never a boundary; chain finality = weakest level with downgrades exposed). Composition
+  test: engine boundaries + evidence + trusted policyTrust assemble into a payload that
+  passes W1 strict validateReport with a stable reportHash. Remaining before achieved:
+  Codex cross-vendor review of the W3 chain modules (INS-002/INS-004 ladder), then
+  disposition + stamp. Multi-chain time-aligned ENGINE composition (candidate walk-back
+  across recorded blocks) is W5 report-assembly seam — selectTimeAligned itself is
+  tested pure.
 - read_first: docs/ENGINEERING_SPEC.md §Block selection and finality + §Provider quorum
   and conflicts + §Evidence acquisition; roadmap/research/WR3/provider-matrix.md §5
   (quorum pairs + do-not-pair rationale); docs/THREAT_MODEL.md provider rows;
