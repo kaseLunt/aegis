@@ -256,3 +256,17 @@ Provider agreement depends on "canonicalized raw results," but the byte/string n
 ### SPEC-QUESTION-18: boundary sort comparison
 
 Boundary ordering includes decimal-string block numbers and slots, but the spec does not say whether their stable-key comparison is numeric or lexical. The golden vectors avoid two same-identity boundaries whose order would expose that ambiguity.
+
+## SPEC-QUESTION triage (integrator, 2026-07-22)
+
+Normative answers live in docs/ENGINEERING_SPEC.md §Canonicalization clarifications (v1.2).
+Map: SQ-01 -> clarification 1 (typed rejection codes). SQ-02 -> 2 (reject at boundary;
+adapters normalize upstream; M-04 stands). SQ-03 -> 3 (chainId/ageSeconds stay JSON numbers;
+goldens stand). SQ-04 -> layer split (schema enforces byte lengths; goldens exercise
+normalization+JCS+hash layer). SQ-05 -> schema: 64 lowercase hex. SQ-06 -> 4 (index field
+contract). SQ-07 -> 5 (registered shapes only). SQ-08/09/10 -> 6 (stable keys enumerated;
+role-ID lists are sets; EvidenceRef rule everywhere). SQ-11 -> 8 (resolve against top-level
+evidence). SQ-12 -> 9 (>=1 boundary). SQ-13 -> 10 (sha256:<hex> form). SQ-16 -> 11
+(identity predicate fails; dependents unknown). SQ-18 -> 7 (numeric via length-then-lex).
+Deferred: SQ-14, SQ-17 (W3), SQ-15 (M3). All 20 golden/ordering/malformed vectors remain
+valid under these answers; no vector was adjusted.

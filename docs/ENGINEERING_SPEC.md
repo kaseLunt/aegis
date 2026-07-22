@@ -1,8 +1,8 @@
 # Aegis Engineering Specification
 
 Status: target architecture
-Version: 1.1
-Updated: 2026-07-21
+Version: 1.2
+Updated: 2026-07-22
 
 ## Engineering objective
 
@@ -789,6 +789,59 @@ Canonical array rules:
 - duplicates in set-like arrays are rejected unless the schema explicitly models multiplicity;
 - integers use minimal unsigned decimal strings and hex bytes use normalized lowercase `0x` encoding;
 - arrays with semantic order, including Safe batches, transaction prefixes, event tapes, and traces, retain order and include an explicit sequence/index field rather than being sorted.
+
+### Canonicalization clarifications (v1.2, adopted 2026-07-22 from the WR6 blind-derivation triage)
+
+Two layers are normative and separable. **Schema validation** enforces structure: mandatory
+fields, exact byte lengths (32-byte block hashes, roots, and transaction hashes; 20-byte
+addresses; `sha256:` identifiers are exactly 64 lowercase hex characters), enum membership,
+and referential integrity. **Domain normalization + JCS** enforces canonical form and may be
+exercised independently by test vectors that use abbreviated identifiers.
+
+1. **Typed rejection.** A canonicalization or validation failure carries
+   `{ phase: "schema_validation" | "referential_validation" | "domain_normalization", code }`
+   with stable codes including `missing_mandatory_field`, `duplicate_set_member`,
+   `noncanonical_unsigned_decimal`, `noncanonical_hex`, `dangling_evidence_role_id`, and
+   `semantic_index_invalid`. The first failing phase reports; codes are part of the contract.
+2. **Noncanonical encodings are rejected, not repaired, at the payload boundary.** Adapters
+   normalize raw provider material before constructing payload values; once a payload is
+   presented for canonicalization, uppercase hex, non-minimal decimals (leading zeros, `+`),
+   and duplicate set members are errors.
+3. **Numeric fields.** Fields declared as JSON numbers (`chainId`, `ageSeconds`) serialize as
+   JCS numbers. The minimal-unsigned-decimal-string rule applies to declared string-typed
+   quantities (block numbers, slots, token amounts, counts, currency values).
+4. **Semantic-order arrays** (Safe batches, transaction prefixes, event tapes, traces) carry
+   an explicit `index` field: zero-based, minimal unsigned decimal string, contiguous, no
+   duplicates (`semantic_index_invalid` otherwise). The normalizer never reorders them.
+5. **Normalization inside open-typed values** (`decodedResult`, `expected`, `actual`, fact
+   `value`): the normalizer descends only into shapes registered by the producing adapter
+   (e.g. `safeBatch`); unregistered subtrees pass through with JCS key-sorting only and
+   arrays left untouched.
+6. **Stable sort keys.** Scalar string sets: lexicographic after normalization. `EvidenceRef`
+   arrays: by `id` — this applies to every `EvidenceRef` array (top-level `evidence`,
+   `policyTrust.evidence`, `Verification.evidence`, `EvidenceFact.evidence`). Observation
+   boundaries: by `kind`, then chain/network/source identity, then number/slot/contentHash,
+   then hash/root. Provider responses: `(providerId, rawResultHash)`. Limitations:
+   `(code, text)`. `policyRefs`: `(kind, id, version)`. Evidence-role ID lists
+   (`expectedEvidenceIds`, `actualEvidenceIds`, `derivationInputIds`, `inputEvidenceIds`)
+   are sets sorted by value. Freshness assessments: `(policyId, boundary stable key)`.
+7. **Decimal-string comparison is numeric**, implemented as length-then-lexicographic over
+   minimal unsigned decimals (valid because encodings are minimal).
+8. **Referential integrity.** Every `EvidenceRef` appearing anywhere in the payload must
+   also appear, by `id`, in top-level `evidence`; evidence-role IDs resolve against
+   top-level `evidence`.
+9. **Cardinality.** `observationBoundaries` requires at least one entry; other arrays may be
+   empty.
+10. **External representation of the report identity** is the content-address form
+    `sha256:<64 lowercase hex>`.
+11. **Identity-mismatch semantics** (cross-reference §Deployment code identity): the
+    `deployment.code_identity` predicate itself returns `fail` when quorum evidence shows a
+    terminal-runtime-hash mismatch against the manifest; verifications that depend on
+    semantic decoding of that contract return `unknown`.
+
+Deferred to their owning milestones: the provisional-contradiction alert schema (provider
+quorum, M1/W3), raw-result canonicalization for provider agreement (M1/W3), and
+supersession/lineage representation (append-only store, M3).
 
 `reportHash = sha256(JCS(normalizedAssurancePayload))`. `requestId`, delivery `generatedAt`, provider latency, retry count, HTTP metadata, and tracing identifiers live only in the delivery envelope and are excluded. Any visible live/recorded label, policy-trust badge, freshness state, or coverage summary is read from or deterministically derived from hashed payload fields; a renderer cannot relabel a recorded or untrusted artifact without changing or contradicting its hash.
 

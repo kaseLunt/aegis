@@ -17,7 +17,7 @@ invalidated_by:
   - roadmap/research/WR6/**
 review_when: phase:P1:exit
 updated: 2026-07-21
-evidence_fingerprint: sha256:a22474f654b95947
+evidence_fingerprint: sha256:10b40172e6a5130e
 ---
 
 # WR6 — Adversarial vectors (designed blind to W1 implementation)

@@ -12,6 +12,7 @@ informs: [H0]
 allowed_paths:
   - lib/**
   - tests/**
+  - docs/ENGINEERING_SPEC.md
   - roadmap/work/W1-canonical-report-core.md
 invalidated_by:
   - lib/**
@@ -61,9 +62,10 @@ npm run test:property
 (none yet — Declared)
 
 ## Handoff
-- next: implementation starts at canonical types + JSON Schema (ENGINEERING_SPEC §Canonical
-  domain types) under packages-lite layout in lib/; then domain array normalization, JCS
-  (RFC 8785), reportHash; property tests per §Tests. TDD; single owner fable-main.
+- next: SPEC-QUESTION triage DONE (spec v1.2 clarifications; all vectors stand unadjusted).
+  Now TDD in lib/aegis/report/: golden-vector harness (binary reads) -> JCS -> domain
+  normalization -> reportHash; then malformed-vector rejections; then schema layer + property
+  tests. M0 lib/aegis/canonical.ts untouched until superseded.
 - read_first: docs/ENGINEERING_SPEC.md §Canonical domain types + §Canonicalization and
   hashing + §Tests; roadmap/insights/INS-001 (bytes-in-memory rule); WR6 vectors when they
   land (golden vectors are authored blind — do NOT adjust them to match implementation;
