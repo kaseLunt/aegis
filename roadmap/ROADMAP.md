@@ -23,7 +23,7 @@ Dependency-gated: an item can't be certified while anything it depends on is unp
 
 | ID | Work item | Phase | Depends on | Evidence target | Current |
 |----|-----------|-------|-----------|-----------------|---------|
-| W0 | Stand up the control plane (this system) | P0 | — | Correct | Active |
+| W0 | Stand up the control plane (this system) | P0 | — | Correct | Correct ✅ |
 | W1 | Canonical report core: schemas, JCS canonicalization, SHA-256 report hash | P1 | W0 | Correct + Robust | Declared |
 | W2 | Manifest model + trust root (approved-hash / reviewer-threshold policy) | P1 | W1 | Correct + Robust | Declared |
 | W3 | Finalized-block selection + two independent RPC adapters + quorum/conflict semantics | P1 | W1 | Correct + Robust | Declared |
