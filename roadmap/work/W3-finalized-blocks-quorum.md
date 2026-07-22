@@ -76,11 +76,17 @@ npm test
   duplicate-provider self-corroboration; decoded-match/raw-mismatch retained as unknown
   for policy review, not auto-conflict; optional-provider raw disagreement conflicts
   fail-closed — over-strict by design, revisit if the provider_quorum policy grows a
-  knob). Next: slice 2 — block selection (single-chain finalized + confirmation-depth
-  fallback with downgrade exposure; multi-chain time-aligned, asOfTimestamp ≤ oldest
-  finalized head). Then slice 3 — adapter interface + recorded-fixture adapter
-  (data/recordings/**, binary IO per INS-001) + Alchemy/QuickNode adapter configs (no
-  secrets; provider identity + capability declarations only).
+  knob). Slice 2 DONE (lib/aegis/chain/selection.ts — selectFinalizedBoundary pins the
+  exact hash and refuses non-finalized heads; confirmationDepthTarget/
+  selectConfirmationDepthBoundary implement the QuickNode-OP fallback with a typed
+  FinalityDowngrade record, target-mismatch and underflow fail closed;
+  selectTimeAligned: asOf = oldest head via fixed-width UTC-Z lexicographic compare,
+  max-by-number pick per chain from head+candidates, boundaries sorted by chainId,
+  candidates cannot introduce chains). Next: slice 3 — adapter interface +
+  recorded-fixture adapter (data/recordings/**, binary IO per INS-001) +
+  Alchemy/QuickNode adapter configs (no secrets; provider identity + capability
+  declarations only), then wire selection→quorum→policyTrust into one engine pass over
+  recorded fixtures.
 - read_first: docs/ENGINEERING_SPEC.md §Block selection and finality + §Provider quorum
   and conflicts + §Evidence acquisition; roadmap/research/WR3/provider-matrix.md §5
   (quorum pairs + do-not-pair rationale); docs/THREAT_MODEL.md provider rows;
@@ -101,3 +107,9 @@ npm test
   required-provider missing/disagreement, policy floor, cross-chain + block-number +
   duplicate-provider fail-closed throws) + 30-run order-invariance property. Full suite
   159/159; lint clean.
+- 2026-07-22: TDD slice 2 — RED (module missing), GREEN 14/14: finalized pin + refusal of
+  non-finalized heads; confirmation-depth fallback (WR3 QuickNode-OP shape) with typed
+  downgrade record, target-mismatch/underflow/cross-chain fail-closed; time-aligned
+  multi-chain selection (asOf = oldest head, per-chain max ≤ asOf, sorted, never atomic;
+  no-eligible-block / duplicate-head / stray-candidate / single-chain typed failures) +
+  25-run order-invariance property. Full suite 190/190; lint clean.
