@@ -65,16 +65,22 @@ npm run test:property
   BYTE-IDENTICAL to Codex blind derivation incl. 1973/2870/2908-byte payloads; mutation
   check (evidence-sort disabled) kills 4/5 tests, restore passes; full suite 14/14; lint
   clean on project code.
+- 2026-07-22: slices 2-3 — RED 7 failing rejection tests, GREEN three-phase validation
+  (schema/referential/domain_normalization) passing all M-01..M-06 with vector-exact codes,
+  phases, and input-order paths; property suite: 50-run set-shuffle invariance, 10-field
+  hash sensitivity (one vacuous mutation caught and fixed in the TEST, engine was right),
+  determinism, CRLF-injected fixture reproduces the G-01 golden hash; sort-mutation kills
+  4 property/golden tests; 35/35 green.
 
 ## Handoff
-- next: slice 1 DONE — lib/aegis/report/canonical.ts (normalize + JCS + reportHash) passes
-  all 3 golden + 2 ordering vectors byte-identically (cross-vendor agreement). Next cycles:
-  (a) M-01..M-06 typed rejections (RED from malformed vectors), (b) referential validation
-  (clarification 8), (c) schema layer with byte lengths (clarification: 32/20-byte,
-  sha256 64-hex), (d) fast-check property tests: set-shuffle invariance, hash sensitivity to
-  every hashed field, CRLF-injected fixture (INS-001), (e) normalization surfaces not yet
-  exercised by any vector (verification/fact arrays, role-ID sets, freshness assessments,
-  limitations) — write vectors/tests FIRST, they are currently unimplemented by design.
+- next: slices 1-3 DONE (goldens/ordering; M-01..M-06 typed rejections + referential
+  validation + cardinality; property suite incl. CRLF fixture — 35 tests, all
+  mutation-checked). Remaining cycles: (c) strict schema layer `validateReport` (32/20-byte
+  lengths, sha256 64-hex, enum membership — full-length fixtures, RED first), (e) vectors
+  THEN implementation for unexercised normalization surfaces (verification/fact array
+  sorting by (invariantId|factId, evaluatorVersion), role-ID set sorting, freshness
+  assessments, limitations by (code,text)), then wire reportHash into engine output and
+  supersede M0 lib/aegis/canonical.ts report identifiers.
 - read_first: docs/ENGINEERING_SPEC.md §Canonical domain types + §Canonicalization and
   hashing + §Tests; roadmap/insights/INS-001 (bytes-in-memory rule); WR6 vectors when they
   land (golden vectors are authored blind — do NOT adjust them to match implementation;
