@@ -99,29 +99,52 @@ def main(argv):
         return blocked("protected control-plane files staged (owner-only surfaces)", prot,
                        ["These define the constitution/vision; changing them is a human-owner act."])
 
-    status = parse_fm(staged_content('roadmap/STATUS.md'))
-    if status is None:
-        return blocked("staged roadmap/STATUS.md is missing or has no frontmatter",
-                       extra=["The committed state must carry active_phase/active_task (fail-closed)."])
-    active = status.get('active_task')
-    if not active or active == 'none':
-        return 0
+    def staged_work_item(task_id):
+        ls = git('ls-files', '--cached', '--', 'roadmap/work')
+        for wf in [f for f in ls.stdout.replace('\\', '/').split('\n') if f.endswith('.md')]:
+            fm = parse_fm(staged_content(wf))
+            if fm and fm.get('id') == task_id:
+                return (wf, fm)
+        return None
 
-    ls = git('ls-files', '--cached', '--', 'roadmap/work')
-    item = None
-    for wf in [f for f in ls.stdout.replace('\\', '/').split('\n') if f.endswith('.md')]:
-        fm = parse_fm(staged_content(wf))
-        if fm and fm.get('id') == active:
-            item = (wf, fm)
-            break
-    if item is None:
-        return blocked(f"active_task '{active}' has no work file in the staged index",
-                       extra=["Fail-closed: stage the work item, or set STATUS active_task correctly."])
-    declared = item[1].get('allowed_paths') or []
-    if not declared:
-        return blocked(f"active work item '{active}' declares no allowed_paths",
-                       extra=["Fail-closed: every active item must declare its scope."])
-    allowed = list(dict.fromkeys(declared + ALWAYS_ALLOWED))
+    # D-006: an agent lane commits under its claim (AEGIS_AGENT); otherwise fall back to
+    # the STATUS active_task. Both resolve from the STAGED index, both fail closed.
+    agent = os.environ.get('AEGIS_AGENT')
+    if agent:
+        cpath = f'roadmap/claims/CLAIM-{agent}.md'
+        cfm = parse_fm(staged_content(cpath))
+        if cfm is None:
+            return blocked(f"AEGIS_AGENT='{agent}' but {cpath} is not in the staged index",
+                           extra=["Fail-closed: open and stage the claim first (claim.py open ...)."])
+        if cfm.get('status') != 'active':
+            return blocked(f"claim for agent '{agent}' is status:{cfm.get('status')}, not active")
+        active = cfm.get('task')
+        item = staged_work_item(active)
+        if item is None:
+            return blocked(f"claim task '{active}' has no work file in the staged index")
+        declared = cfm.get('allowed_paths') or item[1].get('allowed_paths') or []
+        if not declared:
+            return blocked(f"neither claim '{agent}' nor task '{active}' declares allowed_paths",
+                           extra=["Fail-closed: every lane must declare its scope."])
+        allowed = list(dict.fromkeys(declared + ALWAYS_ALLOWED))
+        item = (cpath, cfm) if cfm.get('allowed_paths') else item
+    else:
+        status = parse_fm(staged_content('roadmap/STATUS.md'))
+        if status is None:
+            return blocked("staged roadmap/STATUS.md is missing or has no frontmatter",
+                           extra=["The committed state must carry active_phase/active_task (fail-closed)."])
+        active = status.get('active_task')
+        if not active or active == 'none':
+            return 0
+        item = staged_work_item(active)
+        if item is None:
+            return blocked(f"active_task '{active}' has no work file in the staged index",
+                           extra=["Fail-closed: stage the work item, or set STATUS active_task correctly."])
+        declared = item[1].get('allowed_paths') or []
+        if not declared:
+            return blocked(f"active work item '{active}' declares no allowed_paths",
+                           extra=["Fail-closed: every active item must declare its scope."])
+        allowed = list(dict.fromkeys(declared + ALWAYS_ALLOWED))
 
     violations = [f for f in staged if not any(fnmatchcase(f, p) for p in allowed)]
     if not violations:

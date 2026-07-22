@@ -1,6 +1,6 @@
 ---
 active_phase: P0
-active_task: W0C
+active_task: W0D
 updated: 2026-07-21
 ---
 
@@ -12,8 +12,9 @@ updated: 2026-07-21
 **Active phase:** P0 — Foundation (control plane + honest M0 baseline)
 **Health:** 🟢 on track
 
-## Current task (WIP = 1)
-**W0C — identity scrub** — *in progress*. Advances: P0 · public-artifact hygiene ([[R-002]]).
+## Current task (WIP = 1 per agent, [[D-006]])
+**W0D — parallelism prep (claims model + lane charters)** — *in progress* (claim:
+fable-main). W0C parked pending owner action (see Blockers).
 
 ## Recently completed
 - **W0B — control-plane hardening per external review** (commit 6bf2c03): staged-index scope
@@ -35,7 +36,9 @@ updated: 2026-07-21
    check once PR flow starts mattering.
 
 ## Blockers
-None.
+- W0C (parked): GitHub repo deletion needs owner auth — run
+  `gh auth refresh -h github.com -s delete_repo` or delete kaseLunt/aegis via web; agent
+  then recreates, pushes, verifies, and closes W0C.
 
 ## Queued / awaiting decision
 - Route research blockers (`docs/SOURCE_REGISTER.md` §Hiring-ready route research blockers) —

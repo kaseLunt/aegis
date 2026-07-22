@@ -71,5 +71,9 @@ Full model: `roadmap/RULES.md` and `roadmap/SYSTEM.md`.
 - **Verify by re-running, not re-reading.** Commands you prescribe must have been executed;
   evidence cites real runs. Your unrequested additions carry the same verification burden.
 - **Capture with one command:** `python roadmap/tools/new.py <idea|insight|decision|risk> "title"`.
+- **Parallel lanes run under claims** (D-006): `python roadmap/tools/claim.py open <agent> <task>`;
+  commit a lane's work with `AEGIS_AGENT=<agent>` set so the scope gate judges the claim's
+  scope. One active claim per agent; leases expire — renew or release. Never source an
+  expected value, implement its observed-side check, AND certify it — pick at most one role.
 
 Full standing rules: `roadmap/RULES.md` §13–20.

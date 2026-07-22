@@ -255,10 +255,47 @@ if status_fm:
                 errors.append(f"active_task '{at}' phase {afm.get('phase')} != active_phase {ap}")
     if ap and ap not in phase_ids:
         errors.append(f"STATUS active_phase '{ap}' not in ROADMAP phases {sorted(phase_ids)}")
-    if len(active_work) > 1:
-        errors.append(f"more than one active work object: {active_work}")
     if at and at in ids and active_work and at not in active_work:
-        errors.append(f"active_task '{at}' is not the active work object {active_work}")
+        errors.append(f"active_task '{at}' is not an active work object {active_work}")
+
+# D-006 claims model: WIP=1 is PER AGENT. Every active work item needs exactly one active,
+# unexpired claim; each agent holds at most one active claim; claim scope must be a subset
+# of the task's declared scope.
+claims = []
+for cpath in glob.glob(os.path.join(ROADMAP, 'claims', 'CLAIM-*.md')):
+    crel = os.path.relpath(cpath, REPO).replace('\\', '/')
+    cfm = parse_fm(open(cpath, encoding='utf-8').read())
+    if not cfm or 'agent' not in cfm:
+        errors.append(f"{crel}: claim file missing frontmatter/agent")
+        continue
+    claims.append((crel, cfm))
+now_utc = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+agents_seen = {}
+claimed_tasks = {}
+for crel, cfm in claims:
+    if cfm.get('status') != 'active':
+        continue
+    agent, task = cfm.get('agent'), cfm.get('task')
+    if agent in agents_seen:
+        errors.append(f"{crel}: agent '{agent}' holds more than one active claim (also {agents_seen[agent]})")
+    agents_seen[agent] = crel
+    exp = cfm.get('lease_expires', '')
+    if not exp or exp < now_utc:
+        errors.append(f"{crel}: lease expired ({exp or 'missing'}) -- renew (claim.py renew {agent}) or release")
+    if task not in ids or objs[task][1].get('type') not in WORKLIKE:
+        errors.append(f"{crel}: claim task '{task}' is not a work-like object")
+        continue
+    if objs[task][1].get('status') != 'active':
+        errors.append(f"{crel}: claim task '{task}' is status:{objs[task][1].get('status')}, not active")
+    claimed_tasks.setdefault(task, []).append(crel)
+    task_paths = objs[task][1].get('allowed_paths') or []
+    for p in (cfm.get('allowed_paths') or []):
+        if p not in task_paths:
+            errors.append(f"{crel}: claim path '{p}' not declared in {task}'s allowed_paths (claims may only narrow)")
+for w in active_work:
+    n = len(claimed_tasks.get(w, []))
+    if n != 1:
+        errors.append(f"active work item '{w}' has {n} active claims (need exactly 1 -- claim.py open <agent> {w})")
 for oid, (rel, fm, _txt) in objs.items():
     if fm.get('status') == 'active' and (fm.get('blocked_by') or []):
         errors.append(f"{rel}: active but blocked_by={fm.get('blocked_by')}")

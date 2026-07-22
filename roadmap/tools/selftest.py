@@ -103,6 +103,26 @@ def part_a():
             '- read_first: none\n- hazards: none\n')
     mutate('active-requires-achieved-deps', 'not achieved', fab_active_unachieved_dep)
 
+    def fab_claim(rm, name, body):
+        os.makedirs(os.path.join(rm, 'claims'), exist_ok=True)
+        open(os.path.join(rm, 'claims', f'CLAIM-{name}.md'), 'w', encoding='utf-8', newline='\n').write(body)
+
+    def fab_unclaimed_active(rm):
+        fab_active_unachieved_dep(rm)  # active WTEST2 with no claim
+    mutate('active-item-requires-claim', 'active claims (need exactly 1', fab_unclaimed_active)
+
+    def fab_expired_lease(rm):
+        fab_claim(rm, 'agentx', '---\nagent: agentx\ntask: W1\nstatus: active\n'
+                  'lease_expires: 2020-01-01T00:00:00Z\nupdated: 2020-01-01T00:00:00Z\n---\n')
+    mutate('expired-lease-flagged', 'lease expired', fab_expired_lease)
+
+    def fab_double_claim(rm):
+        fab_claim(rm, 'agenty', '---\nagent: agentz\ntask: W1\nstatus: active\n'
+                  'lease_expires: 2099-01-01T00:00:00Z\n---\n')
+        fab_claim(rm, 'agentz', '---\nagent: agentz\ntask: W1\nstatus: active\n'
+                  'lease_expires: 2099-01-01T00:00:00Z\n---\n')
+    mutate('one-claim-per-agent', 'more than one active claim', fab_double_claim)
+
 
 # ---------- Part B: staged-index gate integration in a scratch git repo ----------
 
@@ -176,6 +196,22 @@ def part_b():
         r = gate(repo)
         check('B:protected-files-block', r.returncode == 1 and 'VISION' in r.stdout, r.stdout[-300:])
         run(['git', 'reset', '-q', '--', 'roadmap/VISION.md'], cwd=repo)
+
+        # Claim-based scope (AEGIS_AGENT): claim narrows scope below the task's paths.
+        os.makedirs(os.path.join(repo, 'roadmap', 'claims'), exist_ok=True)
+        open(os.path.join(repo, 'roadmap', 'claims', 'CLAIM-lane1.md'), 'w', encoding='utf-8', newline='\n').write(
+            '---\nagent: lane1\ntask: WT\nstatus: active\nallowed_paths:\n  - src/ok.txt\n'
+            'lease_expires: 2099-01-01T00:00:00Z\n---\n')
+        os.makedirs(os.path.join(repo, 'src2'), exist_ok=True)
+        open(os.path.join(repo, 'src2', 'other.txt'), 'w', encoding='utf-8', newline='\n').write('x\n')
+        run(['git', 'add', 'roadmap/claims', 'src2'], cwd=repo)
+        r = gate(repo, env={'AEGIS_AGENT': 'lane1'})
+        check('B:agent-claim-scope-blocks', r.returncode == 1 and 'src2/other.txt' in r.stdout, r.stdout[-300:])
+        run(['git', 'reset', '-q', '--', 'src2'], cwd=repo)
+        r = gate(repo, env={'AEGIS_AGENT': 'ghost'})
+        check('B:unknown-agent-fails-closed', r.returncode == 1, r.stdout[-300:])
+        run(['git', 'rm', '-rq', '--cached', 'roadmap/claims'], cwd=repo)
+        os.remove(os.path.join(repo, 'roadmap', 'claims', 'CLAIM-lane1.md'))
 
         # Evidence fingerprint: stamp an achieved item, then change a staged input.
         edit(os.path.join(repo, 'roadmap', 'work', 'WT.md'),

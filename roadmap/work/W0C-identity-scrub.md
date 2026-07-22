@@ -3,7 +3,7 @@ id: W0C
 type: work
 title: Purge work-email identity from history and prevent recurrence mechanically
 phase: P0
-status: active
+status: committed
 evidence_target: "Correct"
 priority: 1
 depends_on: [W0B]
