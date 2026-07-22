@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
-import { canonicalBytes, reportHash } from "../lib/aegis/report/canonical";
+import { canonicalBytesStructural as canonicalBytes, reportHashStructural as reportHash } from "../lib/aegis/report/canonical";
 
 const VEC = join(__dirname, "..", "roadmap", "research", "WR6", "vectors");
 

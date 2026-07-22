@@ -24,3 +24,18 @@ W1's acceptance suite passed but its coverage had the holes above; achieved refl
 evidence-as-of-commit, not timeless correctness — exactly what the evidence ladder warns of.
 Fixes land under the active W2 lane (shared spine, fable-main single owner); W1 + W2 are
 re-attested at a new fingerprint after the expanded suite passes.
+
+## Resolution (integrator, 2026-07-22)
+FIX-NOW items all landed, TDD (tests/spine-review-fixes.test.ts, RED first). Unifying fix:
+`assertJsonDomain` (I-JSON guard: plain-own-property objects only, reject undefined/exotic/
+toJSON/symbols/cycles/lone-surrogates) closes P0#1(proto), P0#2(inherited-{}), P1#6, P1#7-exotic
+in one place, enforced at every entry point. P0#2: `canonicalBytes`/`reportHash` now run strict
+`validateReport`; abbreviated WR6 vectors use explicit `canonicalBytesStructural`/
+`reportHashStructural`. P0#1: `evaluateTrust` recomputes the hash and throws integrity_mismatch
+on any divergence; loaded manifests are deep-frozen. P0#3: complete manifest schema (formats,
+decimals, validity structure, required+verified embedded hash). P1#4: duplicate rejection on all
+set-like arrays + semantic-index validation + typed stable keys. P1#5: normalizeManifest before
+hashing. Two P0 defenses mutation-verified (strict-bypass kills 2; integrity-throw removal kills 2).
+90/90 suite, lint clean, production build passes. Deferred with records: R-003 (duplicate-aware
+raw parsing at untrusted-bytes boundary), R-004 (M0 identifier migration at W5), adapter-shape
+registry for future domain arrays.

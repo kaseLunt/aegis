@@ -20,7 +20,7 @@ invalidated_by:
   - roadmap/work/W1-canonical-report-core.md
 review_when: phase:P1:exit
 updated: 2026-07-21
-evidence_fingerprint: sha256:6a4487d3bb978a14
+evidence_fingerprint: sha256:a35502f9f0c05396
 ---
 
 # W1 — Canonical report core
@@ -60,6 +60,10 @@ npm run test:property
 ```
 
 ## Evidence
+- 2026-07-22: Codex cross-vendor review (roadmap/reviews/W1W2-spine-codex-review.md) found
+  P0#2 (reportHash skipped strict validation) + P1#4/#6/#7 in this module; all fixed TDD,
+  strict/structural entry points split, re-attested. Honest note: "achieved" reflected
+  passing-but-incomplete coverage; the fixes restore it at a stronger fingerprint.
 - 2026-07-22: spec v1.2 clarifications adopted (commit 9d212cb); 15/18 SPEC-QUESTIONs
   answered, 3 deferred with owners; zero vectors adjusted.
 - 2026-07-22: TDD slice 1 — RED (module missing), GREEN 5/5 golden+ordering vectors

@@ -20,6 +20,7 @@ invalidated_by:
   - roadmap/work/W2-manifest-trust.md
 review_when: phase:P1:exit
 updated: 2026-07-22
+evidence_fingerprint: sha256:1a65636079b19a6c
 ---
 
 # W2 — Manifest model + trust root
@@ -61,7 +62,10 @@ npm test
 ```
 
 ## Handoff
-- next: slice 1 DONE (13 tests: content addressing excl. embedded hash, integrity, trust
+- next: slice 1 + spine-review hardening DONE (P0#1 trust binding via recompute+freeze,
+  P0#3 full schema, P1#5 normalize-before-hash; 90/90 incl. spine-review-fixes). Remaining:
+  loader-from-bytes (binary, R-003 duplicate-aware parse deferred to untrusted boundary);
+  wire policyTrust output shape into the report payload block; slice 1 (orig) (13 tests: content addressing excl. embedded hash, integrity, trust
   set-membership incl. fabricated-reviewer adversarial case, applicability windows/chains;
   trust-everything mutation kills 3 tests). Remaining: manifest fixture files under
   data/manifests/ + loader-from-bytes (binary read, INS-001); property tests (key-order

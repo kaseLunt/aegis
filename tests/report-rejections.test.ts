@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
-import { CanonicalizationError, canonicalBytes } from "../lib/aegis/report/canonical";
+import { CanonicalizationError, canonicalBytesStructural as canonicalBytes } from "../lib/aegis/report/canonical";
 
 const VEC = join(__dirname, "..", "roadmap", "research", "WR6", "vectors");
 

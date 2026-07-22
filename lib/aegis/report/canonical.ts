@@ -32,6 +32,54 @@ const str = (v: unknown): string => (v === undefined || v === null ? "" : String
 
 const cmpString = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
+// --- I-JSON domain guard (RFC 8785 §3.1 input; spine review P0#1/#2, P1#6/#7) -----------
+// Canonicalization is defined only over I-JSON: null, finite numbers, strings without lone
+// surrogates, arrays, and PLAIN objects with own enumerable string keys. Anything else
+// (undefined, Date/Map/exotic, toJSON, symbols, functions, prototype-only, cycles) could
+// silently become {} / be dropped and merge two different inputs to one hash — rejected.
+const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
+
+export function assertJsonDomain(value: unknown, path = "", seen: WeakSet<object> = new WeakSet()): void {
+  if (value === null || typeof value === "boolean") return;
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) fail("domain_normalization", "nonfinite_number", path || "/");
+    return;
+  }
+  if (typeof value === "string") {
+    if (LONE_SURROGATE.test(value)) fail("domain_normalization", "lone_surrogate", path || "/");
+    return;
+  }
+  if (typeof value !== "object") {
+    fail("domain_normalization", "non_json_value", path || "/", typeof value);
+  }
+  const o = value as object;
+  if (seen.has(o)) fail("domain_normalization", "cyclic_value", path || "/");
+  seen.add(o);
+  if (Array.isArray(o)) {
+    o.forEach((v, i) => {
+      if (v === undefined) fail("domain_normalization", "undefined_array_member", `${path}/${i}`);
+      assertJsonDomain(v, `${path}/${i}`, seen);
+    });
+  } else {
+    if (Object.getPrototypeOf(o) !== Object.prototype && Object.getPrototypeOf(o) !== null) {
+      fail("domain_normalization", "non_plain_object", path || "/");
+    }
+    if (typeof (o as JsonObject).toJSON === "function") {
+      fail("domain_normalization", "tojson_not_permitted", path || "/");
+    }
+    if (Object.getOwnPropertySymbols(o).length > 0) {
+      fail("domain_normalization", "symbol_key", path || "/");
+    }
+    for (const k of Object.keys(o)) {
+      if (LONE_SURROGATE.test(k)) fail("domain_normalization", "lone_surrogate", `${path}/${k} (key)`);
+      const v = (o as JsonObject)[k];
+      if (v === undefined) fail("domain_normalization", "undefined_property", `${path}/${k}`);
+      assertJsonDomain(v, `${path}/${k}`, seen);
+    }
+  }
+  seen.delete(o);
+}
+
 // Spec clarification 7: minimal unsigned decimals compare numerically via length-then-lex.
 // Exported as the single decimal-string comparator (manifest applicability reuses it).
 export const cmpDecimal = (a: string, b: string): number =>
@@ -209,6 +257,40 @@ function checkBoundaryForm(path: string, v: unknown): void {
   }
 }
 
+// Spine review P1#4: set-like arrays reject duplicates by their stable key; keys use typed
+// components so numeric 1 and string "1" are NOT coerced equal.
+function checkKeyedSet(path: string, arr: unknown[], key: (v: unknown) => string): void {
+  const seen = new Set<string>();
+  for (const v of arr) {
+    const k = key(v);
+    if (seen.has(k)) fail("domain_normalization", "duplicate_set_member", path, k);
+    seen.add(k);
+  }
+}
+
+const limitationKey = (v: unknown): string => JSON.stringify([str(obj(v).code), str(obj(v).text)]);
+const boundaryStableKey = (v: unknown): string => JSON.stringify(boundaryKey(v).map(([s, m]) => `${m}:${s}`));
+
+// Spine review P1#4: registered semantic-order arrays carry zero-based, minimal, contiguous,
+// unique decimal indices (v1.2 clarification 4). safeBatch is the one registered shape.
+function checkSemanticArray(path: string, arr: unknown[]): void {
+  arr.forEach((item, i) => {
+    const idx = obj(item).index;
+    if (typeof idx !== "string" || !DECIMAL_RE.test(idx) || idx !== String(i)) {
+      fail("domain_normalization", "semantic_index_invalid", `${path}/${i}/index`, str(idx));
+    }
+  });
+}
+
+function checkSemanticShapes(path: string, value: unknown): void {
+  if (Array.isArray(value)) {
+    value.forEach((v, i) => checkSemanticShapes(`${path}/${i}`, v));
+  } else if (isObject(value)) {
+    if (Array.isArray(value.safeBatch)) checkSemanticArray(`${path}/safeBatch`, value.safeBatch);
+    for (const k of Object.keys(value)) checkSemanticShapes(`${path}/${k}`, value[k]);
+  }
+}
+
 function validateNormalizationPhase(p: JsonObject): void {
   const coverage = obj(p.coverage);
   for (const k of ["supported", "unsupported", "excluded"]) {
@@ -216,6 +298,10 @@ function validateNormalizationPhase(p: JsonObject): void {
   }
   const pt = obj(p.policyTrust);
   if (Array.isArray(pt.reasonCodes)) checkScalarSet("/policyTrust/reasonCodes", pt.reasonCodes);
+  if (Array.isArray(p.policyRefs)) {
+    checkKeyedSet("/policyRefs", p.policyRefs, (v) => JSON.stringify([str(obj(v).kind), str(obj(v).id), str(obj(v).version)]));
+  }
+  if (Array.isArray(p.limitations)) checkKeyedSet("/limitations", p.limitations, limitationKey);
   for (const [base, arr] of evidenceArrays(p)) {
     checkScalarSet(base, arr.map((e) => str(obj(e).id)));
     arr.forEach((e, i) => {
@@ -223,18 +309,25 @@ function validateNormalizationPhase(p: JsonObject): void {
       checkBoundaryForm(`${base}/${i}/boundary`, ref.boundary);
       if (ref.address !== undefined) checkHex(`${base}/${i}/address`, ref.address);
       if (ref.calldata !== undefined) checkHex(`${base}/${i}/calldata`, ref.calldata);
+      if (ref.decodedResult !== undefined) checkSemanticShapes(`${base}/${i}/decodedResult`, ref.decodedResult);
     });
   }
   if (Array.isArray(p.observationBoundaries)) {
+    checkKeyedSet("/observationBoundaries", p.observationBoundaries, boundaryStableKey);
     p.observationBoundaries.forEach((b, i) => checkBoundaryForm(`/observationBoundaries/${i}`, b));
   }
   for (const [field, arr] of [["verifications", p.verifications], ["facts", p.facts]] as const) {
     if (!Array.isArray(arr)) continue;
+    const idKey = field === "verifications"
+      ? (v: unknown) => JSON.stringify([str(obj(v).invariantId), str(obj(v).evaluatorVersion)])
+      : (v: unknown) => JSON.stringify([str(obj(v).factId), str(obj(v).evaluatorVersion)]);
+    checkKeyedSet(`/${field}`, arr, idKey);
     arr.forEach((v, i) => {
       const item = obj(v);
       for (const list of ROLE_LISTS) {
         if (Array.isArray(item[list])) checkScalarSet(`/${field}/${i}/${list}`, item[list] as unknown[]);
       }
+      if (Array.isArray(item.limitations)) checkKeyedSet(`/${field}/${i}/limitations`, item.limitations, limitationKey);
     });
   }
 }
@@ -446,18 +539,36 @@ function jcs(value: unknown): string {
   throw new CanonicalizationError("domain_normalization", "unsupported_value_type", "", typeof value);
 }
 
-// Generic RFC 8785 serialization for arbitrary JSON values (no report validation, no
-// domain normalization). The single JCS implementation in the codebase — everything that
-// needs canonical JSON bytes delegates here.
+// Generic RFC 8785 serialization for arbitrary JSON values (no report validation, no domain
+// normalization) — the single JCS implementation. Enforces the I-JSON domain so no caller
+// can hash a non-JSON value into an authoritative identity.
 export function jcsSerialize(value: unknown): string {
+  assertJsonDomain(value);
   return jcs(value);
 }
 
-export function canonicalBytes(payload: unknown): Uint8Array {
+// Structural entry point (TEST/abbreviated-vector use): I-JSON + structural/referential/
+// canonical-form validation + normalization + JCS. Does NOT enforce byte lengths / enums,
+// so the WR6 abbreviated-hex vectors pass. Not for production report identity.
+export function canonicalBytesStructural(payload: unknown): Uint8Array {
+  assertJsonDomain(payload);
   validateReportStructure(payload);
+  return new TextEncoder().encode(jcs(normalizeReport(payload)));
+}
+
+// Production entry point: full strict validation (byte lengths, sha256 identifiers, enums)
+// on top of the structural layer. Spine review P0#2 — reportHash MUST run this.
+export function canonicalBytes(payload: unknown): Uint8Array {
+  assertJsonDomain(payload);
+  validateReport(payload);
   return new TextEncoder().encode(jcs(normalizeReport(payload)));
 }
 
 export function reportHash(payload: unknown): string {
   return `sha256:${createHash("sha256").update(canonicalBytes(payload)).digest("hex")}`;
+}
+
+// Report identity over the structural layer, for abbreviated test vectors only.
+export function reportHashStructural(payload: unknown): string {
+  return `sha256:${createHash("sha256").update(canonicalBytesStructural(payload)).digest("hex")}`;
 }

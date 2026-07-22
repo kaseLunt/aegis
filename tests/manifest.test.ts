@@ -45,6 +45,13 @@ function validManifest(): J {
   };
 }
 
+// A loadable manifest embeds its own content hash (required by the corrected contract).
+function sealedManifest(): J {
+  const m = validManifest();
+  m.contentHash = manifestContentHash(m);
+  return m;
+}
+
 describe("content addressing", () => {
   test("manifestContentHash is stable under key order and excludes the embedded hash", () => {
     const m = validManifest();
@@ -66,7 +73,7 @@ describe("content addressing", () => {
 
 describe("loading and integrity", () => {
   test("a valid manifest loads and reports its computed content hash", () => {
-    const loaded = loadManifest(validManifest());
+    const loaded = loadManifest(sealedManifest());
     expect(loaded.contentHash).toBe(manifestContentHash(validManifest()));
   });
 
@@ -94,14 +101,14 @@ describe("loading and integrity", () => {
 
 describe("trust root (adversarial test 30)", () => {
   test("hash in the approved set evaluates trusted", () => {
-    const loaded = loadManifest(validManifest());
+    const loaded = loadManifest(sealedManifest());
     const t = evaluateTrust(loaded, { trustPolicyId: "tp-1", approvedHashes: [loaded.contentHash] });
     expect(t.state).toBe("trusted");
     expect(t.manifestHash).toBe(loaded.contentHash);
   });
 
   test("structurally valid but unapproved manifest is untrusted with manifest_hash_not_approved", () => {
-    const loaded = loadManifest(validManifest());
+    const loaded = loadManifest(sealedManifest());
     const t = evaluateTrust(loaded, { trustPolicyId: "tp-1", approvedHashes: [sha("0")] });
     expect(t.state).toBe("untrusted");
     expect(t.reasonCodes).toContain("manifest_hash_not_approved");
@@ -111,6 +118,7 @@ describe("trust root (adversarial test 30)", () => {
     const m = validManifest();
     m.reviewers = ["chief-security-officer", "external-auditor", "the-owner-definitely"];
     m.author = "official ether.fi release process";
+    m.contentHash = manifestContentHash(m);
     const loaded = loadManifest(m);
     const t = evaluateTrust(loaded, { trustPolicyId: "tp-1", approvedHashes: [sha("0")] });
     expect(t.state).toBe("untrusted");
@@ -119,10 +127,11 @@ describe("trust root (adversarial test 30)", () => {
   test("reviewer fields are non-authenticating both ways (property)", () => {
     // Mutating author/reviewers changes the hash (they are content) but the trust DECISION
     // depends only on set membership — approved base stays trusted, unapproved stays not.
-    const base = loadManifest(validManifest());
+    const base = loadManifest(sealedManifest());
     const policy = { trustPolicyId: "tp-1", approvedHashes: [base.contentHash] };
     const mutated = validManifest();
     mutated.reviewers = ["someone-else"];
+    mutated.contentHash = manifestContentHash(mutated);
     const loadedMutated = loadManifest(mutated);
     expect(evaluateTrust(base, policy).state).toBe("trusted");
     expect(evaluateTrust(loadedMutated, policy).state).toBe("untrusted");
@@ -136,19 +145,19 @@ describe("applicability (adversarial test 6)", () => {
   });
 
   test("a block inside the validity window on a covered chain is applicable", () => {
-    const loaded = loadManifest(validManifest());
+    const loaded = loadManifest(sealedManifest());
     expect(checkApplicability(loaded, boundary(1, "25577369"))).toEqual({ applicable: true, reasonCodes: [] });
   });
 
   test("a block before fromBlock is inapplicable with manifest_not_yet_valid", () => {
-    const loaded = loadManifest(validManifest());
+    const loaded = loadManifest(sealedManifest());
     const r = checkApplicability(loaded, boundary(1, "24999999"));
     expect(r.applicable).toBe(false);
     expect(r.reasonCodes).toContain("manifest_not_yet_valid");
   });
 
   test("a chain the manifest does not cover is inapplicable with chain_not_covered", () => {
-    const loaded = loadManifest(validManifest());
+    const loaded = loadManifest(sealedManifest());
     const r = checkApplicability(loaded, boundary(42161, "1000"));
     expect(r.applicable).toBe(false);
     expect(r.reasonCodes).toContain("chain_not_covered");
@@ -157,6 +166,7 @@ describe("applicability (adversarial test 6)", () => {
   test("a block past an expiring toBlock is inapplicable with manifest_expired", () => {
     const m = validManifest();
     (m.validity as J).toBlock = { chainId: 1, number: "26000000" };
+    m.contentHash = manifestContentHash(m);
     const loaded = loadManifest(m);
     const r = checkApplicability(loaded, boundary(1, "26000001"));
     expect(r.applicable).toBe(false);
