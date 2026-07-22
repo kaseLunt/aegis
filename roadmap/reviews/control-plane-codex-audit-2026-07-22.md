@@ -25,6 +25,15 @@ TDD (test-first observed). No action.
 ## Class lessons
 - A gate's selftest must own ALL of its fixture state — any dependence on live roadmap
   objects makes the gate rot silently when the live state legitimately changes.
+  - SECOND INSTANCE (same day, caught by CI on the W3 close-out): `none-with-active-work`
+    relied on a live active work item existing; the legitimate between-tasks state
+    (everything achieved, active_task none) made it vacuous. Fixed synthetic; and the
+    class got mechanical teeth — `.githooks/pre-push` now runs the full selftest, so a
+    transition commit that doctor accepts but a mutation test rejects can never reach
+    the remote again. Residual accepted: `ladder-status-drift` and
+    `single-in-progress-phase` still assume one achieved row / one Planned phase exists —
+    both fail LOUD (not silent) if ever vacuous, and both predicates hold for the
+    project's lifetime horizon.
 - "Declared but unenforced" checks are worse than absent ones: W0E's evidence cited a
   check that never ran. A claim in a work item's evidence is only as good as a
   negative test that proves the check fires.

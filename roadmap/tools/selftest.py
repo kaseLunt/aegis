@@ -145,9 +145,18 @@ def part_a():
                   'lease_expires: 2099-01-01T00:00:00Z\n---\n')
     mutate('lane-path-overlap-rejected', 'effective paths overlap', fab_overlapping_lanes)
 
-    mutate('none-with-active-work', "while active work exists",
-           lambda rm: edit(os.path.join(rm, 'STATUS.md'),
-                           lambda s: re.sub(r'^active_task: .*$', 'active_task: none', s, count=1, flags=re.M)))
+    def fab_none_with_active_work(rm):
+        # Fully synthetic (class rule, second instance caught in CI: the old form relied
+        # on a LIVE active work item existing, so a legitimate between-tasks state —
+        # active_task none, everything achieved — made the mutation vacuous).
+        open(os.path.join(rm, 'work', 'WTESTACT-fab.md'), 'w', encoding='utf-8', newline='\n').write(
+            '---\nid: WTESTACT\ntype: work\ntitle: fab\nphase: P0\nstatus: active\n'
+            'evidence_target: "Correct"\ndepends_on: []\nblocked_by: []\nallowed_paths:\n  - src/**\n---\n\n# t\n\n'
+            '## Handoff\n- next: placeholder next steps long enough to satisfy the resumability check.\n'
+            '- read_first: none\n- hazards: none\n')
+        edit(os.path.join(rm, 'STATUS.md'),
+             lambda s: re.sub(r'^active_task: .*$', 'active_task: none', s, count=1, flags=re.M))
+    mutate('none-with-active-work', "while active work exists", fab_none_with_active_work)
 
     def fab_bad_lease(rm):
         fab_claim(rm, 'agentl', '---\nagent: agentl\ntask: W1\nstatus: active\nlease_expires: forever\n---\n')

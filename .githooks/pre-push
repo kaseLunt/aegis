@@ -1,0 +1,20 @@
+#!/bin/sh
+# Selftest gate at the push boundary (class teeth, external audit #2 follow-through,
+# second instance): transition commits can flip roadmap state that a doctor-only
+# pre-commit accepts but the gate MUTATION tests reject — run the full selftest before
+# anything reaches the remote, so CI red from a vacuous mutation cannot recur.
+# Pre-commit stays doctor-only (fast); the ~30 mutation runs are a push-time cost.
+if command -v python >/dev/null 2>&1; then PY=python
+elif command -v python3 >/dev/null 2>&1; then PY=python3
+else echo "pre-push: python not found; skipping selftest gate" >&2; exit 0; fi
+
+if [ -f roadmap/tools/selftest.py ]; then
+  "$PY" roadmap/tools/selftest.py || {
+    echo "" >&2
+    echo "Push blocked: control-plane selftest failing (see above)." >&2
+    echo "Fix the gate or the mutation fixture. Agents: halt and report -- never bypass." >&2
+    echo "(Human owner only, once, with cause: git push --no-verify)" >&2
+    exit 1
+  }
+fi
+exit 0

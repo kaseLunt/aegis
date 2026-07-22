@@ -20,7 +20,7 @@ invalidated_by:
   - roadmap/tools/**
   - roadmap/work/W0E-lane-hardening.md
 updated: 2026-07-22
-evidence_fingerprint: sha256:f6d931480ede222e
+evidence_fingerprint: sha256:b95f9f4176add3ed
 ---
 
 # W0E — Lane hardening (second external review)

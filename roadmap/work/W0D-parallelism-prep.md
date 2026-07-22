@@ -19,7 +19,7 @@ invalidated_by:
   - roadmap/tools/**
   - roadmap/work/W0D-parallelism-prep.md
 updated: 2026-07-21
-evidence_fingerprint: sha256:f6d931480ede222e
+evidence_fingerprint: sha256:b95f9f4176add3ed
 ---
 
 # W0D — Parallelism prep

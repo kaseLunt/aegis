@@ -22,7 +22,7 @@ invalidated_by:
   - roadmap/work/W0B-swarm-hardening.md
 review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:f6f8e21ea707def9
+evidence_fingerprint: sha256:a8d4c08babd642d7
 ---
 
 # W0B — Control-plane hardening (external review response)
