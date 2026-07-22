@@ -1,0 +1,21 @@
+# Connective-tissue control (D-004 rule 9): line endings are a mechanical property,
+# not a vigilance item. Aegis hashes canonical bytes (RFC 8785 + SHA-256); platform
+# newline translation must never be able to touch anything an evidence hash covers.
+
+# Everything text is LF in the repo AND in the working tree.
+* text=auto eol=lf
+
+# Recorded evidence/fixtures are byte-exact artifacts: no translation, ever.
+data/** -text
+examples/** -text
+
+# Binaries
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
