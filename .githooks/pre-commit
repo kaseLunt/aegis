@@ -19,4 +19,16 @@ fi
 if [ -f roadmap/tools/scope_gate.py ]; then
   "$PY" roadmap/tools/scope_gate.py || exit 1
 fi
+
+# Identity tooth: this is a public personal project -- only allowlisted identities may commit.
+# Deliberately an allowlist: it must never name the identities it exists to keep out.
+IDENT_OK='^(kaselunt\.dev@gmail\.com|[0-9]+\+[A-Za-z0-9-]+@users\.noreply\.github\.com)$'
+for EMAIL in "$(git config user.email)" "$GIT_AUTHOR_EMAIL" "$GIT_COMMITTER_EMAIL"; do
+  [ -z "$EMAIL" ] && continue
+  echo "$EMAIL" | grep -Eq "$IDENT_OK" || {
+    echo "Commit blocked: identity '$EMAIL' is not allowlisted for this public repo." >&2
+    echo "Fix: git config user.email kaselunt.dev@gmail.com  (see roadmap/risks/R-002)" >&2
+    exit 1
+  }
+done
 exit 0

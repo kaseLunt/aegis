@@ -22,7 +22,7 @@ invalidated_by:
   - roadmap/work/W0A-orchestrator-directive.md
 review_when: phase:P1:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:2de745aaab55f8c4
+evidence_fingerprint: sha256:df556b7b697798b9
 ---
 
 # W0A — Adopt the orchestrator directive (right-sized)
@@ -54,7 +54,7 @@ python roadmap/tools/new.py idea "title here"
 ```
 
 ## Handoff
-- next: COMPLETE (commit 9c9e9ec). Follow-on: open P1 and activate W1 (owner call).
+- next: COMPLETE (commit daa9d8a). Follow-on: open P1 and activate W1 (owner call).
 - read_first: roadmap/RULES.md §13–20, roadmap/tools/{doctor,scope_gate,new}.py,
   roadmap/decisions/D-004-*.md.
 - hazards: doctor objs tuples are 3-ary (rel, fm, text) — unpack sites must match;
@@ -67,5 +67,5 @@ python roadmap/tools/new.py idea "title here"
 - 2026-07-21: handoff check mutation-tested (renamed heading / missing key / thin body all
   FAIL, restore passes) after first mutation exposed substring laxity — check tightened.
 - 2026-07-21: scope gate: in-scope exit 0, out-of-scope exit 1 with root-cause report,
-  override exit 0; ran live on commit 9c9e9ec.
+  override exit 0; ran live on commit daa9d8a.
 - 2026-07-21: new.py produced D-004 and INS-001 with valid frontmatter (doctor green).

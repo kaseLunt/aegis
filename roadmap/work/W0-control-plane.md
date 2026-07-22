@@ -22,7 +22,7 @@ invalidated_by:
   - roadmap/work/W0-control-plane.md
 review_when: phase:P1:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:6c44c860e6492798
+evidence_fingerprint: sha256:ee3c4f3905f14709
 ---
 
 # W0 — Stand up the control plane
@@ -51,5 +51,5 @@ python roadmap/tools/doctor.py
 
 ## Evidence
 - 2026-07-21: installer ran clean; doctor OK (0 errors, 0 warnings).
-- 2026-07-21: commit 5165890 — cockpit + hooks + CI + session protocol committed; pre-commit
+- 2026-07-21: commit 3d01b6c — cockpit + hooks + CI + session protocol committed; pre-commit
   doctor gate executed and passed (13/13 roadmap files tracked).

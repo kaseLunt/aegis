@@ -22,7 +22,7 @@ invalidated_by:
   - roadmap/work/W0B-swarm-hardening.md
 review_when: phase:P1:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:2de745aaab55f8c4
+evidence_fingerprint: sha256:df556b7b697798b9
 ---
 
 # W0B — Control-plane hardening (external review response)
@@ -57,7 +57,7 @@ python roadmap/tools/selftest.py
 ```
 
 ## Handoff
-- next: COMPLETE (commit f56ac33; CI green on GitHub run 29891851579). Follow-on: owner
+- next: COMPLETE (commit 6bf2c03; CI green on GitHub run 29891851579). Follow-on: owner
   opens P1/W1 when ready; enable branch protection when PR flow starts (R-001 residual).
 - read_first: roadmap/tools/{scope_gate,doctor,selftest}.py, roadmap/decisions/D-004-*.md,
   the external review (session context; key points recorded in this item + D-005/R-001).
@@ -71,5 +71,5 @@ python roadmap/tools/selftest.py
   tests incl. bypass closure, fail-closed states, protected files, fingerprint invalidation).
 - 2026-07-21: fingerprint gate blocked this task's own landing commit once (stale W0A stamp
   after a tools edit) -- live proof of the invalidation mechanism, then re-attested.
-- 2026-07-21: public remote created; CI run 29891851579 green (doctor + selftest, Linux).
+- 2026-07-21: public remote created; CI green on first push (doctor + selftest, Linux); repo recreated during W0C identity scrub -- current runs live on the recreated repo.
 - Owner ratifications recorded: D-001..D-005 approved_by klunt.

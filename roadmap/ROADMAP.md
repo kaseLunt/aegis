@@ -26,6 +26,7 @@ Dependency-gated: an item can't be certified while anything it depends on is unp
 | W0 | Stand up the control plane (this system) | P0 | — | Correct | achieved |
 | W0A | Adopt sibling-orchestrator directive, right-sized ([[D-004]]) | P0 | W0 | Correct | achieved |
 | W0B | Harden control plane per external review ([[D-005]], [[R-001]]) | P0 | W0A | Correct + Robust | achieved |
+| W0C | Identity scrub: purge work email, prevent recurrence ([[R-002]]) | P0 | W0B | Correct | active |
 | W1 | Canonical report core: schemas, JCS canonicalization, SHA-256 report hash | P1 | W0 | Correct + Robust | committed |
 | W2 | Manifest model + trust root (approved-hash / reviewer-threshold policy) | P1 | W1 | Correct + Robust | unfiled |
 | W3 | Finalized-block selection + two independent RPC adapters + quorum/conflict semantics | P1 | W1 | Correct + Robust | unfiled |

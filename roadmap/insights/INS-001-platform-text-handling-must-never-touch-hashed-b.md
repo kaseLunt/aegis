@@ -22,7 +22,7 @@ input — these do.
 
 ## Standing consequences (mechanical homes, not vigilance)
 - `.gitattributes`: `* text=auto eol=lf`; `data/**` and `examples/**` are `-text` (no
-  translation of evidence bytes, ever). Committed 409a4f3.
+  translation of evidence bytes, ever). Committed c97c274.
 - **W1 design input:** canonicalization/hashing must operate on UTF-8 bytes produced *in
   memory* — never on strings round-tripped through the filesystem; fixture readers read
   binary, not text mode. Property tests should include a CRLF-injected fixture to prove the

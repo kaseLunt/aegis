@@ -21,7 +21,7 @@ Sites remote — no GitHub remote, no upstream, no branch protection. Therefore:
 
 ## Bounding (updated 2026-07-21)
 - RESOLVED IN PART: public GitHub remote created (https://github.com/kaseLunt/aegis); CI ran
-  green on push (run 29891851579: doctor + 14/14 selftest on clean Linux checkout).
+  green on push (first-push run: doctor + 14/14 selftest on clean Linux checkout; repo recreated in W0C).
 - RESIDUAL: branch protection on main is not enabled -- a direct push still bypasses PR
   gating, and local hooks remain bypassable by other git clients. Owner action: enable
   branch protection requiring the "Control plane" check when PR flow starts mattering.
