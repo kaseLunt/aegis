@@ -1,0 +1,69 @@
+---
+id: W0B
+type: work
+title: Harden the control plane per external review (enforcement gaps, honest claims)
+phase: P0
+status: active
+evidence_target: "Correct + Robust"
+priority: 1
+depends_on: [W0A]
+blocked_by: []
+informs: [H0]
+allowed_paths:
+  - roadmap/**
+  - .githooks/**
+  - .github/**
+  - .claude/**
+  - CLAUDE.md
+  - AGENTS.md
+invalidated_by:
+  - roadmap/tools/**
+  - .githooks/**
+  - roadmap/work/W0B-swarm-hardening.md
+review_when: phase:P1:entry
+updated: 2026-07-21
+---
+
+# W0B — Control-plane hardening (external review response)
+
+**Why this advances the vision:** the review found the prose promised more enforcement than
+the implementation delivered — the exact failure Aegis's own doctrine forbids at product
+level. Closing the gap (or narrowing the claim) keeps the control plane honest.
+
+## Hypothesis / objective
+Close the enforceable gaps cheaply (staged-index scope gate, fail-closed states, protected
+files, minimal evidence fingerprints, HITL decision records, lifecycle checks, codified gate
+selftests); narrow every remaining claim to what is enforced; explicitly defer swarm
+orchestration primitives with a documented trigger.
+
+## Acceptance (evidence target: Correct + Robust)
+- Correct: doctor + scope gate enforce the new checks; `selftest.py` passes locally.
+- Robust: selftest mutation suite (ladder drift, missing STATUS, dual in-progress phases,
+  unapproved acceptance, handoff absence, unachieved deps, staged-vs-worktree bypass,
+  fail-closed states, protected files, fingerprint invalidation) passes; runs in CI workflow.
+
+## Non-goals
+- Agent leases, heartbeats, worktree ownership, merge coordination, retries, cancellation —
+  deferred with trigger (see IDEA-001); reviewer concurs: "I would not spend weeks building a
+  grand orchestration platform before Aegis itself."
+- Cryptographic/server-side authority for approvals (residual: any local field is writable;
+  authoritative enforcement requires remote CI + branch protection — R-001).
+
+## Canonical commands
+```bash
+python roadmap/tools/doctor.py
+python roadmap/tools/selftest.py
+```
+
+## Handoff
+- next: implement + selftest the gate hardening, capture D-005/R-001/IDEA-001, narrow prose
+  claims, stamp achieved items, obtain owner ratification for decision records, commit.
+- read_first: roadmap/tools/{scope_gate,doctor,selftest}.py, roadmap/decisions/D-004-*.md,
+  the external review (session context; key points recorded in this item + D-005/R-001).
+- hazards: scope gate now reads the STAGED INDEX — `git add` control-plane state before
+  expecting the gate to see it; doctor --stamp writes the work file but you must re-add it;
+  fingerprints hash INDEX blobs, so unstaged edits are invisible to them by design;
+  VISION/SYSTEM/RULES are protected files — owner override required to commit changes.
+
+## Evidence
+(pending — filled at close)

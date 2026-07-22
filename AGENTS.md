@@ -60,8 +60,10 @@ Full model: `roadmap/RULES.md` and `roadmap/SYSTEM.md`.
   "helpfully" fix outside your commit scope. Bypass switches (`--no-verify`,
   `AEGIS_SCOPE_OVERRIDE=1`) are for the human owner only.
 - **Commit scope = the active work item's `allowed_paths`** (plus `roadmap/**` capture, always).
-  Hook-enforced by `roadmap/tools/scope_gate.py`. Out-of-scope work: park the task or get
-  `allowed_paths` amended — don't push through.
+  Enforced by `roadmap/tools/scope_gate.py` against the **staged index** when a task is active;
+  fails closed on missing scope state. `roadmap/{VISION,SYSTEM,RULES}.md` are owner-only
+  surfaces regardless of task. Out-of-scope work: park the task or get `allowed_paths`
+  amended — don't push through. (Local hooks nudge; authoritative CI pends a remote — R-001.)
 - **Handoff at every transition.** Keep the active item's `## Handoff` (next / read_first /
   hazards) current enough that a cold session resumes in minutes. Doctor-enforced.
 - **Teeth habit.** A confirmed finding lands TWO artifacts: the fix and a machine check that

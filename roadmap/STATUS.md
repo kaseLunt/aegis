@@ -1,6 +1,6 @@
 ---
 active_phase: P0
-active_task: none
+active_task: W0B
 updated: 2026-07-21
 ---
 
@@ -13,7 +13,8 @@ updated: 2026-07-21
 **Health:** 🟢 on track
 
 ## Current task (WIP = 1)
-**none** — P0 work complete; awaiting owner go-ahead to open P1 (phase transition = HITL).
+**W0B — Control-plane hardening (external review response)** — *in progress*
+Advances: P0 · VISION "AI-assisted engineering maturity". Handoff lives in the work item.
 
 ## Recently completed
 - **W0A — orchestrator directive adopted, right-sized** (commit 9c9e9ec): ladder-drift +

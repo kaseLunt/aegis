@@ -4,6 +4,7 @@ type: decision
 title: docs/ is product canon; roadmap/ is the execution cockpit derived from it
 status: accepted
 date: 2026-07-21
+approved_by: klunt (2026-07-21, session ratification)
 supersedes: []
 ---
 

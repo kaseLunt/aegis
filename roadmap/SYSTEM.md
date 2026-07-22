@@ -3,10 +3,13 @@
 > The rules that govern how this project tracks itself. Designed around one property:
 > **it must not go stale.** Changing this file requires a Decision record.
 
-> **Enforcement status — bootstrap.** The model below is the *target*. A structural validator
-> (`roadmap/tools/doctor.py`) runs locally (pre-commit) and in CI **now**; evidence fingerprinting
-> and per-type lifecycle automation are staged hardening. Until then the human + `doctor` are the
-> validator — attained `evidence_level` is derived, never hand-set.
+> **Enforcement status — bootstrap+.** The model below is the *target*. A structural validator
+> (`roadmap/tools/doctor.py`), a staged-index scope gate, and minimal evidence fingerprints for
+> achieved items run locally (pre-commit) **now**, with a mutation selftest
+> (`roadmap/tools/selftest.py`). The CI workflow exists but is **not yet authoritative** — the
+> repo has no GitHub remote or branch protection ([[R-001]]); "CI is the gate" below describes
+> the target, and local hooks remain bypassable conveniences until then. Fuller lifecycle
+> automation is staged hardening. Attained `evidence_level` is derived, never hand-set.
 
 ## Governing principle
 

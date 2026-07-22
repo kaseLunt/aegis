@@ -1,6 +1,7 @@
 #!/bin/sh
 # Control-plane drift gate: block commits if the structural doctor or scope gate fails.
-# Authoritative gate is CI (.github/workflows/control-plane.yml); this is fast local feedback.
+# CI (.github/workflows/control-plane.yml) becomes the authoritative gate once a GitHub
+# remote + branch protection exist (roadmap/risks/R-001); until then this is the enforcement.
 if command -v python >/dev/null 2>&1; then PY=python
 elif command -v python3 >/dev/null 2>&1; then PY=python3
 else echo "pre-commit: python not found; skipping control-plane gates" >&2; exit 0; fi

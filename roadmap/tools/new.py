@@ -19,10 +19,12 @@ for _stream in (sys.stdout, sys.stderr):
         pass
 
 ROADMAP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Decisions are born 'proposed': acceptance is a human-owner act recorded via approved_by
+# (doctor blocks accepted-without-approved_by). D-004 rule on HITL.
 TYPES = {
     'idea': ('ideas', 'IDEA', 'inbox'),
     'insight': ('insights', 'INS', 'active'),
-    'decision': ('decisions', 'D', 'accepted'),
+    'decision': ('decisions', 'D', 'proposed'),
     'risk': ('risks', 'R', 'open'),
 }
 
@@ -46,9 +48,6 @@ def main(argv):
     today = datetime.date.today()
     review = (today + datetime.timedelta(days=14)).isoformat()
     path = os.path.join(ROADMAP, subdir, f"{oid}-{slug}.md")
-    if os.path.exists(path):
-        print(f"refusing to overwrite {path}")
-        return 1
     lines = ['---', f'id: {oid}', f'type: {kind}', f'title: {title}', f'status: {status}']
     if kind == 'decision':
         lines += [f'date: {today.isoformat()}', 'supersedes: []']
@@ -57,7 +56,13 @@ def main(argv):
     lines += [f'updated: {today.isoformat()}', '---', '', f'# {oid} — {title}', '',
               '[context / body — fill in now, not later]', '']
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8', newline='\n') as f:
+    try:
+        # O_EXCL closes the check-then-write race between concurrent captures.
+        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        print(f"refusing to overwrite {path}")
+        return 1
+    with os.fdopen(fd, 'w', encoding='utf-8', newline='\n') as f:
         f.write('\n'.join(lines))
     print(path.replace('\\', '/'))
     return 0

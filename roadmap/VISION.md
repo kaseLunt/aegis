@@ -60,8 +60,10 @@ Status is earned, not declared. Every capability sits at exactly one level:
 "Complete" requires **Robust + Demonstrated**. Unit tests alone prove only local correctness.
 
 **Derived ≠ true.** A status level means "consistent with the evidence *as of commit X*" — never
-timeless truth. Evidence is **fingerprinted and auto-invalidated** when its inputs change, so a
-green level can't outlive the build that earned it. Full model: [`SYSTEM.md`](SYSTEM.md).
+timeless truth. Achieved work items carry a tool-written `evidence_fingerprint` over their
+`invalidated_by` inputs (staged-index blob hashes); when those inputs change, the doctor blocks
+commits until the item is re-verified and re-stamped. A green level can't silently outlive the
+bytes that earned it. Full model: [`SYSTEM.md`](SYSTEM.md).
 
 This ladder mirrors the product's own doctrine: Aegis derives verdicts from evidence and prefers
 an honest `unknown` over an unjustified `pass` — the control plane applies the same rule to the

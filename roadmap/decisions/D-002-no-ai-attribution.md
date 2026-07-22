@@ -4,6 +4,7 @@ type: decision
 title: No AI attribution in git history — ever
 status: accepted
 date: 2026-07-21
+approved_by: klunt (2026-07-21, session ratification)
 supersedes: []
 ---
 

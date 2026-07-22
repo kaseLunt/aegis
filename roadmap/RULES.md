@@ -5,8 +5,10 @@
 
 ## Scope control
 1. **One active phase.** Everything else is planned or parked.
-2. **One current task at a time** per agent (WIP = 1). Starting something else means explicitly
-   parking the current task in `STATUS.md` first.
+2. **One current task at a time, repo-wide** (WIP = 1). Starting something else means explicitly
+   parking the current task in `STATUS.md` first. Concurrency today is session-internal
+   subagents under the one active item; independent *committing* agents are out of contract
+   until the lease model exists ([[D-005]], [[IDEA-001]]).
 3. **No work without a roadmap entry.** If it isn't in `ROADMAP.md` / `STATUS.md`, it isn't worked on.
 4. **Every task names what it advances** — which phase/work-item and which VISION goal.
 5. **Tangents go to `ideas/`** immediately and do not interrupt the current task — *unless* a genuine blocker.
@@ -54,7 +56,10 @@ Adopted 2026-07-21, right-sized: survive-many-sessions discipline, not certifica
 18. **Executors fail closed and halt loudly.** A precondition you don't own (dirty tree, failing
     gate, unexpected state) → report root cause and STOP. Never delete, never `--no-verify`,
     never "helpfully" fix outside commit scope. Commit authority is scoped to the active item's
-    `allowed_paths` (+ `roadmap/**` capture, always) — hook-enforced; overrides are human-only.
+    `allowed_paths` (+ `roadmap/**` capture, always) — enforced by the pre-commit scope gate
+    against the **staged index**, failing closed on missing scope state; VISION/SYSTEM/RULES
+    are owner-only. Overrides are human-only. Residual: local hooks are bypassable by other
+    git clients or `--no-verify`; authoritative CI requires a remote ([[R-001]]).
 19. **Connective tissue gets mechanical homes.** Line endings vs hashed bytes (.gitattributes),
     worktree-vs-index drift (doctor tracked-state), console encoding, unpinned inputs — findable
     by tools, not vigilance. When a new member of the class bites, give it a home (rule 15).

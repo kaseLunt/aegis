@@ -4,6 +4,7 @@ type: decision
 title: Adopt the repo-native, evidence-derived control plane
 status: accepted
 date: 2026-07-21
+approved_by: klunt (2026-07-21, session ratification)
 supersedes: []
 ---
 

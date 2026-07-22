@@ -15,3 +15,5 @@ jobs:
           python-version: '3.x'
       - name: Validate control plane (roadmap/)
         run: python roadmap/tools/doctor.py
+      - name: Gate mutation selftest (doctor + scope gate + fingerprints)
+        run: python roadmap/tools/selftest.py

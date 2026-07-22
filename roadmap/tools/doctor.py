@@ -73,6 +73,46 @@ def parse_fm(text):
     return d
 
 
+def fingerprint(globs, own_rel):
+    """sha256 over staged-index blob identities of the invalidated_by path set.
+
+    Uses `git ls-files -s` (index blob hashes), so the fingerprint reflects the bytes that
+    commits carry. The item's own file is excluded (stamping it would loop the hash).
+    """
+    import hashlib
+    specs = [(':(glob)' + g) if any(c in g for c in '*?[') else g for g in globs if g]
+    if not specs:
+        return 'sha256:' + hashlib.sha256(b'').hexdigest()[:16]
+    out = subprocess.run(['git', 'ls-files', '-s', '--'] + specs,
+                         cwd=REPO, capture_output=True, text=True).stdout
+    lines = sorted(l for l in out.replace('\\', '/').split('\n')
+                   if l and not l.endswith('\t' + own_rel))
+    return 'sha256:' + hashlib.sha256('\n'.join(lines).encode()).hexdigest()[:16]
+
+
+def stamp(target_id):
+    for path in glob.glob(os.path.join(ROADMAP, 'work', '*.md')):
+        text = open(path, encoding='utf-8').read()
+        fm = parse_fm(text)
+        if not fm or fm.get('id') != target_id:
+            continue
+        rel = os.path.relpath(path, REPO).replace('\\', '/')
+        fp = fingerprint(fm.get('invalidated_by') or [], rel)
+        if re.search(r'^evidence_fingerprint:.*$', text, re.M):
+            text = re.sub(r'^evidence_fingerprint:.*$', f'evidence_fingerprint: {fp}', text, count=1, flags=re.M)
+        else:
+            end = text.find('\n---', 3)
+            text = text[:end] + f'\nevidence_fingerprint: {fp}' + text[end:]
+        open(path, 'w', encoding='utf-8', newline='\n').write(text)
+        print(f"stamped {target_id}: {fp}  ({rel}) -- remember to `git add` it")
+        return 0
+    print(f"--stamp: no work file with id '{target_id}'")
+    return 1
+
+
+if len(sys.argv) >= 3 and sys.argv[1] == '--stamp':
+    sys.exit(stamp(sys.argv[2]))
+
 objs, status_fm, roadmap_text = {}, None, ''
 found_files = []
 for path in glob.glob(os.path.join(ROADMAP, '**', '*.md'), recursive=True):
@@ -115,6 +155,13 @@ for ln in roadmap_text.split('\n'):
             errors.append(f"ROADMAP ladder row '{lid}' says '{last}' but {objs[lid][0]} has status:{st} (copy drifted)")
     elif 'unfiled' not in last.lower():
         errors.append(f"ROADMAP ladder row '{lid}' has no work file -- mark it 'unfiled' or create roadmap/work/{lid}-*.md")
+# W0B: STATUS.md is mandatory; exactly one phase may be in progress.
+if status_fm is None:
+    errors.append("roadmap/STATUS.md missing or has no frontmatter (active_phase / active_task)")
+inprog = [p for p, row in re.findall(r'^\|\s*(P\d+)\s*\|(.*)$', roadmap_text, re.M)
+          if 'in progress' in row.lower()]
+if len(inprog) != 1:
+    errors.append(f"exactly one phase must be 'In progress' in ROADMAP.md; found {inprog or 'none'}")
 ap = status_fm.get('active_phase') if status_fm else None
 try:
     today = datetime.date.today().isoformat()
@@ -151,6 +198,22 @@ for oid, (rel, fm, _txt) in objs.items():
             errors.append(f"{rel}: work-like object missing evidence_target")
         if 'evidence_level' in fm:
             errors.append(f"{rel}: evidence_level is hand-set (derived field -- use evidence_target)")
+        # W0B: evidence attestation. Achieved items carry a tool-written fingerprint of their
+        # invalidated_by inputs; a mismatch means the evidence no longer covers current bytes.
+        if fm.get('status') == 'achieved':
+            stored = fm.get('evidence_fingerprint')
+            if not stored:
+                errors.append(f"{rel}: achieved without evidence_fingerprint (re-verify, then: doctor.py --stamp {oid})")
+            else:
+                current = fingerprint(fm.get('invalidated_by') or [], rel)
+                if current != stored:
+                    errors.append(f"{rel}: evidence INVALIDATED -- invalidated_by inputs changed since attestation "
+                                  f"(re-run acceptance, then: doctor.py --stamp {oid})")
+        # W0B: dependencies must be proven before work starts on top of them.
+        if fm.get('status') == 'active':
+            for dep in (fm.get('depends_on') or []):
+                if dep in objs and objs[dep][1].get('type') in WORKLIKE and objs[dep][1].get('status') != 'achieved':
+                    errors.append(f"{rel}: active but depends_on '{dep}' is status:{objs[dep][1].get('status')} (not achieved)")
         # D-004 rule 2: the active work item must carry a resumable handoff.
         if fm.get('status') == 'active':
             body = objs[oid][2]
@@ -165,6 +228,10 @@ for oid, (rel, fm, _txt) in objs.items():
                         errors.append(f"{rel}: '## Handoff' missing '{key}' (cold session must resume in minutes)")
                 if len(nxt.strip()) < 120:
                     errors.append(f"{rel}: '## Handoff' too thin to resume from ({len(nxt.strip())} chars)")
+    elif t == 'decision':
+        # W0B: acceptance is a human-owner act. Accepted decisions carry approved_by.
+        if fm.get('status') == 'accepted' and not fm.get('approved_by'):
+            errors.append(f"{rel}: decision is 'accepted' without approved_by (HITL -- owner ratifies, agent records)")
     else:
         advisory += sum(1 for r in (fm.get('depends_on') or []) if r and r not in ids)
     rw = fm.get('review_when')

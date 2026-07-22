@@ -4,6 +4,7 @@ type: decision
 title: Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis
 status: accepted
 date: 2026-07-21
+approved_by: klunt (2026-07-21, session ratification)
 supersedes: []
 updated: 2026-07-21
 ---
