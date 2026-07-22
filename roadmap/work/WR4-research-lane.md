@@ -41,8 +41,7 @@ bridge-hardening rollout window.
 - No production code, no live-RPC-derived "expected" values.
 
 ## Handoff
-- next: background research agent launched 2026-07-21; deliverables land under this lane's
-  allowed path; orchestrator reviews, commits under AEGIS_AGENT=<lane agent>, then closes.
+- next: ROUND 2 per completeness critique (roadmap/research/WR4/completeness-critique.md): EXTEND items A1-A7 (implementation upgrades, setPeer, send/receive libs, full ULN+executor matrix, owner/delegate, pause/roles, timelock pairs), B1-B6 search angles, C2-C5 hazards, D3/D4/D6/D7 corrections. Recommendation stands downgraded to promising-lead meanwhile.
 - read_first: this charter; docs/SOURCE_REGISTER.md (source-class limits).
 - hazards: provenance required on every claim; no live-RPC 'expected' values; explorer
   labels are discovery only; WR6 additionally must stay blind to lib/ and W1 products.

@@ -42,8 +42,7 @@ semantics reproducible, actual effects isolable from later writes.
 - No production code, no live-RPC-derived "expected" values.
 
 ## Handoff
-- next: background research agent launched 2026-07-21; deliverables land under this lane's
-  allowed path; orchestrator reviews, commits under AEGIS_AGENT=<lane agent>, then closes.
+- next: DELIVERED and committed under lane wr5; completeness critic (Codex) running — closure gated on its findings, incl. cross-check of the 16200s timelock-parameter claim against the adjudicated 259200s schedule delay.
 - read_first: this charter; docs/SOURCE_REGISTER.md (source-class limits).
 - hazards: provenance required on every claim; no live-RPC 'expected' values; explorer
   labels are discovery only; WR6 additionally must stay blind to lib/ and W1 products.

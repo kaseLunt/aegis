@@ -17,7 +17,7 @@ invalidated_by:
   - roadmap/research/WR2/**
 review_when: phase:P1:exit
 updated: 2026-07-21
-evidence_fingerprint: sha256:d319a5d81bc1e2c4
+evidence_fingerprint: sha256:839e827e7468e2be
 ---
 
 # WR2 — Authority research (owners, delegates, roles, Safes, timelocks, guardians)

@@ -196,3 +196,14 @@ path and the `docs/SOURCE_REGISTER.md` promotion checklist.
   endpoint is not proof the route is active or symmetric; authorization is not proof of safe
   intent. This map documents *who is authorized*, not that any action is safe or that the
   route is live.
+
+## Integrator adjudication note (2026-07-22)
+
+**Correction:** this document's reading of `output/op_L1_TimelockSchedule.json` as carrying a
+16,200s schedule delay is **wrong by hex truncation**: the delay slot in ALL FOUR schedule
+calls is `0x3f480` = **259,200s (72h)**, not `0x3f48` (16,200s). Independently derived twice:
+WR1's eth_abi decode (roadmap/research/WR1/expected-route-policy.md, conflict section) and
+the integrator's byte-slot decode of the raw file at the pinned commit
+(sha256 5c45a8f432a3ddda0263a4db4c423470..., retrieved 2026-07-22). Two-of-three agreement
+with reproduction steps supersedes the single truncated reading. Downstream inferences built
+on 16,200s (including any "minDelay was later raised" reasoning) must be re-derived.
