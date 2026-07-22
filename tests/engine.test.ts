@@ -27,6 +27,7 @@ const shaOf = (v: unknown) =>
 const POLICY = {
   quorum: { policyId: "pq-reference", requiredProviders: ["alchemy", "quicknode"], minAgreeing: 2 },
   confirmationDepth: "12",
+  maxHeadLagBlocks: "1000",
 };
 
 const adapters = () => [
@@ -34,11 +35,16 @@ const adapters = () => [
   recordedAdapter(bundle(), PROVIDERS.quicknode),
 ];
 
-// Build a sealed in-memory bundle for divergence scenarios.
+// Build a sealed in-memory bundle for divergence scenarios (both hashes recomputed).
 function sealedBundle(mutate: (b: RecordingBundle) => void): RecordingBundle {
   const b = JSON.parse(JSON.stringify(bundle())) as RecordingBundle;
   mutate(b);
-  for (const r of b.responses) r.rawResponseSha256 = shaOf(r.result);
+  for (const r of b.responses) {
+    r.rawResponseSha256 = shaOf(r.result);
+    const envelope: Record<string, unknown> = { ...r };
+    delete envelope.envelopeSha256;
+    r.envelopeSha256 = shaOf(envelope);
+  }
   return loadRecordingBytes(new TextEncoder().encode(JSON.stringify(b)));
 }
 

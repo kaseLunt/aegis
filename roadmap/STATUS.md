@@ -1,6 +1,6 @@
 ---
 active_phase: P1
-active_task: W3
+active_task: none
 updated: 2026-07-22
 ---
 
@@ -16,15 +16,18 @@ no force-push). Audit #2 fully dispositioned: roadmap/reviews/
 control-plane-codex-audit-2026-07-22.md; residuals bounded in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W3 — finalized-block selection + quorum/conflict semantics + RPC adapters** — fable-main
-(serial writer). Slice 1 (pure quorum evaluator) DONE; slice 2 (block selection) next.
-Codex W2-delta review landed and dispositioned: 3 P1s fixed TDD same-day
-(roadmap/reviews/W2-delta-codex-review.md); suite 176/176.
+**None — W3 achieved; W4 (identity adapters + ABI registry) is next up** (file the work
+item + open a claim at kickoff; W4 depends on W2+W3, both achieved).
 Lanes: WR1/WR2/WR3/WR6 closed. WR4 + WR5 delivered, critiqued (Codex), dispositions
 applied; both open with round-2 scopes, deferred to M3/M4 planning (several EXTEND items
 need real archive/trace providers). W0C parked pending owner action (Blockers).
 
 ## Recently completed
+- **W3 — finalized-block selection + quorum + RPC adapters** ACHIEVED (4 slices, all TDD;
+  228-test suite): quorum with administrative-domain independence, hash-pinned selection
+  with downgrade exposure, envelope-verified recorded adapters, engine pass composing
+  with W2 policyTrust into W1-valid payloads. Codex review BEFORE stamp: 2 P0 + 4 P1 +
+  2 P2 all fixed same-day (roadmap/reviews/W3-codex-review.md).
 - **W2 — manifest model + trust root** ACHIEVED: schema + content addressing + approved-hash
   trust root + loadManifestBytes + sealed reference fixture + policyTrustFromBytes report
   wiring; adversarial-review round 2 (4 lenses, 3-skeptic panels) dispositioned — P1

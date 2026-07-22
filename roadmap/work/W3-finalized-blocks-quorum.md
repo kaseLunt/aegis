@@ -3,7 +3,7 @@ id: W3
 type: work
 title: Finalized-block selection + two independent RPC adapters + quorum/conflict semantics
 phase: P1
-status: active
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W1]
@@ -22,6 +22,7 @@ invalidated_by:
   - roadmap/work/W3-finalized-blocks-quorum.md
 review_when: phase:P1:exit
 updated: 2026-07-22
+evidence_fingerprint: sha256:eff43f44f3b5c978
 ---
 
 # W3 — Finalized-block selection + quorum/conflict semantics + RPC adapters
@@ -95,10 +96,16 @@ npm test
   through; probe-step work); quorum failure → unresolved with observations preserved,
   never a boundary; chain finality = weakest level with downgrades exposed). Composition
   test: engine boundaries + evidence + trusted policyTrust assemble into a payload that
-  passes W1 strict validateReport with a stable reportHash. Remaining before achieved:
-  Codex cross-vendor review of the W3 chain modules (INS-002/INS-004 ladder), then
-  disposition + stamp. Multi-chain time-aligned ENGINE composition (candidate walk-back
-  across recorded blocks) is W5 report-assembly seam — selectTimeAligned itself is
+  passes W1 strict validateReport with a stable reportHash. Codex review DONE and
+  dispositioned (roadmap/reviews/W3-codex-review.md): 2 P0 + 4 P1 + 2 P2, all fixed TDD
+  same-day — administrative-domain independence in quorum, returned-block validation in
+  the engine, envelope-bound recording integrity + verified-bundle gate, catch-all
+  failure mapping, head-divergence leash (maxHeadLagBlocks) with proposal diagnostics,
+  time-aligned finality gates, real-instant timestamps, payload-carrying non-ok quorum
+  tests. W3 COMPLETE. For W4/W5: live adapters must thread captured raw-response hashes
+  (engine header note); the live-recording pipeline should anchor recordingId to a
+  whole-bundle digest; multi-chain time-aligned ENGINE composition (candidate walk-back
+  across recorded blocks) is the W5 report-assembly seam — selectTimeAligned itself is
   tested pure.
 - read_first: docs/ENGINEERING_SPEC.md §Block selection and finality + §Provider quorum
   and conflicts + §Evidence acquisition; roadmap/research/WR3/provider-matrix.md §5
@@ -134,3 +141,12 @@ npm test
   env-var names with a no-key-material regex test). Bundle sealed (5 responses,
   reference-scenario provenance documented in data/recordings/README.md). Full suite
   202/202; lint clean.
+- 2026-07-22: TDD slice 3b — engine pass; composition test proves adapters → boundaries
+  + evidence + trusted policyTrust assemble into a strict-validated payload with stable
+  reportHash. 209/209.
+- 2026-07-22: Codex cross-vendor review (BEFORE stamp): 2 P0 + 4 P1 + 2 P2, all
+  reproduced as RED tests then fixed (19 tests, tests/codex-w3-fixes.test.ts) —
+  alias-independence, wrong-chain certification, provenance-bound recordings,
+  native-error resilience, divergence leash, alignment finality gates, real-instant
+  timestamps, status-payload sweeps. Final: 228/228, lint clean; dispositions in
+  roadmap/reviews/W3-codex-review.md.

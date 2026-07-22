@@ -16,6 +16,10 @@ export class ChainError extends Error {
 
 export interface ProviderObservation {
   providerId: string;
+  // Codex W3 review P0#1: independence is enforced, not assumed — the reviewed
+  // administrative domain travels WITH the observation, and agreement requires
+  // minAgreeing DISTINCT domains, so aliases of one endpoint can never self-corroborate.
+  administrativeDomain?: string;
   status: "ok" | "timeout" | "malformed";
   block?: { chainId: number; number: string; hash: string };
   rawResultHash?: string;
@@ -46,6 +50,7 @@ const bad = (code: string, path: string, detail?: string): never => {
 // provider response: missing evidence, never a value (spec).
 const isCompleteOk = (o: ProviderObservation): boolean =>
   o.status === "ok" &&
+  typeof o.administrativeDomain === "string" && o.administrativeDomain.length > 0 &&
   o.block !== undefined &&
   typeof o.block.hash === "string" && o.block.hash.length > 0 &&
   typeof o.block.number === "string" && o.block.number.length > 0 &&
@@ -59,6 +64,9 @@ export function evaluateQuorum(
   // providers. A policy below the floor is invalid, not a weaker quorum.
   if (!Number.isInteger(policy.minAgreeing) || policy.minAgreeing < 2) {
     bad("invalid_quorum_policy", "/policy/minAgreeing", String(policy.minAgreeing));
+  }
+  if (new Set(policy.requiredProviders).size !== policy.requiredProviders.length) {
+    bad("invalid_quorum_policy", "/policy/requiredProviders", "duplicate entries");
   }
   const seen = new Set<string>();
   for (const o of observations) {
@@ -119,6 +127,10 @@ export function evaluateQuorum(
   if (agreeing.length < policy.minAgreeing) reasonCodes.push("insufficient_provider_responses");
   if (policy.requiredProviders.some((p) => !agreeing.includes(p))) {
     reasonCodes.push("required_provider_missing");
+  }
+  const domains = new Set(oks.map((o) => o.administrativeDomain));
+  if (agreeing.length >= policy.minAgreeing && domains.size < policy.minAgreeing) {
+    reasonCodes.push("administrative_domain_overlap");
   }
   if (reasonCodes.length > 0) {
     return {

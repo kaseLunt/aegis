@@ -23,6 +23,7 @@ const BLOCK = { chainId: 1, number: "25577369", hash: h32("a") };
 function ok(providerId: string, over: Partial<ProviderObservation> = {}): ProviderObservation {
   return {
     providerId,
+    administrativeDomain: `domain-of-${providerId}`, // distinct per provider by default
     status: "ok",
     block: { ...BLOCK },
     rawResultHash: sha("1"),

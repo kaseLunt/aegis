@@ -60,6 +60,12 @@ function validateBlock(path: string, b: PinnedBlock): void {
   if (typeof b.timestamp !== "string" || !TIMESTAMP_RE.test(b.timestamp)) {
     bad("noncanonical_timestamp", `${path}/timestamp`, String(b.timestamp));
   }
+  // Codex W3 review P2#7: shape is not validity — reject impossible dates/times via an
+  // exact round-trip, so lexicographic order is chronological over REAL instants only.
+  const parsed = new Date(b.timestamp);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString() !== `${b.timestamp.slice(0, -1)}.000Z`) {
+    bad("noncanonical_timestamp", `${path}/timestamp`, `${b.timestamp} is not a real instant`);
+  }
 }
 
 // Spec step 1/4: the finalized head IS the boundary; the exact hash pins every
@@ -131,6 +137,16 @@ export function selectTimeAligned(
   }
   heads.forEach((h, i) => validateBlock(`/heads/${i}`, h));
   candidates.forEach((c, i) => validateBlock(`/candidates/${i}`, c));
+  // Codex W3 review P1#6: alignment anchors must carry accepted finality — an
+  // unconfirmed head is exactly what the single-chain selectors refuse to pin, and it
+  // cannot re-enter through the multi-chain door.
+  for (const [what, arr] of [["heads", heads], ["candidates", candidates]] as const) {
+    arr.forEach((b, i) => {
+      if (b.finality !== "finalized" && b.finality !== "confirmations") {
+        bad("finality_mismatch", `/${what}/${i}/finality`, b.finality);
+      }
+    });
+  }
   const byChain = new Map<number, { head: PinnedBlock; pool: PinnedBlock[] }>();
   for (const h of heads) {
     if (byChain.has(h.chainId)) bad("duplicate_chain_head", "/heads", String(h.chainId));
@@ -139,6 +155,9 @@ export function selectTimeAligned(
   for (const c of candidates) {
     const entry = byChain.get(c.chainId);
     if (!entry) bad("candidate_without_head", "/candidates", String(c.chainId));
+    if (cmpDecimal(c.number, entry!.head.number) > 0) {
+      bad("candidate_above_head", "/candidates", `${c.number} > head ${entry!.head.number} on chain ${c.chainId}`);
+    }
     entry!.pool.push(c);
   }
   // Oldest finalized head bounds the alignment: fixed-width UTC Z strings compare

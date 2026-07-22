@@ -16,6 +16,7 @@
         "finality": "finalized"
       },
       "rawResponseSha256": "sha256:f00e2e23c4c32272f529ff072cfff918c544d298c996447f199545040fdeda62",
+      "envelopeSha256": "sha256:ad6f98329c8bb62176d8fa902aba41c07cc9ab9b7f4fbb91178653e6c28f9cd1",
       "capturedAt": "2026-07-20T23:59:59Z"
     },
     {
@@ -32,6 +33,7 @@
         "finality": "finalized"
       },
       "rawResponseSha256": "sha256:f00e2e23c4c32272f529ff072cfff918c544d298c996447f199545040fdeda62",
+      "envelopeSha256": "sha256:9c0214c9e09f822277c1fc35013e5ca335bf113254c23eeb0401c371ca85d3c5",
       "capturedAt": "2026-07-20T23:59:59Z"
     },
     {
@@ -48,6 +50,7 @@
         "finality": "finalized"
       },
       "rawResponseSha256": "sha256:ab39b318367f9a00cfee988f1b736182aa5f862c25e55e6030eacbb63e7722c2",
+      "envelopeSha256": "sha256:d2257c806da0a6cad7ecc822fe4fd967018b57c6924c1b81547efdbb36fd934f",
       "capturedAt": "2026-07-21T00:00:03Z"
     },
     {
@@ -64,6 +67,7 @@
         "finality": "unconfirmed"
       },
       "rawResponseSha256": "sha256:1e16f0722c9857aa31adfaf21f307fff2eec718816f0b435895adb83d82df204",
+      "envelopeSha256": "sha256:886cb123003bee2b5b3f646446ef6ab8d5772264dc1f10a63a943c4c16426a67",
       "capturedAt": "2026-07-21T00:00:04Z"
     },
     {
@@ -80,6 +84,7 @@
         "finality": "finalized"
       },
       "rawResponseSha256": "sha256:16d1926bbb1463cfde79e861f8bc5f74cdd4b3eb8edd4a035df820f8642bcd0c",
+      "envelopeSha256": "sha256:7ec6cc68757f624b7bd03c2496a06fd59b2ed66b4e7415e4f23083b64602431c",
       "capturedAt": "2026-07-21T00:00:06Z"
     },
     {
@@ -96,6 +101,7 @@
         "finality": "confirmations"
       },
       "rawResponseSha256": "sha256:a0fc25cf92c1f2e60c0c98a6b858e34885b6b5e1aa59d1b87494ba2cca48e515",
+      "envelopeSha256": "sha256:6b909a543f744aed951224fae110ba296523384e2c5d5eea58d716a4ef9ec2a5",
       "capturedAt": "2026-07-21T00:00:05Z"
     }
   ]
