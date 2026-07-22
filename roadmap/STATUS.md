@@ -1,6 +1,6 @@
 ---
 active_phase: P0
-active_task: none
+active_task: W0A
 updated: 2026-07-21
 ---
 
@@ -13,7 +13,8 @@ updated: 2026-07-21
 **Health:** 🟢 on track
 
 ## Current task (WIP = 1)
-**none** — W0 achieved; awaiting owner go-ahead to open P1 (phase transition = HITL).
+**W0A — Adopt orchestrator directive (right-sized)** — *in progress*
+Advances: P0 · VISION "AI-assisted engineering maturity". Handoff lives in the work item.
 
 ## Recently completed
 - **W0 — control plane stood up** (commit 5165890): cockpit, doctor, git+CI gates, session

@@ -1,16 +1,21 @@
 #!/bin/sh
-# Control-plane drift gate: block commits if the structural doctor fails.
+# Control-plane drift gate: block commits if the structural doctor or scope gate fails.
 # Authoritative gate is CI (.github/workflows/control-plane.yml); this is fast local feedback.
 if command -v python >/dev/null 2>&1; then PY=python
 elif command -v python3 >/dev/null 2>&1; then PY=python3
-else echo "pre-commit: python not found; skipping control-plane doctor" >&2; exit 0; fi
+else echo "pre-commit: python not found; skipping control-plane gates" >&2; exit 0; fi
 
 if [ -f roadmap/tools/doctor.py ]; then
   "$PY" roadmap/tools/doctor.py || {
     echo "" >&2
     echo "Commit blocked: control-plane doctor found drift (see above)." >&2
-    echo "Fix roadmap/ consistency, or bypass once with: git commit --no-verify" >&2
+    echo "Fix roadmap/ consistency. Agents: halt and report -- never bypass." >&2
+    echo "(Human owner only, once, with cause: git commit --no-verify)" >&2
     exit 1
   }
+fi
+
+if [ -f roadmap/tools/scope_gate.py ]; then
+  "$PY" roadmap/tools/scope_gate.py || exit 1
 fi
 exit 0

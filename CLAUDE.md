@@ -52,3 +52,22 @@ transitions; give a one-line sync summary. No narrative session-dumps.
 Full model: `roadmap/RULES.md` and `roadmap/SYSTEM.md`.
 
 <!-- END control-plane session protocol -->
+
+## Executor Discipline (D-004 — binding for every agent)
+
+- **Fail closed, halt loudly.** On any precondition you don't own — dirty tree, failing gate,
+  unexpected state — report the root cause and STOP. Never delete, never `--no-verify`, never
+  "helpfully" fix outside your commit scope. Bypass switches (`--no-verify`,
+  `AEGIS_SCOPE_OVERRIDE=1`) are for the human owner only.
+- **Commit scope = the active work item's `allowed_paths`** (plus `roadmap/**` capture, always).
+  Hook-enforced by `roadmap/tools/scope_gate.py`. Out-of-scope work: park the task or get
+  `allowed_paths` amended — don't push through.
+- **Handoff at every transition.** Keep the active item's `## Handoff` (next / read_first /
+  hazards) current enough that a cold session resumes in minutes. Doctor-enforced.
+- **Teeth habit.** A confirmed finding lands TWO artifacts: the fix and a machine check that
+  catches the class (test, fixture, doctor rule, hook), negative-tested at landing.
+- **Verify by re-running, not re-reading.** Commands you prescribe must have been executed;
+  evidence cites real runs. Your unrequested additions carry the same verification burden.
+- **Capture with one command:** `python roadmap/tools/new.py <idea|insight|decision|risk> "title"`.
+
+Full standing rules: `roadmap/RULES.md` §13–20.

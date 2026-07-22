@@ -21,17 +21,20 @@ Crossing the MVP line requires a VISION review before the next phase opens.
 ## Work ladder (current phases)
 Dependency-gated: an item can't be certified while anything it depends on is unproven.
 
-| ID | Work item | Phase | Depends on | Evidence target | Current |
-|----|-----------|-------|-----------|-----------------|---------|
-| W0 | Stand up the control plane (this system) | P0 | — | Correct | Correct ✅ |
-| W1 | Canonical report core: schemas, JCS canonicalization, SHA-256 report hash | P1 | W0 | Correct + Robust | Declared |
-| W2 | Manifest model + trust root (approved-hash / reviewer-threshold policy) | P1 | W1 | Correct + Robust | Declared |
-| W3 | Finalized-block selection + two independent RPC adapters + quorum/conflict semantics | P1 | W1 | Correct + Robust | Declared |
-| W4 | Identity adapters (direct / EIP-1967 / beacon / clone) + code-hash-scoped ABI registry | P1 | W2, W3 | Correct + Robust | Declared |
-| W5 | `aegis verify` CLI + report API + CI adapter + web evidence drawer over one engine | P1 | W4 | Correct + Robust + Demonstrated | Declared |
+| ID | Work item | Phase | Depends on | Evidence target | Status |
+|----|-----------|-------|-----------|-----------------|--------|
+| W0 | Stand up the control plane (this system) | P0 | — | Correct | achieved |
+| W0A | Adopt sibling-orchestrator directive, right-sized ([[D-004]]) | P0 | W0 | Correct | active |
+| W1 | Canonical report core: schemas, JCS canonicalization, SHA-256 report hash | P1 | W0 | Correct + Robust | committed |
+| W2 | Manifest model + trust root (approved-hash / reviewer-threshold policy) | P1 | W1 | Correct + Robust | unfiled |
+| W3 | Finalized-block selection + two independent RPC adapters + quorum/conflict semantics | P1 | W1 | Correct + Robust | unfiled |
+| W4 | Identity adapters (direct / EIP-1967 / beacon / clone) + code-hash-scoped ABI registry | P1 | W2, W3 | Correct + Robust | unfiled |
+| W5 | `aegis verify` CLI + report API + CI adapter + web evidence drawer over one engine | P1 | W4 | Correct + Robust + Demonstrated | unfiled |
 
-(Each row is also a file under `work/` — the contract + work-order + live status in one.
-W2–W5 files are created when the item is committed at P1 entry; W1 exists now as the P1 seed.)
+(Each row is also a file under `work/`. The **Status column is a validated copy** of the work
+file's frontmatter `status` — the doctor blocks commits when it drifts; `unfiled` rows have no
+file yet and are created when committed at phase entry. Evidence *levels* are never hand-written
+anywhere.)
 
 ## Evidence ladder
 `Declared → Reachable → Active → Correct → Robust → Demonstrated` — definitions in `VISION.md`.

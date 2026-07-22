@@ -46,6 +46,11 @@ I/O-free modules with JSON Schema + TypeScript types in lockstep.
 - No live RPC acquisition (W3), no manifest trust root (W2), no identity resolution (W4).
 - No UI beyond keeping existing prototype checks green.
 
+## Hazards
+- CRLF class ([[INS-001]]): hash UTF-8 bytes produced in memory, never strings round-tripped
+  through the filesystem; fixture readers use binary mode; include a CRLF-injected fixture in
+  the property suite to prove translation-immunity.
+
 ## Canonical commands
 ```bash
 npm test

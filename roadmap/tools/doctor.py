@@ -11,6 +11,13 @@ BOOTSTRAP validator. Evidence fingerprinting + per-type lifecycle automation are
 """
 import os, re, sys, glob, subprocess, datetime
 
+# Windows consoles default to cp1252; never let an emoji in validated content crash the gate.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 ROADMAP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPO = os.path.dirname(ROADMAP)
 WORKLIKE = {"work", "experiment", "milestone"}
@@ -85,10 +92,29 @@ for path in glob.glob(os.path.join(ROADMAP, '**', '*.md'), recursive=True):
         if oid in objs:
             errors.append(f"duplicate id '{oid}' ({rel} and {objs[oid][0]})")
         else:
-            objs[oid] = (rel, fm)
+            objs[oid] = (rel, fm, text)
 
 ids = set(objs)
 phase_ids = set(re.findall(r'^\|\s*(P\d+)\s*\|', roadmap_text, re.M))
+
+# D-004 rule 1: the ROADMAP work-ladder Status column is a COPY of work-item frontmatter
+# status. Copies of derived/stored facts must be tool-validated or they drift.
+in_ladder = False
+for ln in roadmap_text.split('\n'):
+    if ln.startswith('## '):
+        in_ladder = ln.lower().startswith('## work ladder')
+        continue
+    m = re.match(r'^\|\s*(W[\w.\-]+)\s*\|', ln) if in_ladder else None
+    if not m:
+        continue
+    cells = [c.strip() for c in ln.strip().strip('|').split('|')]
+    lid, last = m.group(1), cells[-1]
+    if lid in objs:
+        st = objs[lid][1].get('status', '')
+        if st and st not in last:
+            errors.append(f"ROADMAP ladder row '{lid}' says '{last}' but {objs[lid][0]} has status:{st} (copy drifted)")
+    elif 'unfiled' not in last.lower():
+        errors.append(f"ROADMAP ladder row '{lid}' has no work file -- mark it 'unfiled' or create roadmap/work/{lid}-*.md")
 ap = status_fm.get('active_phase') if status_fm else None
 try:
     today = datetime.date.today().isoformat()
@@ -108,7 +134,7 @@ def due(rw):
 
 
 advisory = 0
-for oid, (rel, fm) in objs.items():
+for oid, (rel, fm, _txt) in objs.items():
     t = fm.get('type')
     for ref in (fm.get('informs') or []):
         if ref and ref not in ids:
@@ -125,6 +151,20 @@ for oid, (rel, fm) in objs.items():
             errors.append(f"{rel}: work-like object missing evidence_target")
         if 'evidence_level' in fm:
             errors.append(f"{rel}: evidence_level is hand-set (derived field -- use evidence_target)")
+        # D-004 rule 2: the active work item must carry a resumable handoff.
+        if fm.get('status') == 'active':
+            body = objs[oid][2]
+            hm = re.search(r'^## Handoff\s*$', body, re.M)
+            if not hm:
+                errors.append(f"{rel}: active work item missing '## Handoff' section (next / read_first / hazards)")
+            else:
+                seg = body[hm.end():]
+                nxt = re.split(r'^## ', seg, maxsplit=1, flags=re.M)[0]
+                for key in ('next:', 'read_first:', 'hazards:'):
+                    if not re.search(r'^\s*[-*]?\s*' + key, nxt, re.M):
+                        errors.append(f"{rel}: '## Handoff' missing '{key}' (cold session must resume in minutes)")
+                if len(nxt.strip()) < 120:
+                    errors.append(f"{rel}: '## Handoff' too thin to resume from ({len(nxt.strip())} chars)")
     else:
         advisory += sum(1 for r in (fm.get('depends_on') or []) if r and r not in ids)
     rw = fm.get('review_when')
@@ -134,7 +174,7 @@ for oid, (rel, fm) in objs.items():
         elif due(str(rw)):
             infos.append(f"REVIEW-DUE: {oid} -- review_when={rw}  ({rel})")
 
-active_work = [o for o, (r, fm) in objs.items() if fm.get('type') in WORKLIKE and fm.get('status') == 'active']
+active_work = [o for o, (r, fm, _t) in objs.items() if fm.get('type') in WORKLIKE and fm.get('status') == 'active']
 if status_fm:
     at = status_fm.get('active_task')
     if at and at != 'none':
@@ -152,12 +192,12 @@ if status_fm:
         errors.append(f"more than one active work object: {active_work}")
     if at and at in ids and active_work and at not in active_work:
         errors.append(f"active_task '{at}' is not the active work object {active_work}")
-for oid, (rel, fm) in objs.items():
+for oid, (rel, fm, _txt) in objs.items():
     if fm.get('status') == 'active' and (fm.get('blocked_by') or []):
         errors.append(f"{rel}: active but blocked_by={fm.get('blocked_by')}")
 
 graph = {o: [r for r in (fm.get('depends_on') or []) if r in objs and objs[r][1].get('type') in WORKLIKE]
-         for o, (rel, fm) in objs.items() if fm.get('type') in WORKLIKE}
+         for o, (rel, fm, _t) in objs.items() if fm.get('type') in WORKLIKE}
 color = {}
 def dfs(n, stack):
     color[n] = 1
