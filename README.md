@@ -6,17 +6,30 @@ Aegis is an independent, evidence-first verifier for onchain financial systems. 
 
 Aegis does not connect a wallet, request keys, sign transactions, or broadcast user intent. It separates public state, code properties, and reference scenarios instead of presenting every successful check as a live safety guarantee.
 
-## Product surfaces
+## Canonical specification
+
+The repository now distinguishes the current prototype from the full production target. Start with the [documentation index](docs/README.md), then use these documents as the design contract:
+
+- [Product specification](docs/PRODUCT_SPEC.md) - users, Record/Rehearse/Rewind workflows, evidence language, scope, and acceptance criteria.
+- [Threat model](docs/THREAT_MODEL.md) - trust boundaries, failure semantics, forbidden inferences, and adversarial tests.
+- [Engineering specification](docs/ENGINEERING_SPEC.md) - target architecture, domain model, manifests, providers, finality, APIs, CLI, and verification strategy.
+- [Source and provenance register](docs/SOURCE_REGISTER.md) - official research inputs, evidentiary limits, and the backlog required before live claims.
+- [Delivery roadmap](docs/ROADMAP.md) - milestone 0 prototype status, several-engineer-week target scope, and objective exit gates.
+- [Interview brief](docs/INTERVIEW_BRIEF.md) - an honest technical narrative and the decisions the project owner should be able to defend.
+
+The current application is a working prototype, not the completed assurance platform described by those specifications. It becomes the finished project only when the roadmap's final definition of done passes.
+
+## Current prototype surfaces
 
 - **Protocol health** evaluates seven falsifiable controls and exposes the exact expression, inputs, evidence anchors, result hash, and limitations behind each result.
 - **Transaction preflight** models Direct Pay and Borrow Mode with fixed-point arithmetic, stale-oracle handling, funding boundaries, collateral stress, and a deterministic decision trace.
-- **Incident replay** reconstructs the documented oracle-staleness/public-fallback sequence and reruns it under explicit counterfactual policy inputs.
+- **Incident replay** presents an authored reference scenario for the documented oracle-staleness/public-fallback sequence and reruns it under explicit counterfactual policy inputs. It is not indexed ether.fi history.
 
 The shared evidence drawer ties the three experiences together: a control can be observed in the matrix, tested through a proposed state transition, and followed through a causal replay.
 
-## Trust contract
+## Current prototype trust contract
 
-Aegis uses five result states: `holding`, `advisory`, `violated`, `unknown`, and `stale`.
+The current prototype uses five presentation states: `holding`, `advisory`, `violated`, `unknown`, and `stale`. The target engine replaces that vocabulary with the six canonical states defined in the [product specification](docs/PRODUCT_SPEC.md#result-states): `pass`, `fail`, `unknown`, `stale`, `conflict`, and `not_applicable`. `holding` maps to `pass`, `violated` maps to `fail`, and `unknown`/`stale` remain unchanged. `advisory` becomes severity or policy metadata rather than a truth state; `conflict` and `not_applicable` are added explicitly.
 
 - Missing or stale evidence cannot become a green result.
 - A passing assertion proves only its encoded predicate at its stated observation boundary.
@@ -26,7 +39,7 @@ Aegis uses five result states: `holding`, `advisory`, `violated`, `unknown`, and
 
 The default control suite deliberately uses narrow claims: local weETH wrapper-share backing rather than whole-protocol solvency; implementation identity rather than “safe contract”; quorum geometry rather than broad oracle health.
 
-## Architecture
+## Current prototype architecture
 
 ```text
 app/
@@ -72,7 +85,7 @@ npm run build
 
 The test suite includes property checks for backing failures, positive-rebase boundaries, spend-capacity enforcement, fixed-point borrow arithmetic, stale evidence, deterministic reports, and causal timing.
 
-## API
+## Current prototype API
 
 ```text
 GET  /api/health
