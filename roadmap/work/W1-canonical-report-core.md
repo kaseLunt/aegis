@@ -59,13 +59,22 @@ npm run test:property
 ```
 
 ## Evidence
-(none yet — Declared)
+- 2026-07-22: spec v1.2 clarifications adopted (commit 9d212cb); 15/18 SPEC-QUESTIONs
+  answered, 3 deferred with owners; zero vectors adjusted.
+- 2026-07-22: TDD slice 1 — RED (module missing), GREEN 5/5 golden+ordering vectors
+  BYTE-IDENTICAL to Codex blind derivation incl. 1973/2870/2908-byte payloads; mutation
+  check (evidence-sort disabled) kills 4/5 tests, restore passes; full suite 14/14; lint
+  clean on project code.
 
 ## Handoff
-- next: SPEC-QUESTION triage DONE (spec v1.2 clarifications; all vectors stand unadjusted).
-  Now TDD in lib/aegis/report/: golden-vector harness (binary reads) -> JCS -> domain
-  normalization -> reportHash; then malformed-vector rejections; then schema layer + property
-  tests. M0 lib/aegis/canonical.ts untouched until superseded.
+- next: slice 1 DONE — lib/aegis/report/canonical.ts (normalize + JCS + reportHash) passes
+  all 3 golden + 2 ordering vectors byte-identically (cross-vendor agreement). Next cycles:
+  (a) M-01..M-06 typed rejections (RED from malformed vectors), (b) referential validation
+  (clarification 8), (c) schema layer with byte lengths (clarification: 32/20-byte,
+  sha256 64-hex), (d) fast-check property tests: set-shuffle invariance, hash sensitivity to
+  every hashed field, CRLF-injected fixture (INS-001), (e) normalization surfaces not yet
+  exercised by any vector (verification/fact arrays, role-ID sets, freshness assessments,
+  limitations) — write vectors/tests FIRST, they are currently unimplemented by design.
 - read_first: docs/ENGINEERING_SPEC.md §Canonical domain types + §Canonicalization and
   hashing + §Tests; roadmap/insights/INS-001 (bytes-in-memory rule); WR6 vectors when they
   land (golden vectors are authored blind — do NOT adjust them to match implementation;
