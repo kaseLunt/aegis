@@ -375,3 +375,29 @@ comfortably exceeding this lane's "at least two" charter requirement.
    spanning 2025-08 to 2026-07) has not been confirmed against Aegis's actual configured
    providers; this is an operational prerequisite for Milestone 1's two-independent-provider
    requirement, not something this research lane can resolve.
+
+## Post-critique disposition (integrator, 2026-07-22)
+
+An independent completeness critic (Codex, INS-003; full report in
+`completeness-critique.md`) reviewed this deliverable against charter and specs. Standing
+corrections, effective immediately and superseding the wording above where they conflict:
+
+1. **Recommendation downgraded (D1):** Candidates 1/2 are *promising leads toward* the M3
+   exit gate, not M3-qualified recommendations. Qualification additionally requires the
+   directed-pathway matrix, canonical event identities, ABI/code epochs per candidate, and
+   an affected-assertion map.
+2. **Causal-edge relabel (D2):** the L1/OP pair in Candidate 1 (~14s apart) is
+   **chronology-only** evidence. Per ENGINEERING_SPEC ordering rules, a causal edge
+   requires an explicit linking artifact (common authored batch, operation id, proposal);
+   none has been shown.
+3. **"One day before the blog post" (D5):** withdrawn until the post's publish date is
+   independently resolved.
+4. **Accepted gaps (C1, C6, C7):** no candidate has canonical event identity yet
+   (chainId, blockHash, txHash, logIndex); per-chain log-availability/gap-detection
+   capability is unassessed; transaction-boundary isolation from later same-block writes is
+   unverified. Every recommendation is gated on closing these during M3 implementation.
+5. **Round-2 scope (EXTEND items):** A1–A7 candidate classes (implementation upgrades,
+   setPeer, send/receive library changes, full ULN+executor matrix, owner/delegate, pause
+   and role transitions, timelock pairs), B1–B6 search angles (event-first, git history,
+   batch inventory, timelock streams, LZ pathway tooling, per-direction completion),
+   C2–C5 hazard analyses, and D3/D4/D6/D7 corrections. Tracked in the WR4 charter handoff.
