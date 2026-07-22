@@ -19,10 +19,11 @@ Sites remote — no GitHub remote, no upstream, no branch protection. Therefore:
   (`--no-verify`, no python, other git clients);
 - durable approval records (approved_by) are plain text any local actor could write.
 
-## Bounding
-- Local gates fail closed on staged state (W0B) and the selftest suite runs wherever CI
-  eventually does.
-- Owner decision pending: create a GitHub remote + branch protection, or accept local-only
-  enforcement and keep prose narrowed accordingly.
+## Bounding (updated 2026-07-21)
+- RESOLVED IN PART: public GitHub remote created (https://github.com/kaseLunt/aegis); CI ran
+  green on push (run 29891851579: doctor + 14/14 selftest on clean Linux checkout).
+- RESIDUAL: branch protection on main is not enabled -- a direct push still bypasses PR
+  gating, and local hooks remain bypassable by other git clients. Owner action: enable
+  branch protection requiring the "Control plane" check when PR flow starts mattering.
 
 owner: klunt

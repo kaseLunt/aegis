@@ -3,7 +3,7 @@ id: W0B
 type: work
 title: Harden the control plane per external review (enforcement gaps, honest claims)
 phase: P0
-status: active
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0A]
@@ -22,6 +22,7 @@ invalidated_by:
   - roadmap/work/W0B-swarm-hardening.md
 review_when: phase:P1:entry
 updated: 2026-07-21
+evidence_fingerprint: sha256:2de745aaab55f8c4
 ---
 
 # W0B — Control-plane hardening (external review response)
@@ -56,8 +57,8 @@ python roadmap/tools/selftest.py
 ```
 
 ## Handoff
-- next: implement + selftest the gate hardening, capture D-005/R-001/IDEA-001, narrow prose
-  claims, stamp achieved items, obtain owner ratification for decision records, commit.
+- next: COMPLETE (commit f56ac33; CI green on GitHub run 29891851579). Follow-on: owner
+  opens P1/W1 when ready; enable branch protection when PR flow starts (R-001 residual).
 - read_first: roadmap/tools/{scope_gate,doctor,selftest}.py, roadmap/decisions/D-004-*.md,
   the external review (session context; key points recorded in this item + D-005/R-001).
 - hazards: scope gate now reads the STAGED INDEX — `git add` control-plane state before
@@ -66,4 +67,9 @@ python roadmap/tools/selftest.py
   VISION/SYSTEM/RULES are protected files — owner override required to commit changes.
 
 ## Evidence
-(pending — filled at close)
+- 2026-07-21: selftest 14/14 locally (6 doctor mutations + 8 staged-index gate integration
+  tests incl. bypass closure, fail-closed states, protected files, fingerprint invalidation).
+- 2026-07-21: fingerprint gate blocked this task's own landing commit once (stale W0A stamp
+  after a tools edit) -- live proof of the invalidation mechanism, then re-attested.
+- 2026-07-21: public remote created; CI run 29891851579 green (doctor + selftest, Linux).
+- Owner ratifications recorded: D-001..D-005 approved_by klunt.

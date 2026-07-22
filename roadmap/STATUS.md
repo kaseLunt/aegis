@@ -1,6 +1,6 @@
 ---
 active_phase: P0
-active_task: W0B
+active_task: none
 updated: 2026-07-21
 ---
 
@@ -13,10 +13,13 @@ updated: 2026-07-21
 **Health:** 🟢 on track
 
 ## Current task (WIP = 1)
-**W0B — Control-plane hardening (external review response)** — *in progress*
-Advances: P0 · VISION "AI-assisted engineering maturity". Handoff lives in the work item.
+**none** — P0 complete (W0, W0A, W0B all achieved); parked at the P0→P1 gate per owner
+(2026-07-21: "not yet").
 
 ## Recently completed
+- **W0B — control-plane hardening per external review** (commit f56ac33): staged-index scope
+  gate, fail-closed states, protected files, evidence fingerprints, decision ratification,
+  14/14 gate selftests; public GitHub remote + green CI — see [[D-005]], [[R-001]].
 - **W0A — orchestrator directive adopted, right-sized** (commit 9c9e9ec): ladder-drift +
   handoff doctor checks, pre-commit scope gate, one-command capture, standing rules §13–20 —
   see [[D-004]], [[INS-001]].
@@ -26,9 +29,11 @@ Advances: P0 · VISION "AI-assisted engineering maturity". Handoff lives in the 
   source register, interview brief) — authority hierarchy in `docs/README.md`.
 
 ## Next up
-1. Open P1 (M1 — canonical evidence spine): activate W1 (canonical report core), draft W2–W5
-   work orders.
+1. Open P1 (M1 — canonical evidence spine) when owner gives the word: activate W1
+   (canonical report core), draft W2–W5 work orders.
 2. Start route research capture (`docs/SOURCE_REGISTER.md` blockers) in parallel as ideas/insights.
+3. R-001 residual (owner, low urgency): enable branch protection requiring the "Control plane"
+   check once PR flow starts mattering.
 
 ## Blockers
 None.
