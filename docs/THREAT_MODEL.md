@@ -1,7 +1,7 @@
 # Aegis Threat Model
 
 Status: target security contract
-Version: 1.0
+Version: 1.1
 Last updated: 2026-07-21
 
 ## Purpose
@@ -21,6 +21,7 @@ Aegis does not prove that ether.fi, a bridge, or a transaction is safe. It prove
 5. **Mode integrity** - observed facts, recorded fixtures, declared configuration, derived facts, and modeled counterfactuals stay visibly distinct.
 6. **Availability of uncertainty** - missing, stale, conflicting, or unsupported evidence remains visible instead of being coerced into a pass.
 7. **User intent privacy** - preflight input is not logged or transmitted beyond documented providers without explicit consent.
+8. **Coverage integrity** - unsupported contracts, policy leaves, operators, AVSs, routes, sources, and historical ranges cannot disappear from denominators or presentation.
 
 ## System boundaries
 
@@ -68,6 +69,8 @@ A threat need not be malicious. Aegis treats operational mistakes and incomplete
 - a simulation that diverges from eventual execution;
 - a user who interprets `pass` as a universal safety guarantee;
 - a UI defect that hides coverage gaps or blends modeled and observed data;
+- an incomplete, stale, duplicated, or incorrectly joined operator/AVS attribution source;
+- a Liquid policy commitment or supported call being misrepresented as evidence of strategy quality or future return;
 - malicious calldata, revert data, token metadata, or other untrusted chain-controlled strings;
 - server-side request forgery through caller-selected RPC or source URLs;
 - denial of service, provider rate limits, or partial multicall failure.
@@ -75,15 +78,15 @@ A threat need not be malicious. Aegis treats operational mistakes and incomplete
 ## Core assumptions
 
 - Ethereum and each supported chain eventually provide a usable finalized state under their documented consensus model.
-- At least one configured provider can return honest evidence. Critical positive findings require agreement from at least two administratively independent providers.
+- At least one configured provider can return honest evidence. Every critical `pass` or `fail` requires matching evidence from at least two administratively independent providers; a unilateral contradiction is provisional and the canonical result remains incomplete.
 - The reviewed manifest represents a declared policy, not ground truth. A manifest can be wrong even when correctly signed and hashed.
 - Public contract state cannot reveal undisclosed intent, secret compromise, or private operational systems.
-- `eth_call` is a state-bound execution model, not a guarantee of ordering, inclusion, gas conditions, future prices, or later state.
+- `eth_call` is a state-bound call/revert/return model, not evidence of committed post-state and not a guarantee of ordering, inclusion, gas conditions, future prices, or later state. Any claimed after-state requires stateful fork/equivalent execution at an exact boundary.
 - Crosschain observations have causal relationships but no universally atomic global order.
 
 ## Result semantics
 
-Aegis uses six result states:
+Aegis uses six states for falsifiable predicate verification:
 
 - `pass` - all mandatory evidence was available and the predicate held.
 - `fail` - all mandatory evidence was available and the predicate did not hold.
@@ -94,6 +97,10 @@ Aegis uses six result states:
 
 `unknown`, `stale`, and `conflict` are successful failure handling, not degraded forms of `pass`. Presentation code must not collapse them into a reassuring aggregate.
 
+Neutral facts and metrics use `available`, `partial`, `unknown`, `stale`, `conflict`, or `not_applicable`. They never use `pass` or `fail`. `available` means a value was reproducibly acquired or derived at its cited boundary; it is not evidence that the subject is healthy. `partial` must retain the population definition and uncovered denominator.
+
+Policy trust is represented separately as `trusted`, `untrusted`, or `invalid`; it is not a seventh result state. Untrusted policy forces policy-dependent verification to `unknown`, while invalid policy is rejected before evaluation.
+
 ## Threats, controls, and residual risk
 
 | Threat | Failure mode | Required control | Residual risk |
@@ -102,7 +109,7 @@ Aegis uses six result states:
 | Provider lag | Old state presented as current | Report provider head, finalized head, observation age, and freshness policy | A chain can be live while a specific archive method is unavailable |
 | Reorganization | A previously valid report points to noncanonical state | Key caches by block hash; recheck canonicality; preserve and supersede reorged artifacts | Finality models differ by chain and can fail under consensus faults |
 | Partial RPC failure | Empty or zero values become a pass | Typed per-call errors; no default substitution; mandatory evidence yields `unknown` | Provider bugs can return syntactically valid but wrong values |
-| Manifest poisoning | Observed state is compared with attacker-selected expectations | Content-addressed manifests, source attribution, review history, validity window, explicit environment | A reviewed policy may still encode the wrong intent |
+| Manifest poisoning | Observed state is compared with attacker-selected expectations | Deployment-configured approved hashes/protected release roots or reviewer-signature threshold; content addressing; provenance; validity and environment checks | An authenticated and reviewed policy may still encode the wrong intent |
 | Circular verification | Expected values are copied from the same read being checked | Separate acquisition paths and provenance classes for expected and observed values | Independent public sources can still originate from the same erroneous deployment |
 | Proxy or ABI mismatch | Calls decode successfully against the wrong implementation | Resolve implementation and runtime code hash before selecting a code-hash-scoped ABI | Metamorphic or unusual proxy patterns require explicit adapters |
 | Log gaps | Rewind omits a material change | Detect range gaps, overlap queries, bind logs to block hashes, reconcile derived state with direct checkpoints | Providers may share incomplete historical data |
@@ -112,6 +119,8 @@ Aegis uses six result states:
 | Authorized unsafe action | Governance changes a critical value within its authority | Compare before/after state and policy; never infer safety from authorization | Aegis cannot determine social intent or stop execution |
 | Signer compromise | Malicious but validly signed action | Decode and evaluate observable effects; surface signer and executor evidence | Aegis cannot identify compromise before behavior becomes observable |
 | Counterfactual confusion | Modeled result is reported as historical fact | Immutable factual layer; separate model layer; visible inputs and constrained verdict language | Users can still quote a result without its assumptions |
+| Exposure attribution gap | Unknown validators/operators/AVSs disappear from a denominator or an inferred join is treated as observed | Version source snapshots; retain unknown populations; label relationship provenance; test deduplication and denominators | Public attribution may remain incomplete or strategically misleading |
+| Policy-to-performance leap | A permitted Liquid action or matching vault policy is presented as a profitable or low-risk strategy | Limit findings to identity, permissions, parameters, and supported state transitions; prohibit return verdicts | Economic effects can remain unmodeled even when calls are decoded correctly |
 | Renderer misrepresentation | UI omits limitations or provenance | Schema-required evidence and limitations; renderer conformance tests; JSON export | Screenshots can detach a finding from its context |
 | Untrusted rendered data | Contract metadata or revert data injects markup or misleading content | Treat all chain and provider strings as untrusted; escape output; apply a strict content security policy | A compromised frontend can still alter what a user sees |
 | Caller-selected endpoint | Public API is used to probe internal network resources | Server-controlled provider and source allowlists; reject arbitrary RPC URLs; bound redirects | CLI users remain responsible for local endpoints they configure |
@@ -124,6 +133,7 @@ The following shortcuts are specifically prohibited unless a future predicate su
 - `getTotalPooledEther()` or a similar accounting value is not proof of reserves.
 - Local weETH wrapper-share backing is not proof of whole-protocol solvency.
 - A matching runtime code hash is not proof that a contract is bug-free or safe.
+- A self-consistent manifest hash or reviewer-name field is not proof that the manifest is authorized; canonical live verdicts require the deployment trust root.
 - A paused contract is not, by itself, evidence of an exploit or policy breach.
 - An implementation change is not, by itself, evidence of malicious behavior.
 - A deployed OFT endpoint is not proof that a route is active or correctly configured in both directions.
@@ -131,6 +141,12 @@ The following shortcuts are specifically prohibited unless a future predicate su
 - A route-control `pass` does not prove the messaging provider, destination chain, sequencer, or settlement assumptions are safe.
 - A published four-of-four DVN description is not live configuration until the relevant contracts are decoded at an identified block.
 - A liquidatable account is not, by itself, a protocol failure.
+- A valid Liquid Merkle proof or matching Manager policy does not prove a strategy is profitable, liquid, diversified, or safe.
+- A Liquid Merkle root does not reveal its leaves; Aegis cannot claim a complete allowed-action set without a reviewed authoritative full corpus.
+- An Accountant rate, queue state, or supported rebalance simulation is not a forecast of future vault return or withdrawal availability.
+- Operator/AVS attribution, subset top-N share, or bounded HHI is exposure context, not proof of operator competence, independence, insurance, correlation, or risk.
+- With incomplete attribution, a concentration value is not population-wide unless its missing-mass bounds and allocation/granularity assumptions are explicit.
+- Unattributed validators or unsupported sources cannot be omitted to make exposure appear more complete or concentrated metrics more reassuring.
 - Exchange-rate monotonicity cannot be assumed across a permitted negative rebase.
 - A transaction authorized by governance is not necessarily intended, prudent, or safe.
 - Public chain state cannot prove the health of Cash card processors, custodians, issuers, banks, or settlement systems.
@@ -165,7 +181,21 @@ The production claim set is not complete until automated tests cover at least:
 14. a reciprocal peer becoming asymmetric;
 15. an explicit library reverting to inherited default configuration;
 16. one required DVN being removed or its threshold reduced;
-17. report reproduction with byte-identical canonical JSON.
+17. an active route losing its required nonzero bounded limit while a deliberately disabled route retains an expected zero limit;
+18. an unsupported proxy/clone/identity strategy preventing dependent ABI decoding;
+19. a Liquid Merkle root with a missing, malformed, conflicting, or unsupported proof/decoder and an explicitly incomplete leaf corpus;
+20. an unexpected Liquid module/authority plus Accountant or queue bound violations;
+21. a Liquid or Cash simulation whose external effects or committed post-state cannot be observed;
+22. Cash dependency miswiring, reverted/malformed oracle output, and stale-oracle input only where an implementation-bound timestamp/heartbeat exists;
+23. a Cash onchain-capacity result being rendered as a card-authorization conclusion;
+24. duplicated, ambiguous, or conflicting operator/AVS joins;
+25. unattributed exposure being omitted from a denominator or collapsed into an unjustified single HHI value;
+26. stale, incomplete, or conflicting external source snapshots;
+27. a neutral fact or metric being rendered as `pass`/`fail`;
+28. retrospective rehearsal with an unresolved block hash, missing same-block transaction prefix, divergent block context, or unavailable stateful post-state;
+29. one provider contradicting policy while the other required providers are unavailable, which must not create a critical `fail`;
+30. a structurally valid but unapproved manifest with fabricated reviewer metadata attempting to replace the default live policy;
+31. report reproduction with byte-identical canonical JSON across predicate and fact artifacts.
 
 ## Disclosure policy
 

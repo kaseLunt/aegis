@@ -5,13 +5,13 @@ Last updated: 2026-07-21
 
 ## The honest headline
 
-Aegis is an independent change-assurance and route-readiness system designed around ether.fi. Its hiring-ready route release records the Ethereum and OP weETH route configuration at exact finalized blocks, reconstructs how that state changed, and rehearses supported proposed transactions against the same explicit assertions.
+Aegis is an independent protocol flight recorder and change-assurance workbench for ether.fi's Stake, crosschain, Liquid, Cash, governance, and operator/AVS control and exposure surfaces. It binds execution state to finalized block hashes, consensus state to finalized slots/roots, and external attribution to content-addressed source snapshots, then reconstructs change and rehearses supported proposed transactions against the same explicit assertions.
 
-The current repository contains a strong deterministic prototype and the specification for the production evidence pipeline. Do not present target features as implemented until their roadmap exit gates pass.
+The Ethereum and OP weETH route is the first complete vertical slice and five-minute hero demonstration, not the whole product. The current repository contains a deterministic prototype and the specification for the production evidence pipeline. Do not present target features as implemented until their roadmap exit gates pass.
 
 ## Thirty-second pitch
 
-> Ether.fi publicly hardened weETH routes through explicit libraries, DVNs, and pairwise limits, but verifying the deployed state still requires contract-specific, bidirectional reads at exact blocks. I built Aegis to make that verification reproducible. It records the Ethereum and OP route controls, rewinds real configuration changes, and rehearses proposed Safe transactions. Every answer carries its evidence and limitations; missing or conflicting data can never turn green.
+> I built Aegis as an independent protocol flight recorder for ether.fi. One evidence engine records deployed Stake, crosschain, Liquid, Cash, governance, and operator/AVS state, rewinds real changes, and rehearses supported proposals. Onchain facts carry exact blocks; external attribution carries content-addressed source snapshots. Every answer exposes derivation, coverage, and limitations, and missing or conflicting data can never turn green. The Ethereum and OP weETH route is the first end-to-end demonstration of that larger system.
 
 ## Two-minute technical explanation
 
@@ -25,11 +25,13 @@ This project is not a generic dashboard with an ether.fi logo. Ether.fi is a goo
 - staking and withdrawal accounting boundaries;
 - oracle quorum and rebase constraints;
 - Cash collateral, oracle, and spend-cap configuration;
+- Liquid vault wiring, policy commitments, accounting bounds, queues, and supported rebalance actions;
 - weETH crosschain routes with LayerZero libraries, DVNs, roles, pause state, and pairwise rate limits.
+- public validator, operator, AVS, authority, and exposure relationships with completeness stated relative to a declared source snapshot and population denominator.
 
 Those surfaces create a real operational question: does production match the configuration engineers believe they deployed, and what will a proposed change do to that assertion set?
 
-The initial release answers that question through the most legible surface: one real, bidirectional Ethereum and OP weETH route. Wider staking, Cash, Liquid, and operator coverage is deliberately deferred until that route survives the complete evidence and adversarial pipeline.
+The first vertical slice answers that question through the most legible surface: one real, bidirectional Ethereum and OP weETH route. The completed Protocol Atlas extends the same engine across Stake/core, wider routes, Liquid, Cash, governance, and factual operator/AVS exposure. Their later delivery order protects the shared evidence contract; it does not remove them from the selected product.
 
 ## The value, even if ether.fi never adopts it
 
@@ -38,7 +40,7 @@ Aegis demonstrates a reusable engineering capability: turning protocol-specific 
 The hiring signal is the quality of the boundaries:
 
 - expected state and observed state have independent provenance;
-- all reads belong to one identified block;
+- all onchain reads in an evaluation belong to an explicit execution-block or consensus-state boundary, while external attribution uses a cited content-addressed snapshot;
 - provider disagreement is a visible result, not an implementation detail;
 - ABI decoding follows verified code identity;
 - replay respects reorgs and crosschain causal ambiguity;
@@ -54,11 +56,12 @@ You do not need to memorize or defend every generated line. You do need to own t
 3. where expected values came from;
 4. finality and provider-quorum policy;
 5. `pass`, `fail`, `unknown`, `stale`, `conflict`, and `not_applicable` semantics;
-6. proxy and ABI identity rules;
-7. report canonicalization and reproducibility;
-8. what preflight does not model;
-9. how factual, declared, derived, and counterfactual data are separated;
-10. which tempting checks were excluded because they would overclaim.
+6. why neutral facts use availability/coverage states instead of pass/fail;
+7. proxy and ABI identity rules;
+8. report canonicalization and reproducibility;
+9. what preflight does not model;
+10. how factual, declared, derived, and counterfactual data are separated;
+11. which tempting checks were excluded because they would overclaim.
 
 That is a realistic ownership boundary for an AI-assisted engineer: implementation was accelerated with agents, while the product contract, threat model, domain predicates, architecture, and validation gates received direct human judgment and review.
 
@@ -70,7 +73,9 @@ A good answer is direct:
 
 This is stronger than pretending every line was typed manually. The proof of competence is that you can explain the important system behavior, reproduce a result, diagnose a failure, and change the design safely.
 
-## Five-minute live demo
+## Five-minute hero demo
+
+The route demo is intentionally the fastest way to understand Aegis. A deeper reviewer tour follows the same report, evidence, and history contracts into the other completed domains.
 
 ### 0:00-0:45 - Establish the contract
 
@@ -86,7 +91,7 @@ Run a local fork or recorded fixture with an unexpected implementation, wrong pe
 
 ### 2:30-3:40 - Rehearse
 
-Load a public unsigned Safe proposal or a historical execution reconstructed at its parent block. Show code-identity-aware decoding, exact simulation boundary, predicted configuration diff, affected invariants, expiry, and explicit non-guarantees. For a retrospective case, show that the prediction hash existed before the separate actual-result comparison.
+Load a public unsigned Safe proposal or one canonical historical execution reconstructed by forking its parent block and replaying the target block's earlier transaction prefix. Show code-identity-aware decoding, stateful execution, exact simulation boundary, predicted configuration diff, affected invariants, expiry, and explicit non-guarantees. For a retrospective case, show that the prediction hash existed before the separate actual-result comparison.
 
 ### 3:40-4:35 - Rewind
 
@@ -94,9 +99,9 @@ Open one real route or implementation configuration change. Show its transaction
 
 ### 4:35-5:00 - Reproduce
 
-Export the canonical report, run the equivalent CLI command, and show the same hash. Close with one unsupported property visible in the coverage matrix.
+Export the pinned evidence bundle, reproduce it offline with the CLI, and show the same hash. Explain that a fresh independent acquisition may agree semantically while producing its own evidence artifact and hash. Close with one unsupported property visible in the coverage matrix.
 
-After milestone 5, an extended demo may add a separately labeled counterfactual policy run. It is not part of the hiring-ready route-release gate.
+After the counterfactual milestone, an extended demo may add a separately labeled bounded policy run. It is not part of the intermediate route-release gate.
 
 ## Likely questions and defensible answers
 
@@ -108,13 +113,17 @@ Explorers expose transactions and state; Dune is strong for indexed analytics. A
 
 The directed topology deliberately borrows the monitor's immediate legibility, but "health" is too vague for the conclusion. Aegis states exactly which peer, library, DVN, role, or limit matched which reviewed expectation at which block. It also reconstructs configuration changes and rehearses proposed ones using the same assertions. Liquidity, traffic, and lack of alerts cannot silently become a safety verdict.
 
+### If Aegis is broader, why start with one bridge route?
+
+The route is a dependency-rich proof, not a scope compromise. It forces the system to solve chain-scoped code identity, multi-chain finality, provider conflict, directed policy, versioned manifests, reorg-aware history, governance rehearsal, adversarial forks, and a legible topology in one slice. Once those contracts survive review, Stake, Liquid, Cash, governance, and operator/AVS adapters can reuse them instead of becoming separate dashboards with inconsistent semantics.
+
 ### Why is the manifest trustworthy?
 
-It is not assumed to be truth. It is a versioned declaration of expected policy with source, review, applicability, and hash. Aegis keeps it independent from observed state and shows disagreements. A future signed-manifest process can strengthen authorship, but it still cannot prove the policy was wise.
+It is not assumed to be truth. It is a versioned declaration of expected policy with source, review, applicability, and hash, authenticated for the default production view by a deployment-configured approved hash/release root or reviewer-signature threshold. Caller-supplied custom manifests are labeled untrusted and cannot replace the canonical live verdict. Aegis keeps policy independent from observed state and shows disagreements. Authentication still cannot prove the policy was wise.
 
 ### Why require two RPC providers?
 
-One provider failure should not create a false positive. Agreement reduces ordinary lag and corruption risk, while disagreement becomes `conflict`. It does not create Byzantine certainty because providers may share infrastructure; that residual risk is explicit.
+One provider should not create either a false pass or a false critical failure. Matching independent evidence is required for both critical verdicts; disagreement becomes `conflict`, while a unilateral contradiction without quorum remains `unknown` with a provisional alert. This reduces ordinary lag and corruption risk but does not create Byzantine certainty because providers may share infrastructure; that residual risk is explicit.
 
 ### What happens during a reorg?
 
@@ -122,7 +131,7 @@ Evidence and caches are keyed by block hash, not just height. If canonicality ch
 
 ### How do you choose an ABI?
 
-Resolve the proxy pattern and implementation first, hash runtime bytecode, then select an ABI registered for that code identity. If the identity is unknown, Aegis can report raw evidence but refuses semantic decoding.
+Use the identity strategy declared in the reviewed manifest: direct code, EIP-1967/transparent/UUPS, beacon, minimal clone, or a separately reviewed adapter. Resolve the full indirection path, hash terminal runtime bytecode, then select an ABI registered for that identity. If the pattern or identity is unknown, Aegis can report raw evidence but refuses semantic decoding.
 
 ### How can expected and observed values be independent?
 
@@ -135,6 +144,10 @@ No. It means mandatory evidence was available and one displayed predicate held a
 ### Why no aggregate risk score?
 
 The underlying risks have different units, evidence quality, and consequence. Collapsing them creates false precision and hides unknowns. Aegis optimizes for falsifiable assertions that an engineer can inspect.
+
+### Why doesn't an operator concentration metric pass or fail?
+
+HHI or top-N share is a neutral derived fact, not a policy verdict. Aegis reports its formula, inputs, units, source snapshot, population denominator, and unattributed coverage using availability states such as `available` or `partial`. With incomplete attribution it reports an attributed-subset value and only emits population bounds when the missing-mass and granularity assumptions are explicit. A separate reviewed predicate would be required to compare that fact with an explicit policy, and even then it would not prove operator competence, independence, insurance, or overall risk.
 
 ### What does preflight miss?
 
@@ -154,7 +167,7 @@ The hardest problem is epistemic, not visual: preventing stale, conflicting, dec
 
 ### What would you do differently with more time?
 
-Increase independent review of each route predicate, add local-fork tracing for sensitive Safe batches, strengthen manifest signing and review workflows, and expand route coverage only after Ethereum and OP remain reliable under adversarial provider tests. After that, add facts-only operator exposure, Liquid policy inspection, and exact Cash capacity views without introducing composite risk scores or recommendations.
+Increase independent review of every domain predicate, add local-fork tracing for sensitive Safe batches, strengthen manifest signing and review workflows, and improve attribution coverage. The roadmap already includes facts-only operator exposure, Liquid policy inspection, exact Cash capacity views, Stake/core verification, and wider routes; more time should deepen their evidence and adversarial coverage rather than add composite scores or recommendations.
 
 ## Subtle exclusions worth volunteering
 
@@ -173,7 +186,7 @@ These demonstrate domain judgment better than a long feature list:
 
 Use this order when sharing the code:
 
-1. `docs/PROJECT_SELECTION.md` - why this project and why the bridge-first synthesis;
+1. `docs/PROJECT_SELECTION.md` - why the finished multi-domain project wins and why the bridge is only the first slice;
 2. `docs/PRODUCT_SPEC.md` - the user and product contract;
 3. `docs/THREAT_MODEL.md` - what results can and cannot mean;
 4. `docs/ENGINEERING_SPEC.md` - schemas, boundaries, and target architecture;
@@ -196,7 +209,7 @@ Avoid starting with component code. The important story is evidence becoming a c
 
 ### Use only after the final definition of done passes
 
-> Built Aegis, an evidence-first TypeScript protocol flight recorder that verifies ether.fi configuration at finalized blocks, performs implementation-aware transaction preflights, and deterministically replays incident counterfactuals with reorg-safe caching, provenance, and adversarial tests.
+> Built Aegis, an evidence-first TypeScript protocol flight recorder spanning ether.fi Stake, crosschain, Liquid, Cash, governance, and operator/AVS surfaces, with finalized multi-provider verification, implementation-aware preflights, reorg-safe history, bounded counterfactuals, and canonical reports shared by web, CLI, API, and CI.
 
 ## The desired interview reaction
 

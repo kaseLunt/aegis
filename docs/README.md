@@ -4,10 +4,10 @@ This directory is the canonical design record for Aegis. It separates the finish
 
 ## Reading order
 
-1. [Project selection decision](PROJECT_SELECTION.md) - the evaluated alternatives, why Aegis remains the core project, and why the first release absorbs the crosschain-monitor concept.
+1. [Project selection decision](PROJECT_SELECTION.md) - the completed-product comparison, selected full Aegis scope, adopted ideas, and bridge-first sequencing.
 2. [Product specification](PRODUCT_SPEC.md) - who Aegis serves, the Record/Rehearse/Rewind workflows, data labels, UX principles, non-goals, and product acceptance criteria.
 3. [Threat model](THREAT_MODEL.md) - what Aegis protects, what can make it wrong, result semantics, forbidden inferences, privacy boundaries, and adversarial tests.
-4. [Engineering specification](ENGINEERING_SPEC.md) - target architecture, schemas, finality and provider policy, invariant engine, APIs, CLI, storage, testing, and the first vertical slice.
+4. [Engineering specification](ENGINEERING_SPEC.md) - target architecture, shared schemas, all evidence families, finality and provider policy, APIs, CLI, storage, testing, and integration gates.
 5. [Source and provenance register](SOURCE_REGISTER.md) - official research references, their allowed evidentiary use, claim-to-source mapping, and live-claim research backlog.
 6. [Delivery roadmap](ROADMAP.md) - the difference between the current prototype and the finished system, staged deliverables, and objective exit gates.
 7. [Interview brief](INTERVIEW_BRIEF.md) - how to explain and demonstrate the work honestly, including AI-assisted engineering ownership.
@@ -17,9 +17,9 @@ This directory is the canonical design record for Aegis. It separates the finish
 - The **threat model** wins for the strength and limits of any claim.
 - The **engineering specification** wins for machine behavior, schemas, and service boundaries.
 - The **product specification** wins for users, workflows, language, and interaction design.
-- The **project selection decision** wins for initial positioning and scope priority, but cannot weaken the product, engineering, or threat-model contracts.
+- The **project selection decision** wins for completed-product positioning and selected scope, but cannot weaken the product, engineering, or threat-model contracts.
 - The **roadmap** wins for current implementation status and sequencing.
-- The **source register** records research inputs but never overrides block-hash-bound evidence or an active reviewed manifest.
+- The **source register** records research inputs but never overrides a canonical execution/consensus observation, content-addressed source snapshot, or active reviewed manifest/source policy.
 - The **interview brief** is explanatory only and cannot expand product or engineering claims.
 
 ## Current status
@@ -28,7 +28,7 @@ The current application is milestone 0: a polished deterministic prototype built
 
 That distinction is deliberate. The prototype proves the interaction model and some core engineering patterns. The remaining work proves that real production evidence survives provider failure, reorgs, proxy changes, incomplete history, and skeptical review.
 
-The next hiring-ready artifact is the live Ethereum and OP route slice. Additional prototype-only surfaces are explicitly deferred.
+The next hiring-ready artifact is the live Ethereum and OP route slice. It is the first vertical proof of the shared engine, not the definition of the finished product. The completed target then extends that engine across Stake/core, wider crosschain, Liquid, Cash, governance, and facts-only operator/AVS exposure.
 
 ## Change rule
 

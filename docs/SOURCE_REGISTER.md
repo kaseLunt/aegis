@@ -34,17 +34,17 @@ A source can explain architecture, state intended policy, provide code, or descr
 
 The bridge-hardening article describes a Kelp DAO incident as the motivating event and explicitly says ether.fi systems were not directly compromised. Aegis therefore labels any prose-derived replay a `documented_scenario`; it must not present the event as an ether.fi exploit unless independent evidence supports a different, precisely scoped claim.
 
-## Evaluated expansion references
+## Full-product domain references
 
-These sources informed the alternative-project comparison and later extension plan. They do not expand the first-release manifest.
+These sources informed the alternative-project comparison and the selected full-product plan. They do not expand the first route manifest automatically; each domain still requires the promotion process below.
 
-| Reference | Supported future direction | Boundary |
+| Reference | Planned evidence family | Boundary |
 | --- | --- | --- |
-| [Node operators guide](https://etherfi.gitbook.io/etherfi/node-operators/node-operators-guide) | Facts-only validator and operator attribution, protocol-subgraph discovery, and historical exposure context | Public metadata does not justify a composite operator risk score, infrastructure-correlation claim, or insurance conclusion |
-| [Liquid technical documentation](https://etherfi.gitbook.io/etherfi/liquid/technical-documentation) | Vault role, module, Merkle-policy, Accountant, queue, and rebalance verification | Public architecture does not justify return forecasts, market-regime assumptions, or optimization recommendations |
-| [Cash technical documentation](https://etherfi.gitbook.io/etherfi/cash/technical-documentation) | Exact onchain vault wiring, collateral, borrow, and spend-capacity explanation | Public contracts cannot establish issuer authorization, fraud decisions, processor behavior, or settlement outcome |
+| [Node operators guide](https://etherfi.gitbook.io/etherfi/node-operators/node-operators-guide) | Operator architecture and query/subgraph discovery only | Its example query and mutable `version/latest` endpoint are not an exhaustive or reproducible population dataset; facts require a pinned subgraph block or content-addressed export plus a separately defined denominator and still cannot justify a composite risk, correlation, or insurance conclusion |
+| [Liquid technical documentation](https://etherfi.gitbook.io/etherfi/liquid/technical-documentation) | Architecture and control-surface discovery for vault roles, modules, Merkle policy, Accountant, queues, and rebalances | It is not deployment evidence or a complete leaf corpus; exact findings require pinned implementation/deployment sources and observation-bound evidence, and architecture cannot justify forecasts or recommendations |
+| [Cash technical documentation](https://etherfi.gitbook.io/etherfi/cash/technical-documentation) | Product/architecture and public-versus-private boundary discovery | It does not establish current Cash v3 OP topology or arithmetic; exact findings require a pinned `cash-v3` implementation/deployment plus block-bound OP reads, and public contracts still cannot establish authorization, fraud, processor, or settlement outcomes |
 
-The accepted selection and deferral rationale is recorded in [PROJECT_SELECTION.md](PROJECT_SELECTION.md).
+The completed-product selection and implementation order are recorded separately in [PROJECT_SELECTION.md](PROJECT_SELECTION.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Upstream technical references
 
@@ -63,13 +63,15 @@ Upstream documentation is versioned externally and can change. Tests pin the rel
 
 | Assertion family | Expected-policy input | Observed input | Important limitation |
 | --- | --- | --- | --- |
-| Deployment code identity | Reviewed release manifest, source commit, expected implementation and runtime code hash | Proxy slot or beacon plus runtime bytecode at one block hash | Matching code identity is not a safety proof |
+| Deployment code identity | Reviewed release manifest, declared identity strategy, source commit, expected indirection path, and runtime code hash | Direct code, declared proxy slots, beacon resolution, or minimal-clone target plus runtime bytecode at one block hash | Matching code identity is not a safety proof; unsupported identity patterns remain unknown |
 | weETH local backing | Reviewed deployed invariant and exact accounting semantics | Required token supply/share reads at one block hash | Local wrapper-share backing is not whole-protocol solvency or reserves proof |
 | Withdrawal escrow | Reviewed deployed accounting paths and units | Escrow balance plus matching locked-withdrawal accounting at one block hash | Public execution-layer state may not capture every beacon or operational exposure |
 | Oracle and rebase controls | Reviewed code, audit scope, deployment constants or policy manifest | Quorum members, thresholds, relevant state, and supported transaction traces | A responding oracle is not proof of economic truth |
 | Governance and roles | Reviewed role/timelock policy and deployment manifest | Role membership, implementation, delay, queued action, and executor reads | Authorization is not proof of sound intent |
 | Directed bridge route | Reviewed route manifest plus LayerZero mechanics | Peer, endpoint, send/receive library, config, DVNs, threshold, pause, and rate limits in each direction | Deployed endpoints do not prove an active or symmetric route |
+| Liquid wiring and policy | Pinned deployment declarations, reviewed policy commitments, audited code, and supported Merkle leaves | Code identity, module/authority pointers, roots, proofs, allowed calls, Accountant bounds, queues, and events | Matching policy is not proof of strategy quality, liquidity, or return |
 | Cash wiring and risk | Pinned Cash v3 deployment declarations and reviewed policy | OP code identity, dependency pointers, roles, oracle config, collateral parameters, and selected account state | Public contracts cannot establish offchain card or settlement health |
+| Operator/AVS exposure | Versioned official attribution plus explicitly reviewed external sources | Onchain registrations, source snapshots, validator/operator/AVS edges, and deterministic concentration calculations | Incomplete attribution cannot justify a risk, insurance, competence, or independence conclusion |
 | Incident replay | Immutable logs/transactions plus explicitly labeled official narrative | Block-hash-bound events and transactions | Narrative-derived timing or causality remains documented, not observed |
 | Counterfactual outcome | Versioned model and explicit policy inputs | Immutable incident-bundle hash | Model output is not historical fact or proof an exploit would have been prevented |
 
@@ -86,6 +88,8 @@ A research reference can enter an active expected-state manifest only after:
 7. passing, failing, missing-evidence, and boundary fixtures exist;
 8. the manifest change receives recorded review rather than being generated from observed production state.
 
+Promotion into the default live policy also requires authentication through the deployment's approved manifest hash/protected release root or reviewer-signature threshold. Embedded author/reviewer text and a self-consistent content hash are not sufficient authority. Custom research manifests remain visibly noncanonical.
+
 ## Hiring-ready route research blockers
 
 - Build the Ethereum/OP directed-route manifest: EIDs, peers, endpoint contracts, libraries, DVNs, thresholds, confirmations, pause controls, and rate limits.
@@ -93,14 +97,44 @@ A research reference can enter an active expected-state manifest only after:
 - Identify official route owners, delegates, roles, Safes, timelocks, guardians, and revocation addresses from independent sources.
 - Confirm provider independence and archive capability rather than treating different commercial labels as independent infrastructure.
 - Record a real governance or configuration change suitable for the first Rewind bundle.
-- Select either a public unsigned proposal or a public historical Safe/timelock execution suitable for parent-block retrospective rehearsal.
+- Select either a public unsigned proposal or one canonical public historical Safe/timelock execution whose parent state, same-block transaction prefix, block context, and target envelope can be reproduced statefully.
 
 Until these route blockers are complete, repository fixtures remain recorded demonstrations and every surface must say so.
 
-## Later expansion research
+## Full-product evidence-family research
 
-- Map each audited core invariant to the exact deployed implementation and ABI epoch.
-- Resolve Cash v3 OP proxy topology and dependency graph; record any disagreement with older documentation or archived deployment material.
-- Treat Liquid policy inspection and operator exposure context as later evidence families, never as forecasting or composite risk-score features.
+These items do not block the intermediate route release, but they are required before Aegis can satisfy its finished-product definition of done:
 
-These later items do not block the hiring-ready route release and cannot substitute for it.
+### Stake and governance
+
+- Map each audited core invariant to the exact deployed implementation, proxy topology, ABI epoch, units, and applicability window.
+- Pin current and historical role, Safe, timelock, guardian, upgrader, and oracle-committee sources.
+- Identify real upgrades, role changes, oracle/quorum transitions, withdrawal events, and rebase transitions suitable for Rewind and Rehearse coverage.
+
+### Wider crosschain
+
+- Enumerate supported production routes and distinguish deployed token contracts from active reciprocal routes.
+- Pin chain-specific endpoints, peers, libraries, DVNs, thresholds, confirmations, pause controls, roles, rate limits, implementations, and history for each promoted direction.
+- Verify archive availability, finality semantics, and provider independence per chain.
+
+### Liquid
+
+- Pin the supported BoringVault deployment map and runtime identities for authority, Teller, Accountant, Manager, decoder/sanitizer, queues, and assets.
+- Collect reviewed Merkle-policy commitments and historical roots plus content-addressed supplied/independently sourced leaf corpora; define which action classes can be decoded without guesswork and never infer corpus completeness from a root alone.
+- Map Accountant bounds, fees, update timing, queue semantics, pause roles, and upgrade paths to exact code epochs.
+- Select at least one real policy/module/accounting change and one real supported proposal or rebalance artifact.
+
+### Cash
+
+- Resolve current Cash v3 OP proxy topology and dependency graph; retain disagreements with older documentation or archived deployment material.
+- Pin collateral, borrow, oracle, role, pause, LTV, liquidation, fee/APY, minimum-share, and account-view semantics to exact implementations; define freshness only for oracle adapters with observable source time/round data and a reviewed heartbeat.
+- Define the precise public-data boundary for spend capacity and select real configuration/history and rehearsal artifacts.
+
+### Operator and AVS exposure
+
+- Define supported population denominators and source precedence for validator, node-operator/DVT, and AVS attribution.
+- Replace mutable example endpoints with pinned subgraph blocks or content-addressed exports; version every source snapshot and record attributed, unattributed, stale, and unsupported coverage.
+- Validate attributed-subset top-N/HHI, missing-mass bounds, allocation/granularity assumptions, deduplication rules, identity changes, and historical backfill against independent samples.
+- Document which relationships are observed, declared, externally sourced, or deterministically inferred and prohibit silent promotion between classes.
+
+Later roadmap position is sequencing, not exclusion. Liquid policy and operator exposure remain facts-first evidence families; they never become forecasting or composite risk-score features.

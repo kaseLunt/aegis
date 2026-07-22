@@ -1,6 +1,6 @@
 # Aegis — Protocol Flight Recorder
 
-Aegis is an independent, evidence-first verifier for onchain financial systems. It is a focused engineering prototype built around ether.fi's public architecture and safety doctrine.
+Aegis is an independent, evidence-first protocol flight recorder built around ether.fi's public architecture and safety doctrine.
 
 > Observe state. Test intent. Reconstruct impact.
 
@@ -10,7 +10,7 @@ Aegis does not connect a wallet, request keys, sign transactions, or broadcast u
 
 The repository now distinguishes the current prototype from the full production target. Start with the [documentation index](docs/README.md), then use these documents as the design contract:
 
-- [Project selection decision](docs/PROJECT_SELECTION.md) - comparison with the evaluated alternatives and the accepted bridge-first release strategy.
+- [Project selection decision](docs/PROJECT_SELECTION.md) - completed-product comparison, the selected multi-domain scope, and the bridge-first delivery strategy.
 - [Product specification](docs/PRODUCT_SPEC.md) - users, Record/Rehearse/Rewind workflows, evidence language, scope, and acceptance criteria.
 - [Threat model](docs/THREAT_MODEL.md) - trust boundaries, failure semantics, forbidden inferences, and adversarial tests.
 - [Engineering specification](docs/ENGINEERING_SPEC.md) - target architecture, domain model, manifests, providers, finality, APIs, CLI, and verification strategy.
@@ -18,9 +18,9 @@ The repository now distinguishes the current prototype from the full production 
 - [Delivery roadmap](docs/ROADMAP.md) - milestone 0 prototype status, several-engineer-week target scope, and objective exit gates.
 - [Interview brief](docs/INTERVIEW_BRIEF.md) - an honest technical narrative and the decisions the project owner should be able to defend.
 
-The current application is a working prototype, not the completed assurance platform described by those specifications. It becomes the finished project only when the roadmap's final definition of done passes.
+The current application is a working prototype, not the completed assurance platform described by those specifications. The finished target spans Stake/core, crosschain, Liquid, Cash, governance, and facts-only operator/AVS exposure through one Record/Rehearse/Rewind evidence engine, with execution blocks, consensus roots, and external source snapshots represented as distinct observation boundaries. It becomes the finished project only when the roadmap's final definition of done passes.
 
-The first hiring-ready release is positioned as **Aegis: ether.fi Change Assurance and weETH Route Readiness**. Its hero experience will be a live, directed Ethereum and OP route topology backed by real configuration evidence, one real change history, and one public proposal or parent-block retrospective governance rehearsal.
+The intermediate hiring-ready release is positioned as **Aegis: ether.fi Change Assurance and weETH Route Readiness**. Its hero experience will be a live, directed Ethereum and OP route topology backed by real configuration evidence, one real change history, and one public proposal or exact pre-transaction retrospective governance rehearsal. That route is the first vertical proof and five-minute demo, not the final product boundary.
 
 ## Current prototype surfaces
 
@@ -32,7 +32,7 @@ The shared evidence drawer ties the three experiences together: a control can be
 
 ## Current prototype trust contract
 
-The current prototype uses five presentation states: `holding`, `advisory`, `violated`, `unknown`, and `stale`. The target engine replaces that vocabulary with the six canonical states defined in the [product specification](docs/PRODUCT_SPEC.md#result-states): `pass`, `fail`, `unknown`, `stale`, `conflict`, and `not_applicable`. `holding` maps to `pass`, `violated` maps to `fail`, and `unknown`/`stale` remain unchanged. `advisory` becomes severity or policy metadata rather than a truth state; `conflict` and `not_applicable` are added explicitly.
+The current prototype uses five presentation states: `holding`, `advisory`, `violated`, `unknown`, and `stale`. The target engine replaces that vocabulary for falsifiable predicates with the six canonical verification states defined in the [product specification](docs/PRODUCT_SPEC.md#result-states): `pass`, `fail`, `unknown`, `stale`, `conflict`, and `not_applicable`. `holding` maps to `pass`, `violated` maps to `fail`, and `unknown`/`stale` remain unchanged. `advisory` becomes severity or policy metadata rather than a truth state; `conflict` and `not_applicable` are added explicitly. Neutral facts and metrics use separate availability/coverage states and never render as a pass/fail verdict.
 
 - Missing or stale evidence cannot become a green result.
 - A passing assertion proves only its encoded predicate at its stated observation boundary.
