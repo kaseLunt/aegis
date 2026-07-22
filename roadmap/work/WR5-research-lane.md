@@ -42,7 +42,7 @@ semantics reproducible, actual effects isolable from later writes.
 - No production code, no live-RPC-derived "expected" values.
 
 ## Handoff
-- next: DELIVERED and committed under lane wr5; completeness critic (Codex) running — closure gated on its findings, incl. cross-check of the 16200s timelock-parameter claim against the adjudicated 259200s schedule delay.
+- next: critic returned 17 findings; disposition applied in deliverable (delay corrected to 259200s -- the truncation error recurred here, catch #2 for the class). ROUND 2 scope: critic items 2-15 (see roadmap/research/WR5/completeness-critique.md). Lane stays open; round 2 deferred until M4 planning unless owner pulls it earlier -- several EXTEND items are cheaper with real archive/trace providers in hand.
 - read_first: this charter; docs/SOURCE_REGISTER.md (source-class limits).
 - hazards: provenance required on every claim; no live-RPC 'expected' values; explorer
   labels are discovery only; WR6 additionally must stay blind to lib/ and W1 products.

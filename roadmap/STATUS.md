@@ -14,8 +14,10 @@ updated: 2026-07-21
 
 ## Current task (WIP = 1 per agent, [[D-006]])
 **W1 — canonical report core** — fable-main, single owner (critical path).
-Lanes: WR1/WR2/WR3/WR6 closed (WR1 won the timelock-delay adjudication: 259200s, WR2
-corrected). WR4 in round 2 per Codex completeness critique; WR5 delivered, critic running.
+Lanes: WR1/WR2/WR3/WR6 closed. WR4 + WR5 delivered, critiqued (Codex), dispositions
+applied; both open with round-2 scopes, deferred to M3/M4 planning (several EXTEND items
+need real archive/trace providers). Timelock delay three-way adjudicated: 259,200s; the
+16,200s truncation recurred in WR5 and was caught by the critic cross-check.
 W0C parked pending owner action (Blockers).
 
 ## Recently completed
@@ -33,8 +35,8 @@ W0C parked pending owner action (Blockers).
 ## Next up
 1. W1 first slice: triage WR6 SPEC-QUESTIONs into spec clarifications, then canonical types
    + JSON Schema + JCS + reportHash with the golden vectors as acceptance targets.
-2. WR5 critic disposition, then WR4 round 2; manifest-owner open items: live rate-limit
-   value (3k vs 10k weETH/4h), executor pin, historical setPeer tx.
+2. Manifest-owner open items: live rate-limit value (3k vs 10k weETH/4h), executor pin,
+   historical setPeer tx. WR4/WR5 round 2 at M3/M4 planning.
 3. R-001 residual (owner, low urgency): enable branch protection requiring the "Control plane"
    check once PR flow starts mattering.
 
