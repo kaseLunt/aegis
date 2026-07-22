@@ -12,6 +12,12 @@ The remaining work is intentionally organized around independently reviewable ve
 
 Effort labels describe the depth of engineering and validation, not a promise that a swarm must consume a particular amount of wall-clock time. The target represents several conventional engineer-weeks because the hard work is evidence acquisition, predicate validation, adversarial testing, and review - not drawing additional screens.
 
+## Release thesis
+
+The first hiring-ready release is **Aegis: ether.fi Change Assurance and weETH Route Readiness**. The [project selection decision](PROJECT_SELECTION.md) records the evaluated alternatives and why Aegis absorbs the strongest crosschain-monitor idea instead of becoming a portfolio dashboard, generalized risk score, or market simulator.
+
+The target architecture is stronger than those alternatives; milestone 0 is not. A genuinely live crosschain monitor would beat a fixture-only Aegis. Therefore, no additional prototype-only page, animation, card, or modeled scenario counts as meaningful progress before the live vertical slice.
+
 ## Scope discipline
 
 The first production-grade slice is narrow:
@@ -19,6 +25,7 @@ The first production-grade slice is narrow:
 - ether.fi-specific, not a generic protocol framework;
 - read-only;
 - Ethereum plus one OP route;
+- both Ethereum-to-OP and OP-to-Ethereum directions;
 - one code-identity predicate completed end to end before broad invariant coverage;
 - versioned expected-state manifests;
 - two independent RPC providers for critical positive findings;
@@ -50,7 +57,7 @@ No later milestone may weaken provenance, finality, or failure semantics to add 
 
 ### Exit gate
 
-The prototype gate is already met when the application boots, all checks pass, and every simulated or recorded value is labeled honestly. It earns permission to build the real evidence pipeline; it does not earn production assurance claims.
+The prototype gate is already met when the application boots, all checks pass, and every simulated or recorded value is labeled honestly. It earns permission to build the real evidence pipeline; it does not earn production assurance claims. Milestone 0 receives no further feature work unless required to support milestones 1 through 4.
 
 ## Milestone 1 - One indisputable live vertical slice
 
@@ -80,31 +87,32 @@ Implement `CODE-01`, runtime implementation identity, from reviewed manifest to 
 - Identical input artifacts produce byte-identical canonical reports offline.
 - The web UI contains no special-case verdict logic.
 
-## Milestone 2 - Ether.fi control registry
+## Milestone 2 - weETH route readiness
 
 ### Goal
 
-Expand from code identity to a small, defensible registry of ether.fi-specific controls.
+Expand from code identity to one live, bidirectional Ethereum and OP weETH route rendered as an evidence-backed directed topology.
 
 ### Deliverables
 
-- weETH wrapper/share backing predicate with explicit local scope;
-- withdrawal escrow accounting predicate;
-- oracle quorum, positive-rebase cap, and upgrade-delay predicates where public state supports them;
+- code identity for every participating route contract;
+- reciprocal peers and Endpoint IDs in both directions;
 - LayerZero send/receive library pinning;
-- DVN membership and threshold checks;
+- effective send and receive configuration, DVN membership, thresholds, and confirmations;
 - directed-route pause and pairwise rate-limit configuration;
 - owner, delegate, and relevant role configuration;
+- a directed topology whose edges are canonical engine results rather than UI-derived health scores;
 - a visible coverage matrix showing unsupported contracts, routes, and chains;
 - independent expected-state sources and a review note for every predicate.
 
 ### Exit gate
 
-- At least six meaningful predicates run against two production routes.
+- At least six meaningful predicates run against both directions of one production route.
 - Every predicate has a written rationale, units, evidence requirements, limitations, and negative fixture.
 - Unsupported or unobservable properties remain visible as `not_applicable` or `unknown`.
-- No predicate claims whole-protocol safety, solvency, or reserve proof.
+- No predicate claims route safety, whole-protocol safety, solvency, or reserve proof.
 - A domain reviewer can challenge an expected value without reading UI code.
+- No price, APY, TVL, liquidity, or decorative traffic metric is required for the route verdict.
 
 ## Milestone 3 - Rewind and change attribution
 
@@ -135,11 +143,12 @@ Explain how a recorded configuration came to exist, without pretending crosschai
 
 ### Goal
 
-Accept a real supported transaction or Safe batch and show its decoded, simulated, policy-relevant effect without broadcasting it.
+Accept a public unsigned proposal or reconstruct a public historical Safe or timelock execution at its parent block, then show its decoded, simulated, policy-relevant effect without broadcasting it.
 
 ### Deliverables
 
 - strict input validation for sender, target, calldata, value, chain, and manifest;
+- explicit artifact origin: `public_unsigned_proposal` or `retrospective_rehearsal`;
 - Safe transaction JSON ingestion;
 - code-identity-first ABI selection and deterministic calldata decoding;
 - pinned-state `eth_call`, with local-fork execution for deeper traces where needed;
@@ -152,10 +161,26 @@ Accept a real supported transaction or Safe batch and show its decoded, simulate
 ### Exit gate
 
 - One real, nontrivial supported transaction is decoded and simulated end to end.
+- A retrospective case produces its prediction from parent-block state before separately comparing it with receipt and post-state evidence.
 - Unknown code identity blocks semantic decoding.
 - Intervening relevant state invalidates the preflight.
 - The report never says `safe to sign` or guarantees execution.
 - A malformed batch, reverted call, unsupported delegatecall, and partial batch failure have distinct outcomes.
+
+## Hiring-ready release gate
+
+Milestones 1 through 4 form one public hiring artifact. It is ready to lead the portfolio only when:
+
+- real code identity works from independent manifest through finalized redundant observations;
+- both Ethereum and OP route directions expose peer, library, DVN, threshold, control, and rate-limit evidence;
+- one real configuration change is indexed and reproduced as a before and after diff;
+- one public unsigned proposal or retrospective Safe/timelock configuration transaction is rehearsed at pinned pre-execution state;
+- one deliberately corrupted fork fails only the affected assertions;
+- one provider timeout produces incomplete evidence and one disagreement produces `conflict`;
+- CLI, API, and web export the same canonical report hash;
+- the hero topology is usable, responsive, accessible, and explicit about unsupported coverage.
+
+Counterfactual replay, core staking, Cash, Liquid, operator intelligence, and broad chain coverage can follow. They do not block the first hiring-ready release and do not substitute for it.
 
 ## Milestone 5 - Counterfactual replay
 

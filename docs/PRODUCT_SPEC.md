@@ -35,6 +35,27 @@ Aegis does not assume ether.fi lacks internal monitoring. Its value is independe
 
 The [source and provenance register](SOURCE_REGISTER.md) records the official research basis for these choices and, critically, what each source cannot prove.
 
+## Hiring-ready route release
+
+The accepted first-release position is:
+
+> **Aegis: ether.fi Change Assurance and weETH Route Readiness**
+
+The [project selection decision](PROJECT_SELECTION.md) explains why this is stronger than the evaluated operator-risk, portfolio, vault-simulation, Cash-optimization, and standalone crosschain-monitor alternatives.
+
+The hero experience is a live, directed Ethereum and OP weETH route topology. It makes both directions inspectable and connects every visible edge to exact configuration evidence. The initial release verifies code identity, peers, endpoint identifiers, explicit send and receive libraries, DVNs and thresholds, pause and control roles, and pairwise rate limits.
+
+This topology is not a liquidity dashboard or route optimizer. It does not add TVL, token prices, APYs, decorative message traffic, or a vague route-health score. Its purpose is to make deployed control state, configuration change, and proposed change immediately legible.
+
+The first hiring-ready release requires more than Record. It also reconstructs one real configuration change through Rewind and evaluates one public unsigned proposal or exact retrospective Safe/timelock transaction through Rehearse.
+
+The Rehearse acceptance artifact may be either:
+
+- a public unsigned Safe or timelock proposal evaluated at a captured applicable block before execution; or
+- an exactly reconstructed historical execution evaluated against its parent block.
+
+A historical case is labeled `retrospective_rehearsal`. Its receipt and post-state are excluded from prediction inputs and used only afterward to compare Aegis's predicted delta with the observed execution. This provides a public, non-sensitive test without presenting hindsight as a prospective review.
+
 ## Success criterion
 
 The primary goal is not adoption. The primary goal is for an ether.fi engineer to inspect the system for ten minutes and conclude:
@@ -134,16 +155,16 @@ Counterfactual controls create a separate model run. They never modify the factu
 
 ### Record: Assurance report
 
-The default screen should identify the target immediately:
+The default screen is the directed Ethereum and OP route instrument. It should identify the target and evidence boundary immediately:
 
 ```text
 ether.fi production assurance
 Ethereum finalized block 25,577,369
 OP finalized block 154,496,611
-Manifest core@b4a0968 / cash-v3@247faab
+Manifest weeth-crosschain@e30c859 / route-policy@sha256:...
 ```
 
-The primary matrix contains falsifiable claims, not a risk score. Each row shows:
+Selecting a direction opens its assurance matrix. The matrix contains falsifiable claims, not a risk score. Each row shows:
 
 - claim identifier and category;
 - expected source;
@@ -155,6 +176,8 @@ The primary matrix contains falsifiable claims, not a risk score. Each row shows
 
 The page also supports:
 
+- reciprocal-route comparison;
+- a topology coverage matrix with unsupported routes still visible;
 - current report versus prior report;
 - current report versus intended manifest;
 - configuration-change tape;
@@ -267,12 +290,13 @@ Missing evidence can never improve a result to `pass`.
 
 ## Five-minute demonstration
 
-1. Open a current report verified at named finalized blocks.
-2. Expand one passing bridge or implementation assertion to raw calls and the expected manifest commit.
-3. Run an intentionally broken fixture or fork with one wrong implementation, default library, or missing DVN; show only affected claims failing.
-4. Preflight a real Safe or timelock bundle and inspect before/after configuration.
-5. Replay one evidence-derived sequence, then run a separately labeled counterfactual.
-6. Export the canonical bundle and reproduce its hash from the CLI.
+1. Open the live Ethereum and OP directed-route topology at named finalized blocks.
+2. Select one direction and expand code identity, peer, library, or DVN evidence through raw calls and the expected manifest commit.
+3. Run an intentionally broken fork with one wrong implementation, peer, default library, or missing DVN; show only affected claims failing.
+4. Inject provider disagreement and show the route becoming `conflict`, never pass.
+5. Rehearse one public unsigned proposal or parent-block retrospective Safe/timelock configuration bundle and inspect its predicted before and after route controls.
+6. Rewind one real configuration change from transaction to affected assertion.
+7. Export the canonical bundle and reproduce its hash from the CLI.
 
 The strongest moment is Aegis becoming visibly uncertain when a provider fails or disagrees.
 
@@ -289,7 +313,11 @@ Aegis does not:
 - claim an atomic crosschain snapshot;
 - collapse unrelated contract, governance, bridge, operational, and account risks into one score;
 - broadcast transactions or custody keys;
-- claim endorsement by ether.fi.
+- claim endorsement by ether.fi;
+- become a general wallet portfolio command center;
+- recommend APY, vault, operator, route, or collateral allocations;
+- produce Monte Carlo forecasts or composite operator risk scores as product truth;
+- infer route safety from liquidity, traffic, or the absence of alerts.
 
 ## Public-data boundary
 
@@ -312,16 +340,20 @@ It is not the assurance system described above. In particular:
 
 These limitations are intentional documentation of the starting point, not accepted final behavior.
 
+A live standalone crosschain monitor would be a stronger hiring artifact than this fixture-only implementation. Additional prototype-only pages or polish do not close that gap. The next meaningful progress is the block-hash-bound vertical slice defined in the roadmap.
+
 ## Product acceptance criteria
 
 The product direction is satisfied only when:
 
 - a new engineer can identify the target protocol and evidence boundary within 30 seconds;
+- the default screen is a live, directed Ethereum and OP route topology rather than a generic health dashboard;
 - at least five ether.fi-specific assertions execute against real finalized-block data;
+- both route directions expose peers, effective libraries, DVN policy, rate limits, code identity, and coverage;
 - one assertion can be reproduced from raw RPC through CLI, API, and web with the same report hash;
 - a deliberately corrupted configuration creates a precise failure;
 - a provider failure or disagreement creates uncertainty rather than a false pass;
 - one real transaction bundle is simulated and produces a semantic before/after diff;
-- one replay is constructed from immutable evidence;
+- one real route or implementation change is reconstructed from immutable evidence;
 - every exported claim includes limitations;
 - the default production surface contains no invented healthy values.

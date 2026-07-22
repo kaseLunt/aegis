@@ -10,6 +10,7 @@ Aegis does not connect a wallet, request keys, sign transactions, or broadcast u
 
 The repository now distinguishes the current prototype from the full production target. Start with the [documentation index](docs/README.md), then use these documents as the design contract:
 
+- [Project selection decision](docs/PROJECT_SELECTION.md) - comparison with the evaluated alternatives and the accepted bridge-first release strategy.
 - [Product specification](docs/PRODUCT_SPEC.md) - users, Record/Rehearse/Rewind workflows, evidence language, scope, and acceptance criteria.
 - [Threat model](docs/THREAT_MODEL.md) - trust boundaries, failure semantics, forbidden inferences, and adversarial tests.
 - [Engineering specification](docs/ENGINEERING_SPEC.md) - target architecture, domain model, manifests, providers, finality, APIs, CLI, and verification strategy.
@@ -18,6 +19,8 @@ The repository now distinguishes the current prototype from the full production 
 - [Interview brief](docs/INTERVIEW_BRIEF.md) - an honest technical narrative and the decisions the project owner should be able to defend.
 
 The current application is a working prototype, not the completed assurance platform described by those specifications. It becomes the finished project only when the roadmap's final definition of done passes.
+
+The first hiring-ready release is positioned as **Aegis: ether.fi Change Assurance and weETH Route Readiness**. Its hero experience will be a live, directed Ethereum and OP route topology backed by real configuration evidence, one real change history, and one public proposal or parent-block retrospective governance rehearsal.
 
 ## Current prototype surfaces
 

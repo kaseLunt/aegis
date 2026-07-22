@@ -34,6 +34,18 @@ A source can explain architecture, state intended policy, provide code, or descr
 
 The bridge-hardening article describes a Kelp DAO incident as the motivating event and explicitly says ether.fi systems were not directly compromised. Aegis therefore labels any prose-derived replay a `documented_scenario`; it must not present the event as an ether.fi exploit unless independent evidence supports a different, precisely scoped claim.
 
+## Evaluated expansion references
+
+These sources informed the alternative-project comparison and later extension plan. They do not expand the first-release manifest.
+
+| Reference | Supported future direction | Boundary |
+| --- | --- | --- |
+| [Node operators guide](https://etherfi.gitbook.io/etherfi/node-operators/node-operators-guide) | Facts-only validator and operator attribution, protocol-subgraph discovery, and historical exposure context | Public metadata does not justify a composite operator risk score, infrastructure-correlation claim, or insurance conclusion |
+| [Liquid technical documentation](https://etherfi.gitbook.io/etherfi/liquid/technical-documentation) | Vault role, module, Merkle-policy, Accountant, queue, and rebalance verification | Public architecture does not justify return forecasts, market-regime assumptions, or optimization recommendations |
+| [Cash technical documentation](https://etherfi.gitbook.io/etherfi/cash/technical-documentation) | Exact onchain vault wiring, collateral, borrow, and spend-capacity explanation | Public contracts cannot establish issuer authorization, fraud decisions, processor behavior, or settlement outcome |
+
+The accepted selection and deferral rationale is recorded in [PROJECT_SELECTION.md](PROJECT_SELECTION.md).
+
 ## Upstream technical references
 
 | Reference | Design decision supported |
@@ -74,15 +86,21 @@ A research reference can enter an active expected-state manifest only after:
 7. passing, failing, missing-evidence, and boundary fixtures exist;
 8. the manifest change receives recorded review rather than being generated from observed production state.
 
-## Research backlog before live claims
+## Hiring-ready route research blockers
 
-- Pin the full current release commits rather than abbreviated prototype references.
-- Map each audited core invariant to the exact deployed implementation and ABI epoch.
-- Identify official governance, Safe, timelock, guardian, and revocation addresses from independent sources.
 - Build the Ethereum/OP directed-route manifest: EIDs, peers, endpoint contracts, libraries, DVNs, thresholds, confirmations, pause controls, and rate limits.
-- Resolve Cash v3 OP proxy topology and dependency graph; record any disagreement with older GitBook or archived deployment material.
+- Pin full current crosschain release commits and runtime code hashes rather than abbreviated prototype references.
+- Identify official route owners, delegates, roles, Safes, timelocks, guardians, and revocation addresses from independent sources.
 - Confirm provider independence and archive capability rather than treating different commercial labels as independent infrastructure.
 - Record a real governance or configuration change suitable for the first Rewind bundle.
-- Select a real, non-sensitive Safe transaction suitable for the first Rehearse acceptance test.
+- Select either a public unsigned proposal or a public historical Safe/timelock execution suitable for parent-block retrospective rehearsal.
 
-Until this backlog is complete, repository fixtures remain recorded demonstrations and every surface must say so.
+Until these route blockers are complete, repository fixtures remain recorded demonstrations and every surface must say so.
+
+## Later expansion research
+
+- Map each audited core invariant to the exact deployed implementation and ABI epoch.
+- Resolve Cash v3 OP proxy topology and dependency graph; record any disagreement with older documentation or archived deployment material.
+- Treat Liquid policy inspection and operator exposure context as later evidence families, never as forecasting or composite risk-score features.
+
+These later items do not block the hiring-ready route release and cannot substitute for it.

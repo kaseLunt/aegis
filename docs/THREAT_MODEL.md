@@ -127,6 +127,8 @@ The following shortcuts are specifically prohibited unless a future predicate su
 - A paused contract is not, by itself, evidence of an exploit or policy breach.
 - An implementation change is not, by itself, evidence of malicious behavior.
 - A deployed OFT endpoint is not proof that a route is active or correctly configured in both directions.
+- Deep liquidity, recent message traffic, or the absence of alerts is not proof that a route's security configuration matches policy.
+- A route-control `pass` does not prove the messaging provider, destination chain, sequencer, or settlement assumptions are safe.
 - A published four-of-four DVN description is not live configuration until the relevant contracts are decoded at an identified block.
 - A liquidatable account is not, by itself, a protocol failure.
 - Exchange-rate monotonicity cannot be assumed across a permitted negative rebase.
@@ -160,7 +162,10 @@ The production claim set is not complete until automated tests cover at least:
 11. a preflight invalidated by an intervening state change;
 12. a renderer attempting to hide `unknown`, `stale`, or `conflict`;
 13. factual and modeled replay events being mixed;
-14. report reproduction with byte-identical canonical JSON.
+14. a reciprocal peer becoming asymmetric;
+15. an explicit library reverting to inherited default configuration;
+16. one required DVN being removed or its threshold reduced;
+17. report reproduction with byte-identical canonical JSON.
 
 ## Disclosure policy
 

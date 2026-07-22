@@ -349,6 +349,23 @@ For every supported direction:
 
 Route deployment does not prove route activity. Activity requires reciprocal peer and effective configuration evidence.
 
+### First-release registry and renderer
+
+The hiring-ready route release prioritizes one Ethereum and OP bidirectional weETH route over broad registry coverage. It combines:
+
+- deployment code identity for every participating contract;
+- both directional peer and Endpoint ID relationships;
+- explicit send and receive libraries, including default-fallback detection;
+- effective send and receive ULN configuration;
+- required and optional DVNs, thresholds, and confirmations;
+- directional pause, role, owner, and delegate observations where applicable;
+- inbound and outbound pairwise rate-limit parameters;
+- configuration-change events required for one real before and after history.
+
+The primary web renderer is a directed topology. Nodes represent chain-scoped contract identities; edges represent one configured direction. An edge result comes only from canonical engine output and links to the generic evidence drawer. The renderer may show operational consequence and coverage, but it cannot compute a separate route-health verdict.
+
+Core staking, Cash, Liquid, operator, and wider chain assertions remain valid extension targets. They do not precede this first route slice.
+
 ### Cash canonical wiring
 
 - CashModule dependencies equal the pinned manifest;
@@ -378,6 +395,7 @@ A liquidatable user account is account risk, not a protocol invariant failure.
 ```ts
 interface PreflightRequest {
   chainId: number;
+  artifactOrigin: "public_unsigned_proposal" | "retrospective_rehearsal";
   tx?: {
     from: `0x${string}`;
     to: `0x${string}`;
@@ -387,8 +405,27 @@ interface PreflightRequest {
   safeBatch?: SafeTransactionBundle;
   at: { kind: "finalized" } | { kind: "block"; number: string; hash?: string };
   manifestVersion: string;
+  retrospectiveSource?: {
+    transactionHashes: Array<`0x${string}`>;
+    parentBlock: { number: string; hash: `0x${string}` };
+  };
 }
 ```
+
+### Acceptance artifact
+
+The hiring-ready release accepts either a public unsigned proposal or an exact reconstruction of a public historical Safe or timelock execution.
+
+For `retrospective_rehearsal`:
+
+- reconstruct sender, target, calldata, value, nonce, and batch order exactly;
+- select the canonical parent block of the first executed transaction as the simulation boundary;
+- exclude receipts, emitted events, post-state values, and later transactions from all prediction inputs;
+- generate and hash the predicted before and after report before comparison;
+- compare the prediction with the separately acquired execution receipt and post-state evidence;
+- report any divergence without rewriting the original predicted artifact.
+
+This validates decoding and state-transition behavior with public evidence while preserving the distinction between retrospective validation and a prospective approval workflow.
 
 ### Evaluation order
 
@@ -623,3 +660,13 @@ The target architecture is credible when one complete vertical slice demonstrate
 10. documented limitations and threat assumptions.
 
 Additional breadth must not precede this vertical slice.
+
+The first hiring-ready release adds the following integration gate on top of the architecture gate:
+
+1. both Ethereum and OP route directions use real finalized evidence;
+2. code identity, peers, effective libraries, DVNs, thresholds, controls, and rate limits are inspectable;
+3. one real configuration transaction is indexed into a deterministic before and after diff;
+4. one public unsigned proposal or exact retrospective Safe/timelock bundle is decoded, simulated at pre-execution state, and evaluated;
+5. one corrupted fork produces only the expected narrow failures;
+6. one provider disagreement produces `conflict` across CLI, API, and web;
+7. the directed topology contains no verdict logic outside the shared engine.

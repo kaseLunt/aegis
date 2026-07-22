@@ -5,13 +5,13 @@ Last updated: 2026-07-21
 
 ## The honest headline
 
-Aegis is an independent protocol flight recorder designed around ether.fi. It records safety-critical public configuration at exact finalized blocks, reconstructs how that state changed, and rehearses supported proposed transactions against the same explicit invariants.
+Aegis is an independent change-assurance and route-readiness system designed around ether.fi. Its hiring-ready route release records the Ethereum and OP weETH route configuration at exact finalized blocks, reconstructs how that state changed, and rehearses supported proposed transactions against the same explicit assertions.
 
 The current repository contains a strong deterministic prototype and the specification for the production evidence pipeline. Do not present target features as implemented until their roadmap exit gates pass.
 
 ## Thirty-second pitch
 
-> Ether.fi exposes meaningful safety properties onchain, but verifying them currently requires contract-specific knowledge, careful historical RPC reads, and a disciplined distinction between intended and observed state. I built Aegis to make that verification reproducible. It records narrow invariants at exact blocks, rewinds configuration changes, and rehearses proposed transactions. Every answer carries its evidence and limitations; missing or conflicting data can never turn green.
+> Ether.fi publicly hardened weETH routes through explicit libraries, DVNs, and pairwise limits, but verifying the deployed state still requires contract-specific, bidirectional reads at exact blocks. I built Aegis to make that verification reproducible. It records the Ethereum and OP route controls, rewinds real configuration changes, and rehearses proposed Safe transactions. Every answer carries its evidence and limitations; missing or conflicting data can never turn green.
 
 ## Two-minute technical explanation
 
@@ -28,6 +28,8 @@ This project is not a generic dashboard with an ether.fi logo. Ether.fi is a goo
 - weETH crosschain routes with LayerZero libraries, DVNs, roles, pause state, and pairwise rate limits.
 
 Those surfaces create a real operational question: does production match the configuration engineers believe they deployed, and what will a proposed change do to that assertion set?
+
+The initial release answers that question through the most legible surface: one real, bidirectional Ethereum and OP weETH route. Wider staking, Cash, Liquid, and operator coverage is deliberately deferred until that route survives the complete evidence and adversarial pipeline.
 
 ## The value, even if ether.fi never adopts it
 
@@ -72,7 +74,7 @@ This is stronger than pretending every line was typed manually. The proof of com
 
 ### 0:00-0:45 - Establish the contract
 
-Open Record on a supported Ethereum/OP target. Say exactly what the selected invariant claims and point to source mode, finalized block hash, manifest, engine version, coverage, and report hash.
+Open the directed Ethereum and OP topology. Select one direction, say exactly what its assertions claim, and point to source mode, finalized block hashes, manifest, engine version, coverage, and report hash.
 
 ### 0:45-1:45 - Follow evidence
 
@@ -80,25 +82,31 @@ Open the evidence drawer for code identity or DVN quorum. Show address, method, 
 
 ### 1:45-2:30 - Break it deliberately
 
-Run a recorded fixture with an unexpected implementation or removed DVN. Then inject provider disagreement. The first should fail the narrow predicate; the second should become `conflict`, never pass.
+Run a local fork or recorded fixture with an unexpected implementation, wrong peer, default library, or removed DVN. Then inject provider disagreement. The first should fail only the affected predicates; the second should become `conflict`, never pass.
 
 ### 2:30-3:40 - Rehearse
 
-Load a supported Safe transaction. Show code-identity-aware decoding, exact simulation boundary, predicted configuration diff, affected invariants, expiry, and explicit non-guarantees.
+Load a public unsigned Safe proposal or a historical execution reconstructed at its parent block. Show code-identity-aware decoding, exact simulation boundary, predicted configuration diff, affected invariants, expiry, and explicit non-guarantees. For a retrospective case, show that the prediction hash existed before the separate actual-result comparison.
 
 ### 3:40-4:35 - Rewind
 
-Open one real configuration change or incident bundle. Select an event, show its causal parents and provenance, then enable a counterfactual policy. Emphasize that the factual timeline did not change.
+Open one real route or implementation configuration change. Show its transaction, initiator, executor, before and after values, affected route edges, assertion transitions, and evidence provenance.
 
 ### 4:35-5:00 - Reproduce
 
 Export the canonical report, run the equivalent CLI command, and show the same hash. Close with one unsupported property visible in the coverage matrix.
+
+After milestone 5, an extended demo may add a separately labeled counterfactual policy run. It is not part of the hiring-ready route-release gate.
 
 ## Likely questions and defensible answers
 
 ### Why not just use a block explorer or Dune?
 
 Explorers expose transactions and state; Dune is strong for indexed analytics. Aegis adds a reviewed expected-state manifest, implementation-aware decoding, block-consistent multi-provider evidence, typed uncertainty, deterministic predicate evaluation, transaction preflight, and content-addressed reports. It is an assurance workflow, not a charting layer.
+
+### Why not build a crosschain health monitor?
+
+The directed topology deliberately borrows the monitor's immediate legibility, but "health" is too vague for the conclusion. Aegis states exactly which peer, library, DVN, role, or limit matched which reviewed expectation at which block. It also reconstructs configuration changes and rehearses proposed ones using the same assertions. Liquidity, traffic, and lack of alerts cannot silently become a safety verdict.
 
 ### Why is the manifest trustworthy?
 
@@ -146,7 +154,7 @@ The hardest problem is epistemic, not visual: preventing stale, conflicting, dec
 
 ### What would you do differently with more time?
 
-Increase independent review of each protocol predicate, add local-fork tracing for sensitive Safe batches, strengthen manifest signing and review workflows, and expand route coverage only after the first two routes remain reliable under adversarial provider tests.
+Increase independent review of each route predicate, add local-fork tracing for sensitive Safe batches, strengthen manifest signing and review workflows, and expand route coverage only after Ethereum and OP remain reliable under adversarial provider tests. After that, add facts-only operator exposure, Liquid policy inspection, and exact Cash capacity views without introducing composite risk scores or recommendations.
 
 ## Subtle exclusions worth volunteering
 
@@ -165,13 +173,14 @@ These demonstrate domain judgment better than a long feature list:
 
 Use this order when sharing the code:
 
-1. `docs/PRODUCT_SPEC.md` - the user and product contract;
-2. `docs/THREAT_MODEL.md` - what results can and cannot mean;
-3. `docs/ENGINEERING_SPEC.md` - schemas, boundaries, and target architecture;
-4. one invariant and its adversarial fixture;
-5. canonical report generation;
-6. one renderer using the shared schema;
-7. `docs/ROADMAP.md` - honest implementation status and exit gates.
+1. `docs/PROJECT_SELECTION.md` - why this project and why the bridge-first synthesis;
+2. `docs/PRODUCT_SPEC.md` - the user and product contract;
+3. `docs/THREAT_MODEL.md` - what results can and cannot mean;
+4. `docs/ENGINEERING_SPEC.md` - schemas, boundaries, and target architecture;
+5. one route assertion and its adversarial fixture;
+6. canonical report generation;
+7. the directed topology consuming the shared schema;
+8. `docs/ROADMAP.md` - honest implementation status and exit gates.
 
 Avoid starting with component code. The important story is evidence becoming a constrained claim.
 
@@ -180,6 +189,10 @@ Avoid starting with component code. The important story is evidence becoming a c
 ### Accurate today
 
 > Built and deployed a deterministic TypeScript prototype for an ether.fi-focused protocol flight recorder, including evidence-oriented health checks, fixed-point transaction modeling, causal incident replay, canonical report hashes, property tests, and a production architecture and threat model.
+
+### Use after the hiring-ready route gate passes
+
+> Built Aegis, an evidence-first TypeScript assurance system that verifies ether.fi's bidirectional Ethereum and OP weETH route controls at finalized blocks, reconstructs configuration changes, and preflights Safe transactions with redundant RPC evidence, reorg-safe indexing, canonical reports, and adversarial fork tests.
 
 ### Use only after the final definition of done passes
 
