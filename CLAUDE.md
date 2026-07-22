@@ -1,0 +1,54 @@
+# Aegis — Protocol Flight Recorder (ether.fi)
+
+Independent Record / Rehearse / Rewind assurance workbench for ether.fi's public control and
+exposure surfaces. Currently **milestone 0** (deterministic prototype); target defined in `docs/`.
+
+## Authority (read before claiming anything)
+- **Product canon:** `docs/` — hierarchy in `docs/README.md` (threat model wins on claim strength;
+  engineering spec on machine behavior; product spec on UX language; `docs/ROADMAP.md` on status).
+- **Execution cockpit:** `roadmap/` — derives from `docs/`; on conflict `docs/` wins
+  (see `roadmap/decisions/D-003-docs-canon-authority.md`).
+- No UI label, commit message, or status note may claim more than the canonical result schema and
+  current milestone allow. Describe the implementation by the highest completed milestone.
+
+<!-- BEGIN control-plane session protocol (injected by the control-plane skill) -->
+
+## Project Context (control plane)
+
+This project uses a repo-native control plane. **Read `roadmap/VISION.md` first**, then
+`roadmap/SYSTEM.md` (how the project tracks itself). **Intent is stored; status is derived from evidence.**
+
+## Session Protocol
+
+### On Session Start
+Read, in order: `roadmap/STATUS.md` (current task, blockers) → `roadmap/ROADMAP.md` (active phase)
+→ `roadmap/SYSTEM.md` (the rules) → the active work item under `roadmap/work/`.
+
+### During Work — capture is MANDATORY, continuously (not at exit)
+The instant something outlives the current task, write it to its home **before continuing** — never
+leave a first-class idea living only in chat. The user often just closes the terminal; nothing runs
+after that, so capture as you go.
+- future feature / tangent → `roadmap/ideas/IDEA-*.md` (`status: inbox` for a raw dump to triage later)
+- reusable knowledge / finding → `roadmap/insights/INS-*.md` (with `informs:`)
+- chosen direction + rationale → `roadmap/decisions/D-*.md`
+- blocker → `roadmap/STATUS.md`; plan-threatening risk → `roadmap/risks/`
+
+Agents may **create** ideas/insights freely; only a phase review may **promote** them (HITL barrier).
+
+### On Session End — harvest safety net
+Scan the session for ideas/insights/decisions/blockers/**future-progress** not yet filed; create the
+missing objects in `roadmap/{ideas,insights,decisions,risks}/`; update `roadmap/STATUS.md` on
+transitions; give a one-line sync summary. No narrative session-dumps.
+
+## Git Rules
+- **NEVER add Co-Authored-By lines to commits.** No AI/agent attribution in git history — trailer,
+  author field, or body. Ever. (See `roadmap/decisions/D-002-no-ai-attribution.md`.)
+- Conventional commits (feat/fix/refactor/docs); status updates ride with the work, on transitions.
+
+## Autonomy Rules
+- **Proceed without asking:** the active work item, queued work, bug fixes, tests, docs, and capturing ideas/insights.
+- **Ask first:** new architectural decisions, reprioritizing phases, editing `VISION.md`, new dependencies, promoting an idea into committed work.
+
+Full model: `roadmap/RULES.md` and `roadmap/SYSTEM.md`.
+
+<!-- END control-plane session protocol -->

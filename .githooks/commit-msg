@@ -1,0 +1,15 @@
+#!/bin/sh
+# No AI/agent attribution in git history.
+# Rule of record: roadmap/decisions/D-002-no-ai-attribution.md
+# Blocks AI co-authors and "Generated with <AI>" / 🤖 footers; human co-authors are allowed.
+# Enable per clone with:  git config core.hooksPath .githooks
+msg_file="$1"
+
+if grep -qiE 'co-authored-by:[[:space:]]*[^<]*(claude|anthropic|gpt|openai|chatgpt|copilot|codex|gemini|cursor|[[:space:]]bot)|🤖|generated with[[:space:]]*\[?(claude|chatgpt|copilot|codex|ai)' "$msg_file"; then
+  echo "" >&2
+  echo "✖ Commit blocked: no AI/agent attribution in git history." >&2
+  echo "  Remove Co-Authored-By / 'Generated with <AI>' / 🤖 lines naming an AI from the message." >&2
+  echo "  Rule of record: roadmap/decisions/D-002-no-ai-attribution.md" >&2
+  exit 1
+fi
+exit 0
