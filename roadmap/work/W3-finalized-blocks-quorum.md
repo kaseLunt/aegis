@@ -13,6 +13,7 @@ allowed_paths:
   - lib/**
   - tests/**
   - data/recordings/**
+  - .github/workflows/control-plane.yml
   - roadmap/work/W3-finalized-blocks-quorum.md
 invalidated_by:
   - lib/aegis/chain/**

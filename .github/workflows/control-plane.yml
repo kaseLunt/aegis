@@ -15,15 +15,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+      # Every check reports independently (external audit #2: sequential steps skipped
+      # the scope review in four consecutive red runs, hiding a second failure class).
       - name: Validate control plane (roadmap/)
         run: python roadmap/tools/doctor.py
       - name: Gate mutation selftest (doctor + scope gate + fingerprints + claims)
+        if: ${{ !cancelled() }}
         run: python roadmap/tools/selftest.py
       - name: Base-to-head scope review
-        if: github.event_name == 'push'
+        if: ${{ !cancelled() && github.event_name == 'push' }}
         run: python roadmap/tools/scope_diff.py "${{ github.event.before }}" "${{ github.sha }}"
       - name: Base-to-head scope review (PR)
-        if: github.event_name == 'pull_request'
+        if: ${{ !cancelled() && github.event_name == 'pull_request' }}
         run: python roadmap/tools/scope_diff.py "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}"
 
   product:
