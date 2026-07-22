@@ -33,7 +33,8 @@ const str = (v: unknown): string => (v === undefined || v === null ? "" : String
 const cmpString = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 // Spec clarification 7: minimal unsigned decimals compare numerically via length-then-lex.
-const cmpDecimal = (a: string, b: string): number =>
+// Exported as the single decimal-string comparator (manifest applicability reuses it).
+export const cmpDecimal = (a: string, b: string): number =>
   a.length !== b.length ? a.length - b.length : cmpString(a, b);
 
 type KeyPart = [value: string, mode: "s" | "d"];

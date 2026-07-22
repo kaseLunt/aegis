@@ -61,9 +61,13 @@ npm test
 ```
 
 ## Handoff
-- next: TDD slice 1 — tests/manifest.test.ts RED (schema/hash/trust/applicability), then
-  lib/aegis/manifest/{schema,trust}.ts GREEN. Reuse jcsSerialize + CanonicalizationError
-  patterns from lib/aegis/report/canonical.
+- next: slice 1 DONE (13 tests: content addressing excl. embedded hash, integrity, trust
+  set-membership incl. fabricated-reviewer adversarial case, applicability windows/chains;
+  trust-everything mutation kills 3 tests). Remaining: manifest fixture files under
+  data/manifests/ + loader-from-bytes (binary read, INS-001); property tests (key-order
+  hash invariance via fast-check, reviewer-field non-authentication sweep); wire
+  policyTrust evaluation output shape to the report payload's policyTrust block; W1 Codex
+  review disposition may add work here.
 - read_first: docs/ENGINEERING_SPEC.md §Manifest model + §Manifest trust root;
   docs/THREAT_MODEL.md manifest-poisoning row + adversarial tests 6 and 30;
   lib/aegis/report/canonical.ts (delegate, never duplicate).
@@ -73,4 +77,5 @@ npm test
   contract, same error class is fine).
 
 ## Evidence
-(pending)
+- 2026-07-22: TDD slice 1 — RED 13 (module missing), GREEN 13/13; full suite 72/72; lint
+  clean; trust-everything mutation killed by 3 tests incl. adversarial test 30 form.
