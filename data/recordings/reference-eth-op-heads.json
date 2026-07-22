@@ -1,0 +1,86 @@
+{
+  "recordingId": "reference-eth-op-heads",
+  "capturedAt": "2026-07-20T23:59:59Z",
+  "responses": [
+    {
+      "providerId": "alchemy",
+      "chainId": 1,
+      "method": "eth_getBlockByNumber",
+      "params": ["finalized", false],
+      "result": {
+        "chainId": 1,
+        "number": "25577369",
+        "hash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7",
+        "parentHash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "timestamp": "2026-07-20T23:59:59Z",
+        "finality": "finalized"
+      },
+      "rawResponseSha256": "sha256:f00e2e23c4c32272f529ff072cfff918c544d298c996447f199545040fdeda62",
+      "capturedAt": "2026-07-20T23:59:59Z"
+    },
+    {
+      "providerId": "quicknode",
+      "chainId": 1,
+      "method": "eth_getBlockByNumber",
+      "params": ["finalized", false],
+      "result": {
+        "chainId": 1,
+        "number": "25577369",
+        "hash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7",
+        "parentHash": "0x1111111111111111111111111111111111111111111111111111111111111111",
+        "timestamp": "2026-07-20T23:59:59Z",
+        "finality": "finalized"
+      },
+      "rawResponseSha256": "sha256:f00e2e23c4c32272f529ff072cfff918c544d298c996447f199545040fdeda62",
+      "capturedAt": "2026-07-20T23:59:59Z"
+    },
+    {
+      "providerId": "alchemy",
+      "chainId": 10,
+      "method": "eth_getBlockByNumber",
+      "params": ["finalized", false],
+      "result": {
+        "chainId": 10,
+        "number": "154496611",
+        "hash": "0xd0d2fac2a7226ae8f2cb37ab71a697d9202422c771782c5eb0e9ff8a324f5185",
+        "parentHash": "0x2222222222222222222222222222222222222222222222222222222222222222",
+        "timestamp": "2026-07-21T00:00:03Z",
+        "finality": "finalized"
+      },
+      "rawResponseSha256": "sha256:ab39b318367f9a00cfee988f1b736182aa5f862c25e55e6030eacbb63e7722c2",
+      "capturedAt": "2026-07-21T00:00:03Z"
+    },
+    {
+      "providerId": "quicknode",
+      "chainId": 10,
+      "method": "eth_getBlockByNumber",
+      "params": ["latest", false],
+      "result": {
+        "chainId": 10,
+        "number": "154496611",
+        "hash": "0xd0d2fac2a7226ae8f2cb37ab71a697d9202422c771782c5eb0e9ff8a324f5185",
+        "parentHash": "0x2222222222222222222222222222222222222222222222222222222222222222",
+        "timestamp": "2026-07-21T00:00:03Z",
+        "finality": "unconfirmed"
+      },
+      "rawResponseSha256": "sha256:1e16f0722c9857aa31adfaf21f307fff2eec718816f0b435895adb83d82df204",
+      "capturedAt": "2026-07-21T00:00:04Z"
+    },
+    {
+      "providerId": "quicknode",
+      "chainId": 10,
+      "method": "eth_getBlockByNumber",
+      "params": ["154496599", false],
+      "result": {
+        "chainId": 10,
+        "number": "154496599",
+        "hash": "0x3333333333333333333333333333333333333333333333333333333333333333",
+        "parentHash": "0x4444444444444444444444444444444444444444444444444444444444444444",
+        "timestamp": "2026-07-20T23:59:39Z",
+        "finality": "confirmations"
+      },
+      "rawResponseSha256": "sha256:a0fc25cf92c1f2e60c0c98a6b858e34885b6b5e1aa59d1b87494ba2cca48e515",
+      "capturedAt": "2026-07-21T00:00:05Z"
+    }
+  ]
+}

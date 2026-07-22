@@ -82,11 +82,15 @@ npm test
   FinalityDowngrade record, target-mismatch and underflow fail closed;
   selectTimeAligned: asOf = oldest head via fixed-width UTC-Z lexicographic compare,
   max-by-number pick per chain from head+candidates, boundaries sorted by chainId,
-  candidates cannot introduce chains). Next: slice 3 — adapter interface +
-  recorded-fixture adapter (data/recordings/**, binary IO per INS-001) +
-  Alchemy/QuickNode adapter configs (no secrets; provider identity + capability
-  declarations only), then wire selection→quorum→policyTrust into one engine pass over
-  recorded fixtures.
+  candidates cannot introduce chains). Slice 3a DONE (ChainAdapter interface +
+  loadRecordingBytes: strict UTF-8, per-response JCS-sha256 integrity, typed failures;
+  recordedAdapter: declared_absent finalized tag → null (never a guess), missing
+  recording → typed recording_missing; providers.ts: Alchemy+QuickNode declared-only
+  capabilities, keyEnvVar names, QUORUM_PAIR_1; sealed reference-eth-op-heads bundle).
+  Next: slice 3b — wire selection→quorum→policyTrust into one engine pass over the
+  recorded bundle (two-provider ETH agreement; OP mixed-mode alchemy-finalized vs
+  quicknode-fallback comparison semantics need a decision: compare at matching numbers
+  only), emitting observation boundaries + evidence shapes for W1's payload.
 - read_first: docs/ENGINEERING_SPEC.md §Block selection and finality + §Provider quorum
   and conflicts + §Evidence acquisition; roadmap/research/WR3/provider-matrix.md §5
   (quorum pairs + do-not-pair rationale); docs/THREAT_MODEL.md provider rows;
@@ -113,3 +117,11 @@ npm test
   multi-chain selection (asOf = oldest head, per-chain max ≤ asOf, sorted, never atomic;
   no-eligible-block / duplicate-head / stray-candidate / single-chain typed failures) +
   25-run order-invariance property. Full suite 190/190; lint clean.
+- 2026-07-22: TDD slice 3a — RED (modules + fixture missing), GREEN 12/12: recording
+  loader (integrity per response, CRLF-immune, tamper fails closed, typed
+  invalid_utf8/malformed_json); recorded adapter (deterministic replay, declared_absent
+  → null per WR3 P-Q2, recording_missing typed, composes with both selection paths);
+  provider configs (distinct administrative domains, declared-or-absent capabilities,
+  env-var names with a no-key-material regex test). Bundle sealed (5 responses,
+  reference-scenario provenance documented in data/recordings/README.md). Full suite
+  202/202; lint clean.
