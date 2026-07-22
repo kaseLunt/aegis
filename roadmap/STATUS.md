@@ -14,8 +14,9 @@ updated: 2026-07-22
 
 ## Current task (WIP = 1 per agent, [[D-006]])
 **W3 — finalized-block selection + quorum/conflict semantics + RPC adapters** — fable-main
-(serial writer). Slice 1 (pure quorum evaluator) in progress. Codex conformance review of
-the W2 delta (f7e6dbd) running in background — disposition on landing.
+(serial writer). Slice 1 (pure quorum evaluator) DONE; slice 2 (block selection) next.
+Codex W2-delta review landed and dispositioned: 3 P1s fixed TDD same-day
+(roadmap/reviews/W2-delta-codex-review.md); suite 176/176.
 Lanes: WR1/WR2/WR3/WR6 closed. WR4 + WR5 delivered, critiqued (Codex), dispositions
 applied; both open with round-2 scopes, deferred to M3/M4 planning (several EXTEND items
 need real archive/trace providers). W0C parked pending owner action (Blockers).
@@ -40,7 +41,7 @@ need real archive/trace providers). W0C parked pending owner action (Blockers).
 
 ## Next up
 1. W3 slices 2–3 (block selection; adapter interface + recorded fixtures + provider configs).
-2. Codex W2-delta review disposition when it lands; W4 after W2+W3.
+2. W4 (identity adapters + ABI registry) after W3.
 2. Manifest-owner open items: live rate-limit value (3k vs 10k weETH/4h), executor pin,
    historical setPeer tx. WR4/WR5 round 2 at M3/M4 planning.
 3. R-001 residual (owner, low urgency): enable branch protection requiring the "Control plane"

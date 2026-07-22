@@ -20,7 +20,7 @@ invalidated_by:
   - roadmap/work/W2-manifest-trust.md
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:714dccf69c6dedc6
+evidence_fingerprint: sha256:5193ff42e0bd2d97
 ---
 
 # W2 — Manifest model + trust root
@@ -102,3 +102,9 @@ npm test
   set-member dedup 6 tests; test-quality gaps closed (author-only/reviewers-only sweeps,
   unicode, tamper-with-approved-hash e2e, fixture trust eval, deterministic mutators).
   Final: `npm test` 144/144, lint clean, doctor OK.
+- 2026-07-22: Codex cross-vendor review of the delta (roadmap/reviews/
+  W2-delta-codex-review.md): 3 P1s, all verified via RED tests then fixed same-day —
+  container/component type gates (invalid_field_type; coercion class killed), depth cap
+  swept across validateReport/validateReportStructure/normalizeReport, applicability
+  boundary-kind + environment validation. 17 new tests; suite 176/176. Clean per Codex:
+  approved-hash membership, invalid-byte anchoring.

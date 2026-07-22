@@ -424,8 +424,11 @@ function validateStrictSchemaPhase(p: JsonObject): void {
 }
 
 // Full validation for production payloads: structural schema, strict schema (lengths,
-// identifiers, enums), referential integrity, canonical form.
+// identifiers, enums), referential integrity, canonical form. Guards the I-JSON domain
+// (incl. the nesting cap) FIRST — every exported recursive entry point must reject
+// over-deep input typed before any unguarded recursion runs (Codex W2-delta review F2).
 export function validateReport(payload: unknown): void {
+  assertJsonDomain(payload);
   if (!isObject(payload)) {
     fail("schema_validation", "missing_mandatory_field", "/", "payload is not an object");
   }
@@ -438,6 +441,7 @@ export function validateReport(payload: unknown): void {
 
 // Runs the three phases against the ORIGINAL payload (paths refer to input positions).
 export function validateReportStructure(payload: unknown): void {
+  assertJsonDomain(payload);
   if (!isObject(payload)) {
     fail("schema_validation", "missing_mandatory_field", "/", "payload is not an object");
   }
@@ -449,8 +453,10 @@ export function validateReportStructure(payload: unknown): void {
 
 // Domain normalization (spec §Canonical array rules + v1.2 clarifications). Operates on a
 // structural clone; semantic-order arrays and unregistered open-typed subtrees (e.g.
-// decodedResult) are never reordered.
+// decodedResult) are never reordered. Domain guard first: structuredClone recursion is
+// unguarded and must never see input past the nesting cap.
 export function normalizeReport(payload: unknown): unknown {
+  assertJsonDomain(payload);
   const p = structuredClone(payload);
   if (!isObject(p)) return p;
 

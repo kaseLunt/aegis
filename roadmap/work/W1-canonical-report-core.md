@@ -20,7 +20,7 @@ invalidated_by:
   - roadmap/work/W1-canonical-report-core.md
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:83adcb7d94a2c1f1
+evidence_fingerprint: sha256:ee8f8ad714b03ca0
 ---
 
 # W1 — Canonical report core

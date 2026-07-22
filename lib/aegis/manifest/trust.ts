@@ -52,6 +52,15 @@ function requireAddress(path: string, v: unknown): void {
 function requireDecimal(path: string, v: unknown): void {
   if (typeof v !== "string" || !DECIMAL_STRICT.test(v)) bad("noncanonical_unsigned_decimal", path, String(v));
 }
+// Codex W2-delta review F1: wrong container/component types must be typed failures, never
+// coerced (String(["finality"]) === "finality") or silently defaulted ([] fallbacks).
+function requireString(path: string, v: unknown): void {
+  if (typeof v !== "string") bad("invalid_field_type", path, typeof v);
+}
+function requireArray(path: string, v: unknown): unknown[] {
+  if (!Array.isArray(v)) bad("invalid_field_type", path, typeof v);
+  return v as unknown[];
+}
 function requireUniqueMembers(path: string, arr: unknown[], key: (v: unknown) => string): void {
   const seen = new Set<string>();
   for (const v of arr) {
@@ -128,6 +137,10 @@ export function loadManifest(raw: unknown): LoadedManifest {
   if (raw.contentHash === undefined) {
     throw new ManifestError("missing_mandatory_field", "/contentHash", "immutable content hash is required");
   }
+  for (const k of ["schemaVersion", "manifestVersion", "protocol", "environment", "author", "createdAt"] as const) {
+    requireString(`/${k}`, raw[k]);
+  }
+  requireArray("/reviewers", raw.reviewers).forEach((r, i) => requireString(`/reviewers/${i}`, r));
   if (!Array.isArray(raw.chainIds) || raw.chainIds.length < 1) {
     throw new ManifestError("missing_mandatory_field", "/chainIds", "at least one chain required");
   }
@@ -138,15 +151,19 @@ export function loadManifest(raw: unknown): LoadedManifest {
   // Set-like string fields: members must be strings (mixed types would tie under String
   // coercion in normalizeManifest's sort, making the hash input-order-dependent), unique.
   for (const field of ["invariantIds", "uncovered"] as const) {
-    const arr = Array.isArray(raw[field]) ? (raw[field] as unknown[]) : [];
+    const arr = requireArray(`/${field}`, raw[field]);
     arr.forEach((v, i) => {
       if (typeof v !== "string") bad("invalid_set_member", `/${field}/${i}`, typeof v);
     });
     requireUniqueMembers(`/${field}`, arr, (v) => String(v));
   }
   requireSha256("/contentHash", raw.contentHash); // shape-check the embedded hash
-  const policyRefs = Array.isArray(raw.policyRefs) ? raw.policyRefs : [];
-  policyRefs.forEach((r, i) => requireSha256(`/policyRefs/${i}/contentHash`, obj(r).contentHash));
+  const policyRefs = requireArray("/policyRefs", raw.policyRefs);
+  policyRefs.forEach((r, i) => {
+    if (!isObject(r)) bad("invalid_field_type", `/policyRefs/${i}`, typeof r);
+    for (const k of ["kind", "id", "version"] as const) requireString(`/policyRefs/${i}/${k}`, obj(r)[k]);
+    requireSha256(`/policyRefs/${i}/contentHash`, obj(r).contentHash);
+  });
   // policyRefs are a set keyed by (kind, id, version): duplicate identities are rejected
   // rather than sorted, so normalizeManifest's sort key is always a total order and two
   // refs differing only in contentHash cannot ride on input order.
@@ -160,7 +177,9 @@ export function loadManifest(raw: unknown): LoadedManifest {
     for (const k of TARGET_MANDATORY) {
       if (t[k] === undefined) throw new ManifestError("missing_mandatory_field", `/targets/${i}/${k}`);
     }
-    if (!IDENTITY_STRATEGIES.includes(String(t.identityStrategy) as (typeof IDENTITY_STRATEGIES)[number])) {
+    requireString(`/targets/${i}/targetId`, t.targetId);
+    requireString(`/targets/${i}/identityStrategy`, t.identityStrategy);
+    if (!IDENTITY_STRATEGIES.includes(t.identityStrategy as (typeof IDENTITY_STRATEGIES)[number])) {
       throw new ManifestError("invalid_enum_member", `/targets/${i}/identityStrategy`, String(t.identityStrategy));
     }
     requireAddress(`/targets/${i}/address`, t.address);
@@ -169,14 +188,19 @@ export function loadManifest(raw: unknown): LoadedManifest {
     if (typeof t.chainId !== "number" || !Number.isInteger(t.chainId)) bad("invalid_chain_id", `/targets/${i}/chainId`, String(t.chainId));
   });
   requireUniqueMembers("/targets", raw.targets, (t) => String(obj(t).targetId));
-  // Validity window: structure, minimal decimals, and from <= to per chain.
+  // Validity window: structure, minimal decimals, integer chain IDs, from <= to per
+  // chain. A non-object validity is invalid — never a silent window-free manifest; a
+  // fractional chainId is invalid — never a silently non-matching (ignored) bound.
+  if (!isObject(raw.validity)) bad("invalid_validity_window", "/validity", typeof raw.validity);
   const validity = obj(raw.validity);
   for (const end of ["fromBlock", "toBlock"] as const) {
     const b = validity[end];
     if (b === null || b === undefined) continue;
     if (!isObject(b)) { bad("invalid_validity_window", `/validity/${end}`); }
     else {
-      if (typeof b.chainId !== "number") bad("invalid_chain_id", `/validity/${end}/chainId`, String(b.chainId));
+      if (typeof b.chainId !== "number" || !Number.isInteger(b.chainId)) {
+        bad("invalid_chain_id", `/validity/${end}/chainId`, String(b.chainId));
+      }
       requireDecimal(`/validity/${end}/number`, b.number);
     }
   }
@@ -302,6 +326,16 @@ export function checkApplicability(
   boundary: ExecutionBoundaryLike,
   deploymentEnvironment: string,
 ): ApplicabilityResult {
+  if (typeof deploymentEnvironment !== "string" || deploymentEnvironment.length === 0) {
+    bad("invalid_environment", "/deploymentEnvironment", typeof deploymentEnvironment);
+  }
+  // Codex W2-delta review F3: the boundary must BE an execution block — a snapshot or
+  // consensus boundary carrying a block-shaped field must not be interpreted as one, and
+  // missing structure is a typed failure, never a raw TypeError.
+  if (!isObject(boundary) || boundary.kind !== "execution_block" || !isObject(boundary.block)) {
+    bad("invalid_observation_boundary", "/boundary",
+      isObject(boundary) ? String(boundary.kind) : String(boundary));
+  }
   if (typeof boundary.block.chainId !== "number" || !Number.isInteger(boundary.block.chainId)) {
     bad("invalid_chain_id", "/boundary/block/chainId", String(boundary.block.chainId));
   }
