@@ -46,10 +46,12 @@ python roadmap/tools/doctor.py
 ```
 
 ## Handoff
-- next: history rewritten (commit-tree rebuild, identities only, dates/trees/messages
-  preserved); remaining: identity tooth in pre-commit (negative-test), R-002 capture,
-  re-stamp W0/W0A/W0B (githooks changed), global useConfigOnly, delete+recreate GitHub repo,
-  push, API-verify zero occurrences.
+- next: DONE: rewrite, identity tooth (negative-tested), R-002, re-stamps, global
+  useConfigOnly, force-push (browsable repo clean; API confirms only personal email on main).
+  REMAINING (owner-blocked): old commits still fetchable by direct SHA from GitHub cache --
+  owner either runs `gh auth refresh -h github.com -s delete_repo` (then agent deletes) or
+  deletes via web Settings -> Danger Zone; then agent recreates `aegis` public, pushes,
+  re-verifies zero occurrences, closes this item.
 - read_first: .githooks/pre-commit, roadmap/risks/R-002-*.md, this file.
 - hazards: the tooth allowlist must NEVER contain the work domain string (it ships in a
   public file — the tooth must not leak the secret it guards); commit SHAs cited in roadmap
@@ -57,4 +59,10 @@ python roadmap/tools/doctor.py
   still hold pre-rewrite history until next authenticated push.
 
 ## Evidence
-(pending — filled at close)
+- 2026-07-21: all 12 commits rebuilt via git commit-tree; `git log --format='%ae %ce' --all`
+  → only kaselunt.dev@gmail.com; no file contents ever contained the domain (git grep, all revs).
+- 2026-07-21: identity tooth blocked user.email=blocked@example.com (negative test).
+- 2026-07-21: forced update pushed (45496b1 -> ea4ba3d); GitHub commits API on main lists
+  only the personal email. Direct-SHA fetch of old history still returns cached objects --
+  deletion pending owner auth (see handoff).
+- 2026-07-21: global git config: user.useConfigOnly=true, user.email unset.
