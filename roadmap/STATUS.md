@@ -10,10 +10,10 @@ updated: 2026-07-22
 > Full rules: `SYSTEM.md` · `RULES.md`.
 
 **Active phase:** P1 — M1 canonical evidence spine (P0→P1 review: owner ratification 2026-07-21)
-**Health:** 🔴 control-plane CI red (external audit #2, roadmap/reviews/
-control-plane-codex-audit-2026-07-22.md) — selftest + overlap check fixed locally;
-next push still fails scope-diff until the owner-approval items in Blockers are resolved.
-Product CI green.
+**Health:** 🟢 on track — remote CI green on 9e4d0d8 (doctor + 30/30 selftests +
+scope-diff with owner marker + product 176/176); main protected (required checks strict,
+no force-push). Audit #2 fully dispositioned: roadmap/reviews/
+control-plane-codex-audit-2026-07-22.md; residuals bounded in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
 **W3 — finalized-block selection + quorum/conflict semantics + RPC adapters** — fable-main
@@ -51,17 +51,20 @@ need real archive/trace providers). W0C parked pending owner action (Blockers).
    check once PR flow starts mattering.
 
 ## Blockers
-- OWNER: W2→W3 claim transition needs an AEGIS-OWNER-APPROVED commit in the push range
-  (scope_diff policy) — without it the next push is guaranteed red. Same commit should
-  carry the CI step-ordering fix (.github/** is W0E surface, outside W3 scope).
-- OWNER: main is unprotected (R-001 residual) — enable required checks
-  (Control plane + Product tests) now that CI is load-bearing.
-- OWNER: 25 commits authored as "Review Test" (23 pushed; audit tool's config accident,
-  email always correct). Rewrite needs force-push + roadmap SHA-reference updates —
-  recommendation: don't rewrite; decision recorded on answer.
 - W0C (parked): GitHub repo deletion needs owner auth — run
   `gh auth refresh -h github.com -s delete_repo` or delete kaseLunt/aegis via web; agent
   then recreates, pushes, verifies, and closes W0C.
+
+## Owner decisions resolved 2026-07-22 (audit #2 follow-through)
+- W2→W3 transition: AEGIS-OWNER-APPROVED marker landed (9e4d0d8) with the CI
+  independent-reporting fix; pushed.
+- Branch protection: ON — main requires Control plane doctor + Product tests (strict),
+  force-pushes/deletions blocked, admins exempt until [[D-007]] merge-queue machinery
+  exists (R-001 residual closed).
+- Authorship: keep history as-is ("Review Test" name-only defect, email correct;
+  rewrite declined — recorded in audit #2 dispositions).
+- Concurrency architecture: [[D-007]] accepted (wave model / serialized integrator);
+  W3 finishes serially; machinery after W3; pilot after W4 contract freeze.
 
 ## Queued / awaiting decision
 - Route research blockers (`docs/SOURCE_REGISTER.md` §Hiring-ready route research blockers) —

@@ -40,8 +40,10 @@ becomes live when concurrent repository writers start (pre-W5/M2 planning gate).
 - Single serial writer (fable-main) + read-only reviewers today: items 1–8 have no
   reachable failure path that the gate v3 + doctor + CI metadata review doesn't already
   fence for one writer.
-- Trigger to act: BEFORE opening a second concurrent WRITER lane (D-006 round 2), items
-  1, 2, 5 are prerequisites; the rest ride along in the same hardening pass.
+- Trigger to act: BEFORE opening a second concurrent WRITER lane, items 1, 2, 5 are
+  prerequisites; the rest ride along in the same hardening pass. Target architecture and
+  sequencing now owner-ratified in [[D-007]] (wave model, atomic allocator, worktree
+  lanes, serialized merge queue; machinery built after W3, piloted after W4).
 
 owner: klunt · review_when: phase:P1:exit
 
