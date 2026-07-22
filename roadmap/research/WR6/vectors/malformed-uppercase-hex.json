@@ -1,0 +1,35 @@
+{
+  "vectorId": "M-04",
+  "base": "golden-02-set-normalization.json",
+  "operations": [
+    {
+      "op": "replace",
+      "path": "/observationBoundaries/1/block/hash",
+      "value": "0xAA"
+    },
+    {
+      "op": "replace",
+      "path": "/evidence/0/boundary/block/hash",
+      "value": "0xAA"
+    }
+  ],
+  "expected": {
+    "outcome": "reject",
+    "phase": "domain_normalization",
+    "typedRejection": {
+      "category": "canonicalization_error",
+      "specType": "noncanonical_hex",
+      "paths": [
+        "/observationBoundaries/1/block/hash",
+        "/evidence/0/boundary/block/hash"
+      ],
+      "value": "0xAA",
+      "requiredForm": "lowercase_0x"
+    },
+    "reportHashProduced": false
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Canonicalization and hashing: hex bytes use normalized lowercase 0x encoding.",
+    "ENGINEERING_SPEC.md \u00a7 Tests: noncanonical hex encodings are rejected."
+  ]
+}

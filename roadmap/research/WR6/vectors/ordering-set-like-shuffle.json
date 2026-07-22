@@ -1,0 +1,32 @@
+{
+  "vectorId": "O-01",
+  "base": "golden-02-set-normalization.json",
+  "operations": [
+    {
+      "op": "replace",
+      "path": "/coverage/supported",
+      "value": [
+        "alpha",
+        "zeta"
+      ]
+    },
+    {
+      "op": "replace",
+      "path": "/policyTrust/reasonCodes",
+      "value": [
+        "a_reason",
+        "z_reason"
+      ]
+    }
+  ],
+  "expected": {
+    "outcome": "canonicalized",
+    "sameCanonicalBytesAs": "golden-02-set-normalization.expected.md",
+    "sameReportHashAs": "golden-02-set-normalization.expected.md",
+    "reportHash": "74fdfe4e55842cc19f2811b78095a8e7587c944ce9b2dff4808cfa3c10763e66"
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Canonicalization and hashing: set-like reason-code and coverage arrays use documented stable keys.",
+    "ENGINEERING_SPEC.md \u00a7 Tests: randomized set-input order produces the same normalized payload/hash."
+  ]
+}

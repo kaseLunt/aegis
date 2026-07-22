@@ -1,0 +1,43 @@
+{
+  "vectorId": "M-05",
+  "base": "golden-02-set-normalization.json",
+  "operations": [
+    {
+      "op": "add",
+      "path": "/verifications/0",
+      "value": {
+        "invariantId": "test.dangling-role",
+        "evaluatorVersion": "1",
+        "state": "unknown",
+        "severity": "high",
+        "claimKind": "policy",
+        "statement": "Synthetic dangling evidence-role fixture",
+        "evidence": [],
+        "expectedEvidenceIds": [
+          "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+        ],
+        "actualEvidenceIds": [],
+        "derivationInputIds": [],
+        "freshness": {
+          "aggregate": "unknown",
+          "assessments": []
+        },
+        "limitations": []
+      }
+    }
+  ],
+  "expected": {
+    "outcome": "reject",
+    "phase": "schema_or_referential_validation",
+    "typedRejection": {
+      "category": "evidence_role_error",
+      "specType": "dangling_evidence_role_id",
+      "path": "/verifications/0/expectedEvidenceIds/0",
+      "id": "sha256:9999999999999999999999999999999999999999999999999999999999999999"
+    },
+    "reportHashProduced": false
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Canonical domain types: expected, actual, and derivation evidence roles are explicit ID lists; schema validation rejects missing IDs."
+  ]
+}

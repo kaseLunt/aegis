@@ -1,0 +1,41 @@
+{
+  "vectorId": "S-04",
+  "input": {
+    "severity": "critical",
+    "providerPolicy": {
+      "requiredAdministrativelyIndependentProviders": 2
+    },
+    "responses": [
+      {
+        "providerId": "provider-a",
+        "status": "ok",
+        "block": {
+          "chainId": 1,
+          "number": "100",
+          "hash": "0xaa"
+        },
+        "canonicalRawResult": "0x01",
+        "predicateHeld": true
+      },
+      {
+        "providerId": "provider-b",
+        "status": "timeout"
+      }
+    ]
+  },
+  "expected": {
+    "verificationState": "unknown",
+    "mustNotBe": [
+      "pass",
+      "fail"
+    ],
+    "timeoutTreatment": "missing_evidence",
+    "defaultSubstitution": false
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Provider quorum and conflicts: provider timeout or malformed response is missing evidence, not a zero value.",
+    "ENGINEERING_SPEC.md \u00a7 Provider quorum and conflicts: insufficient responses yield unknown.",
+    "ENGINEERING_SPEC.md \u00a7 Tests: missing evidence cannot improve a result.",
+    "THREAT_MODEL.md \u00a7 Result semantics: unknown means required evidence or a trustworthy derivation was unavailable."
+  ]
+}

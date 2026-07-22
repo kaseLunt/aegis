@@ -1,0 +1,24 @@
+{
+  "vectorId": "M-06",
+  "base": "golden-02-set-normalization.json",
+  "operations": [
+    {
+      "op": "remove",
+      "path": "/evidence/0/rawResultHash"
+    }
+  ],
+  "expected": {
+    "outcome": "reject",
+    "phase": "schema_validation",
+    "typedRejection": {
+      "category": "schema_error",
+      "specType": "missing_mandatory_field",
+      "path": "/evidence/0/rawResultHash",
+      "subjectType": "EvidenceRef"
+    },
+    "reportHashProduced": false
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Canonical domain types: EvidenceRef.rawResultHash is mandatory."
+  ]
+}

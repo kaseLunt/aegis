@@ -1,0 +1,30 @@
+{
+  "vectorId": "M-01",
+  "base": "golden-02-set-normalization.json",
+  "operations": [
+    {
+      "op": "replace",
+      "path": "/coverage/supported",
+      "value": [
+        "zeta",
+        "alpha",
+        "alpha"
+      ]
+    }
+  ],
+  "expected": {
+    "outcome": "reject",
+    "phase": "domain_normalization",
+    "typedRejection": {
+      "category": "canonicalization_error",
+      "specType": "duplicate_set_member",
+      "path": "/coverage/supported",
+      "member": "alpha"
+    },
+    "reportHashProduced": false
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Canonicalization and hashing: duplicates in set-like arrays are rejected unless the schema explicitly models multiplicity.",
+    "ENGINEERING_SPEC.md \u00a7 Tests: duplicate set members are rejected."
+  ]
+}

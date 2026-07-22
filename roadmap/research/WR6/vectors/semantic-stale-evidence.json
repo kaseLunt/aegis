@@ -1,0 +1,37 @@
+{
+  "vectorId": "S-03",
+  "input": {
+    "severity": "critical",
+    "predicateHeld": true,
+    "mandatoryEvidenceAvailable": true,
+    "providerQuorumMatched": true,
+    "freshness": {
+      "aggregate": "stale",
+      "assessments": [
+        {
+          "policyId": "freshness-1",
+          "state": "stale",
+          "boundary": {
+            "kind": "execution_block",
+            "chainId": 1,
+            "number": "100",
+            "hash": "0xaa"
+          }
+        }
+      ]
+    }
+  },
+  "expected": {
+    "verificationState": "stale",
+    "mustNotBe": [
+      "pass"
+    ],
+    "predicateTruthDoesNotOverrideFreshness": true
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Invariant engine: stale evidence cannot produce pass.",
+    "ENGINEERING_SPEC.md \u00a7 Tests: stale evidence cannot pass.",
+    "THREAT_MODEL.md \u00a7 Result semantics: stale means evidence was valid but outside the declared freshness policy.",
+    "THREAT_MODEL.md \u00a7 Required adversarial tests, item 1: a stale provider."
+  ]
+}

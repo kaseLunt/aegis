@@ -1,0 +1,47 @@
+{
+  "vectorId": "S-02",
+  "input": {
+    "severity": "critical",
+    "providerPolicy": {
+      "requiredAdministrativelyIndependentProviders": 2
+    },
+    "responses": [
+      {
+        "providerId": "provider-a",
+        "status": "ok",
+        "block": {
+          "chainId": 1,
+          "number": "100",
+          "hash": "0xaa"
+        },
+        "canonicalRawResult": "0x01",
+        "decodedValue": "1"
+      },
+      {
+        "providerId": "provider-b",
+        "status": "ok",
+        "block": {
+          "chainId": 1,
+          "number": "100",
+          "hash": "0xaa"
+        },
+        "canonicalRawResult": "0x02",
+        "decodedValue": "2"
+      }
+    ]
+  },
+  "expected": {
+    "verificationState": "conflict",
+    "mustNotBe": [
+      "pass",
+      "fail"
+    ],
+    "conflictKind": "required_value_disagreement",
+    "retainBothEvidenceItems": true
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Provider quorum and conflicts: required-provider disagreement yields conflict.",
+    "THREAT_MODEL.md \u00a7 Result semantics: conflict means required sources disagreed on block identity or value.",
+    "THREAT_MODEL.md \u00a7 Required adversarial tests, item 3: two providers returning different values at the same claimed block."
+  ]
+}

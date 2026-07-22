@@ -1,0 +1,44 @@
+{
+  "vectorId": "S-05",
+  "input": {
+    "severity": "critical",
+    "expectedPolicyValue": "1",
+    "providerPolicy": {
+      "requiredAdministrativelyIndependentProviders": 2
+    },
+    "responses": [
+      {
+        "providerId": "provider-a",
+        "status": "ok",
+        "block": {
+          "chainId": 1,
+          "number": "100",
+          "hash": "0xaa"
+        },
+        "canonicalRawResult": "0x00",
+        "observedValue": "0",
+        "contradictsPolicy": true
+      },
+      {
+        "providerId": "provider-b",
+        "status": "timeout"
+      }
+    ]
+  },
+  "expected": {
+    "verificationState": "unknown",
+    "mustNotBe": [
+      "fail",
+      "pass"
+    ],
+    "alert": {
+      "kind": "provisional_contradiction",
+      "canonicalFail": false
+    }
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Provider quorum and conflicts: a single provider contradicting policy without quorum produces unknown with a provisional-contradiction alert; it cannot produce a canonical fail.",
+    "ENGINEERING_SPEC.md \u00a7 Provider quorum and conflicts: a critical fail requires the same evidence-quorum discipline as a critical pass.",
+    "THREAT_MODEL.md \u00a7 Required adversarial tests, item 29: one provider contradicting policy while the other required providers are unavailable must not create a critical fail."
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "schemaVersion": "1",
+  "engineVersion": "1",
+  "evaluationTime": "2026-07-21T00:00:02Z",
+  "manifestVersion": "1",
+  "manifestHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "policyRefs": [
+    {
+      "kind": "provider_quorum",
+      "id": "pq-1",
+      "version": "1",
+      "contentHash": "sha256:8888888888888888888888888888888888888888888888888888888888888888"
+    }
+  ],
+  "policyTrust": {
+    "state": "untrusted",
+    "trustPolicyId": "tp-1",
+    "manifestHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "reasonCodes": [
+      "z_reason",
+      "a_reason"
+    ],
+    "evidence": [
+      {
+        "id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "kind": "manifest",
+        "provenanceClass": "declared_configuration",
+        "sourceMode": "recorded",
+        "boundary": {
+          "kind": "source_snapshot",
+          "snapshot": {
+            "sourceId": "manifest-registry",
+            "contentHash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+            "retrievedAt": "2026-07-21T00:00:00Z",
+            "uri": "urn:aegis:test:manifest-registry"
+          }
+        },
+        "rawResultHash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "capturedAt": "2026-07-21T00:00:00Z"
+      }
+    ]
+  },
+  "sourceMode": "simulation",
+  "requestHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "observationBoundaries": [
+    {
+      "kind": "source_snapshot",
+      "snapshot": {
+        "sourceId": "manifest-registry",
+        "contentHash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "retrievedAt": "2026-07-21T00:00:00Z",
+        "uri": "urn:aegis:test:manifest-registry"
+      }
+    },
+    {
+      "kind": "execution_block",
+      "block": {
+        "chainId": 1,
+        "number": "2",
+        "hash": "0xaa",
+        "parentHash": "0xbb",
+        "timestamp": "2026-07-21T00:00:00Z",
+        "finality": "finalized"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+      "kind": "simulation",
+      "provenanceClass": "modeled_counterfactual",
+      "sourceMode": "simulation",
+      "boundary": {
+        "kind": "execution_block",
+        "block": {
+          "chainId": 1,
+          "number": "2",
+          "hash": "0xaa",
+          "parentHash": "0xbb",
+          "timestamp": "2026-07-21T00:00:00Z",
+          "finality": "finalized"
+        }
+      },
+      "address": "0xab",
+      "calldata": "0x00",
+      "rawResultHash": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "decodedResult": {
+        "safeBatch": [
+          {
+            "index": "0",
+            "to": "0xaa",
+            "value": "0"
+          },
+          {
+            "index": "1",
+            "to": "0xbb",
+            "value": "1"
+          }
+        ]
+      },
+      "capturedAt": "2026-07-21T00:00:01Z"
+    },
+    {
+      "id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "kind": "manifest",
+      "provenanceClass": "declared_configuration",
+      "sourceMode": "recorded",
+      "boundary": {
+        "kind": "source_snapshot",
+        "snapshot": {
+          "sourceId": "manifest-registry",
+          "contentHash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+          "retrievedAt": "2026-07-21T00:00:00Z",
+          "uri": "urn:aegis:test:manifest-registry"
+        }
+      },
+      "rawResultHash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "capturedAt": "2026-07-21T00:00:00Z"
+    }
+  ],
+  "verifications": [],
+  "facts": [],
+  "coverage": {
+    "supported": [
+      "zeta",
+      "alpha"
+    ],
+    "unsupported": [
+      "omega"
+    ],
+    "excluded": [
+      "beta"
+    ]
+  },
+  "limitations": []
+}

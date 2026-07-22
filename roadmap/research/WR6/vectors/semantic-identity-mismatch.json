@@ -1,0 +1,38 @@
+{
+  "vectorId": "S-07",
+  "input": {
+    "identityStrategy": "direct",
+    "targetAddress": "0xab",
+    "expectedTerminalRuntimeHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "observations": [
+      {
+        "providerId": "provider-a",
+        "terminalRuntimeHash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "blockHash": "0xcc"
+      },
+      {
+        "providerId": "provider-b",
+        "terminalRuntimeHash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "blockHash": "0xcc"
+      }
+    ],
+    "candidateAbi": {
+      "boundRuntimeHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "method": "owner()"
+    }
+  },
+  "expected": {
+    "identityComparison": "mismatch",
+    "abiSelected": false,
+    "decode": "refused",
+    "dependentVerificationState": "unknown",
+    "mustNotGuessProxyTypeOrAbi": true
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Deployment code identity: select an ABI only after the terminal runtime hash matches.",
+    "ENGINEERING_SPEC.md \u00a7 Deployment code identity: an undeclared or unsupported pattern returns unknown for dependent semantic reads; Aegis never guesses a proxy type from explorer labels.",
+    "ENGINEERING_SPEC.md \u00a7 Tests: ABI/code-hash mismatch prevents decoding.",
+    "THREAT_MODEL.md threat table, Proxy or ABI mismatch: resolve implementation and runtime code hash before selecting a code-hash-scoped ABI.",
+    "THREAT_MODEL.md \u00a7 Required adversarial tests, items 8 and 18."
+  ]
+}

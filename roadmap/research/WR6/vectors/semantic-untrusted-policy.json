@@ -1,0 +1,39 @@
+{
+  "vectorId": "S-08",
+  "input": {
+    "mode": "isolated_analysis",
+    "policyTrust": {
+      "state": "untrusted",
+      "trustPolicyId": "production-trust-root-1",
+      "reasonCodes": [
+        "manifest_hash_not_approved"
+      ]
+    },
+    "policyDependentVerification": {
+      "mandatoryObservedEvidenceAvailable": true,
+      "providerQuorumMatched": true,
+      "freshness": "current",
+      "predicateHeld": true
+    },
+    "observedNeutralFact": {
+      "mandatoryObservedEvidenceAvailable": true,
+      "freshness": "current",
+      "reproduciblyComputed": true
+    }
+  },
+  "expected": {
+    "policyTrustState": "untrusted",
+    "policyDependentVerificationState": "unknown",
+    "policyDependentVerificationMustNotBe": [
+      "pass",
+      "fail"
+    ],
+    "observedNeutralFactStateAllowed": "available",
+    "mayReplaceDefaultLiveReport": false
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Manifest trust root: a structurally valid custom untrusted manifest forces policy-dependent verifications to unknown; observed neutral facts may remain available; it cannot replace the default live report.",
+    "THREAT_MODEL.md \u00a7 Result semantics: untrusted policy forces policy-dependent verification to unknown.",
+    "THREAT_MODEL.md \u00a7 Required adversarial tests, item 30: a structurally valid but unapproved manifest with fabricated reviewer metadata attempting to replace the default live policy."
+  ]
+}

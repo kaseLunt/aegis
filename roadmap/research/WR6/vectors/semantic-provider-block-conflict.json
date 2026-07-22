@@ -1,0 +1,47 @@
+{
+  "vectorId": "S-01",
+  "input": {
+    "severity": "critical",
+    "providerPolicy": {
+      "requiredAdministrativelyIndependentProviders": 2
+    },
+    "responses": [
+      {
+        "providerId": "provider-a",
+        "status": "ok",
+        "block": {
+          "chainId": 1,
+          "number": "100",
+          "hash": "0xaa"
+        },
+        "canonicalRawResult": "0x01",
+        "decodedValue": "1"
+      },
+      {
+        "providerId": "provider-b",
+        "status": "ok",
+        "block": {
+          "chainId": 1,
+          "number": "100",
+          "hash": "0xbb"
+        },
+        "canonicalRawResult": "0x01",
+        "decodedValue": "1"
+      }
+    ]
+  },
+  "expected": {
+    "verificationState": "conflict",
+    "mustNotBe": [
+      "pass",
+      "fail"
+    ],
+    "conflictKind": "block_hash_mismatch",
+    "retainBothEvidenceItems": true
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Provider quorum and conflicts: a block-number match with a hash mismatch is a conflict.",
+    "THREAT_MODEL.md \u00a7 Result semantics: conflict means required sources disagreed on block identity or value.",
+    "THREAT_MODEL.md \u00a7 Required adversarial tests, item 2: two providers returning different block hashes."
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "vectorId": "O-02",
+  "base": "golden-03-semantic-order-a.json",
+  "operations": [
+    {
+      "op": "replace",
+      "path": "/evidence/0/decodedResult/safeBatch",
+      "value": [
+        {
+          "index": "0",
+          "to": "0xbb",
+          "value": "1"
+        },
+        {
+          "index": "1",
+          "to": "0xaa",
+          "value": "0"
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "outcome": "canonicalized",
+    "byteLength": 2908,
+    "reportHash": "ad6caa2492a279823bc43389522615d3a05791f7f66b83c55d1c5b7a0c6c45cd",
+    "mustDifferFrom": {
+      "vectorId": "G-03",
+      "reportHash": "28bd1f91ba8703b11fb2287b8860a5c1ce43df94daa8adf379c332966fa8c165"
+    },
+    "semanticArrayWasSorted": false
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Canonicalization and hashing: arrays with semantic order retain order and include an explicit sequence/index field rather than being sorted.",
+    "ENGINEERING_SPEC.md \u00a7 Tests: transaction-batch order remains significant."
+  ]
+}

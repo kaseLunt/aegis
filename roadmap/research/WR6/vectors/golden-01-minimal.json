@@ -1,0 +1,75 @@
+{
+  "schemaVersion": "1",
+  "engineVersion": "0",
+  "evaluationTime": "2026-07-21T00:00:00Z",
+  "manifestVersion": "0",
+  "manifestHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "policyRefs": [],
+  "policyTrust": {
+    "state": "trusted",
+    "trustPolicyId": "tp-1",
+    "manifestHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+    "reasonCodes": [
+      "approved_hash"
+    ],
+    "evidence": [
+      {
+        "id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+        "kind": "manifest",
+        "provenanceClass": "declared_configuration",
+        "sourceMode": "recorded",
+        "boundary": {
+          "kind": "source_snapshot",
+          "snapshot": {
+            "sourceId": "manifest-registry",
+            "contentHash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+            "retrievedAt": "2026-07-21T00:00:00Z",
+            "uri": "urn:aegis:test:manifest-registry"
+          }
+        },
+        "rawResultHash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+        "capturedAt": "2026-07-21T00:00:00Z"
+      }
+    ]
+  },
+  "sourceMode": "recorded",
+  "requestHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "observationBoundaries": [
+    {
+      "kind": "source_snapshot",
+      "snapshot": {
+        "sourceId": "manifest-registry",
+        "contentHash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+        "retrievedAt": "2026-07-21T00:00:00Z",
+        "uri": "urn:aegis:test:manifest-registry"
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "id": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "kind": "manifest",
+      "provenanceClass": "declared_configuration",
+      "sourceMode": "recorded",
+      "boundary": {
+        "kind": "source_snapshot",
+        "snapshot": {
+          "sourceId": "manifest-registry",
+          "contentHash": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+          "retrievedAt": "2026-07-21T00:00:00Z",
+          "uri": "urn:aegis:test:manifest-registry"
+        }
+      },
+      "rawResultHash": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "capturedAt": "2026-07-21T00:00:00Z"
+    }
+  ],
+  "verifications": [],
+  "facts": [],
+  "coverage": {
+    "supported": [],
+    "unsupported": [],
+    "excluded": []
+  },
+  "limitations": []
+}

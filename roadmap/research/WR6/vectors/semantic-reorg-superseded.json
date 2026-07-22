@@ -1,0 +1,43 @@
+{
+  "vectorId": "S-06",
+  "input": {
+    "priorArtifact": {
+      "reportHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "chainId": 1,
+      "block": {
+        "number": "100",
+        "hash": "0xaa",
+        "parentHash": "0x99"
+      },
+      "status": "current"
+    },
+    "canonicalityRecheck": {
+      "chainId": 1,
+      "block": {
+        "number": "100",
+        "hash": "0xbb",
+        "parentHash": "0x99"
+      }
+    },
+    "derivedCacheKey": {
+      "chainId": 1,
+      "blockHash": "0xaa",
+      "requestHash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "manifestHash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "evaluatorVersion": "1"
+    }
+  },
+  "expected": {
+    "priorArtifactStatus": "superseded",
+    "priorObservationStatus": "orphaned",
+    "priorArtifactRetained": true,
+    "silentlyDeleted": false,
+    "invalidateDerivedCache": true,
+    "replacementMustUseHash": "0xbb"
+  },
+  "specClauses": [
+    "ENGINEERING_SPEC.md \u00a7 Storage and caching: a block-hash change invalidates derived cache entries and marks prior observations orphaned.",
+    "THREAT_MODEL.md threat table, Reorganization: key caches by block hash, recheck canonicality, preserve and supersede reorged artifacts.",
+    "THREAT_MODEL.md \u00a7 Required adversarial tests, item 4: a one-block reorganization and cache invalidation."
+  ]
+}
