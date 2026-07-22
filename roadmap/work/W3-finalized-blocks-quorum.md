@@ -70,12 +70,16 @@ npm test
 ```
 
 ## Handoff
-- next: slice 1 — quorum/conflict evaluator (pure module lib/aegis/chain/quorum.ts, TDD
-  from the spec rules verbatim). Then slice 2 — block selection (single-chain finalized +
-  confirmation-depth fallback with downgrade exposure; multi-chain time-aligned). Then
-  slice 3 — adapter interface + recorded-fixture adapter (data/recordings/**, binary IO
-  per INS-001) + Alchemy/QuickNode adapter configs (no secrets; provider identity +
-  capability declarations only).
+- next: slice 1 DONE (lib/aegis/chain/quorum.ts — evaluateQuorum: agreement/conflict/
+  unknown with typed reason codes; fail-closed preconditions throw ChainError incl.
+  duplicate-provider self-corroboration; decoded-match/raw-mismatch retained as unknown
+  for policy review, not auto-conflict; optional-provider raw disagreement conflicts
+  fail-closed — over-strict by design, revisit if the provider_quorum policy grows a
+  knob). Next: slice 2 — block selection (single-chain finalized + confirmation-depth
+  fallback with downgrade exposure; multi-chain time-aligned, asOfTimestamp ≤ oldest
+  finalized head). Then slice 3 — adapter interface + recorded-fixture adapter
+  (data/recordings/**, binary IO per INS-001) + Alchemy/QuickNode adapter configs (no
+  secrets; provider identity + capability declarations only).
 - read_first: docs/ENGINEERING_SPEC.md §Block selection and finality + §Provider quorum
   and conflicts + §Evidence acquisition; roadmap/research/WR3/provider-matrix.md §5
   (quorum pairs + do-not-pair rationale); docs/THREAT_MODEL.md provider rows;
@@ -90,4 +94,9 @@ npm test
   canonical fail.
 
 ## Evidence
-- (none yet)
+- 2026-07-22: TDD slice 1 — RED (module missing, import fails), GREEN 15/15: one test per
+  spec quorum rule (agreement, block_hash_mismatch conflict, raw_result_mismatch conflict,
+  decoded-match retained-unknown, timeout/malformed/incomplete-ok = missing evidence,
+  required-provider missing/disagreement, policy floor, cross-chain + block-number +
+  duplicate-provider fail-closed throws) + 30-run order-invariance property. Full suite
+  159/159; lint clean.
