@@ -3,7 +3,7 @@ id: W0E
 type: work
 title: Lane hardening per second review — close cooperative-gate holes before lane commits
 phase: P1
-status: active
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0D]
@@ -20,6 +20,7 @@ invalidated_by:
   - roadmap/tools/**
   - roadmap/work/W0E-lane-hardening.md
 updated: 2026-07-22
+evidence_fingerprint: sha256:8a802568ec3c30cf
 ---
 
 # W0E — Lane hardening (second external review)
@@ -63,4 +64,6 @@ python roadmap/tools/doctor.py && python roadmap/tools/selftest.py
   or other lanes' outputs.
 
 ## Evidence
-(pending)
+- 2026-07-22: 28/28 selftests (incl. none-with-claims block, identity-mandatory, lane
+  confinement, charter-edit block, strict lease/filename, deliverable checks); doctor green.
+- 2026-07-22: commit 7196c94; first three real lane commits (wr2/wr3/wr6) passed gate v3.

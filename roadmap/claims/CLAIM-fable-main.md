@@ -1,11 +1,11 @@
 ---
 agent: fable-main
-task: W0E
+task: W1
 status: active
 worktree: main
-base_commit: caeebfe
-lease_expires: 2026-07-24T05:31:36Z
-updated: 2026-07-22T05:31:36Z
+base_commit: ffbb7df
+lease_expires: 2026-07-29T16:48:37Z
+updated: 2026-07-22T16:48:37Z
 ---
 
-# Claim: fable-main -> W0E
+# Claim: fable-main -> W1

@@ -1,6 +1,6 @@
 ---
 active_phase: P1
-active_task: W0E
+active_task: W1
 updated: 2026-07-21
 ---
 
@@ -13,9 +13,10 @@ updated: 2026-07-21
 **Health:** 🟢 on track
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W0E — lane hardening (second review)** — fable-main; W1 parked until this lands.
-Parallel lanes: WR1–WR6 under claims wr1–wr6 (WR2/WR3/WR6 delivered, pending review-commit;
-WR1/WR4/WR5 died on usage limit, relaunch pending). W0C parked pending owner action (Blockers).
+**W1 — canonical report core** — fable-main, single owner (critical path).
+Lanes: WR2/WR3/WR6 DELIVERED + closed (authority map, provider matrix, adversarial corpus
+with 18 SPEC-QUESTIONs for W1). WR1/WR4/WR5 relaunched after usage-limit deaths.
+W0C parked pending owner action (Blockers).
 
 ## Recently completed
 - **W0B — control-plane hardening per external review** (commit 6bf2c03): staged-index scope
@@ -30,9 +31,9 @@ WR1/WR4/WR5 died on usage limit, relaunch pending). W0C parked pending owner act
   source register, interview brief) — authority hierarchy in `docs/README.md`.
 
 ## Next up
-1. Close W0E (lane hardening), commit WR2/WR3/WR6 research under their claims, relaunch
-   WR1/WR4/WR5 (Claude usage limit killed them mid-run; relaunch on Codex).
-2. Resume W1 (canonical report core) — fable-main reclaims after W0E.
+1. W1 first slice: triage WR6 SPEC-QUESTIONs into spec clarifications, then canonical types
+   + JSON Schema + JCS + reportHash with the golden vectors as acceptance targets.
+2. Review WR1/WR4/WR5 deliverables when their relaunched agents land.
 3. R-001 residual (owner, low urgency): enable branch protection requiring the "Control plane"
    check once PR flow starts mattering.
 

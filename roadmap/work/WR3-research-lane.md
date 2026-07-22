@@ -3,7 +3,7 @@ id: WR3
 type: work
 title: Provider and archive feasibility (independence, finality, EIP-1898, forks)
 phase: P1
-status: active
+status: achieved
 evidence_target: "Correct"
 priority: 2
 depends_on: []
@@ -13,8 +13,11 @@ allowed_paths:
   - roadmap/research/WR3/**
 deliverables:
   - roadmap/research/WR3/provider-matrix.md
+invalidated_by:
+  - roadmap/research/WR3/**
 review_when: phase:P1:exit
 updated: 2026-07-21
+evidence_fingerprint: sha256:ca3f226a14f13606
 ---
 
 # WR3 — Provider and archive feasibility (independence, finality, EIP-1898, forks)
@@ -40,8 +43,7 @@ historical-fork capability on Ethereum mainnet and OP mainnet.
 - No production code, no live-RPC-derived "expected" values.
 
 ## Handoff
-- next: background research agent launched 2026-07-21; deliverables land under this lane's
-  allowed path; orchestrator reviews, commits under AEGIS_AGENT=<lane agent>, then closes.
+- next: DELIVERED and committed under lane wr3; reviewed by orchestrator; closed.
 - read_first: this charter; docs/SOURCE_REGISTER.md (source-class limits).
 - hazards: provenance required on every claim; no live-RPC 'expected' values; explorer
   labels are discovery only; WR6 additionally must stay blind to lib/ and W1 products.
