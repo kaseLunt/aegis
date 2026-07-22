@@ -6,10 +6,11 @@
 > **Enforcement status — bootstrap+.** The model below is the *target*. A structural validator
 > (`roadmap/tools/doctor.py`), a staged-index scope gate, and minimal evidence fingerprints for
 > achieved items run locally (pre-commit) **now**, with a mutation selftest
-> (`roadmap/tools/selftest.py`). The CI workflow exists but is **not yet authoritative** — the
-> repo has no GitHub remote or branch protection ([[R-001]]); "CI is the gate" below describes
-> the target, and local hooks remain bypassable conveniences until then. Fuller lifecycle
-> automation is staged hardening. Attained `evidence_level` is derived, never hand-set.
+> (`roadmap/tools/selftest.py`), plus a CI base-to-head scope review (`scope_diff.py`). CI runs
+> on the public GitHub remote, but **main has no branch protection yet** ([[R-001]]) — local
+> hooks + CI visibility are the current enforcement; "CI is the gate" below is fully true only
+> after branch protection. Fuller lifecycle automation is staged hardening. Attained
+> `evidence_level` is derived, never hand-set.
 
 ## Governing principle
 

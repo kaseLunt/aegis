@@ -22,7 +22,7 @@ invalidated_by:
   - roadmap/work/W0-control-plane.md
 review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:959715847d01b982
+evidence_fingerprint: sha256:e49ee42ac6b7cd86
 ---
 
 # W0 — Stand up the control plane

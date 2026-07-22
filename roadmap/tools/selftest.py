@@ -123,6 +123,28 @@ def part_a():
                   'lease_expires: 2099-01-01T00:00:00Z\n---\n')
     mutate('one-claim-per-agent', 'more than one active claim', fab_double_claim)
 
+    mutate('none-with-active-work', "while active work exists",
+           lambda rm: edit(os.path.join(rm, 'STATUS.md'),
+                           lambda s: re.sub(r'^active_task: .*$', 'active_task: none', s, count=1, flags=re.M)))
+
+    def fab_bad_lease(rm):
+        fab_claim(rm, 'agentl', '---\nagent: agentl\ntask: W1\nstatus: active\nlease_expires: forever\n---\n')
+    mutate('lease-must-be-strict-utc', 'not strict UTC', fab_bad_lease)
+
+    def fab_name_mismatch(rm):
+        fab_claim(rm, 'agentm', '---\nagent: other\ntask: W1\nstatus: active\n'
+                  'lease_expires: 2099-01-01T00:00:00Z\n---\n')
+    mutate('claim-agent-matches-filename', 'does not match claim filename', fab_name_mismatch)
+
+    def fab_missing_deliverable(rm):
+        fab_claim(rm, 'agentd', '')  # ensure claims dir exists
+        os.remove(os.path.join(rm, 'claims', 'CLAIM-agentd.md'))
+        open(os.path.join(rm, 'work', 'WTEST3-fab.md'), 'w', encoding='utf-8', newline='\n').write(
+            '---\nid: WTEST3\ntype: work\ntitle: fab\nphase: P0\nstatus: achieved\n'
+            'evidence_target: "Correct"\ndepends_on: []\nblocked_by: []\n'
+            'deliverables:\n  - roadmap/research/NOPE/missing.md\n---\n\n# t\n')
+    mutate('achieved-requires-deliverables', 'deliverable missing', fab_missing_deliverable)
+
 
 # ---------- Part B: staged-index gate integration in a scratch git repo ----------
 
@@ -196,22 +218,67 @@ def part_b():
         r = gate(repo)
         check('B:protected-files-block', r.returncode == 1 and 'VISION' in r.stdout, r.stdout[-300:])
         run(['git', 'reset', '-q', '--', 'roadmap/VISION.md'], cwd=repo)
+        run(['git', 'checkout', '--', 'roadmap/VISION.md'], cwd=repo)
 
-        # Claim-based scope (AEGIS_AGENT): claim narrows scope below the task's paths.
+        # --- Lane-mode tests (W0D claims + W0E hardening) ---
+        w = lambda rel, s: open(os.path.join(repo, rel), 'w', encoding='utf-8', newline='\n').write(s)
         os.makedirs(os.path.join(repo, 'roadmap', 'claims'), exist_ok=True)
-        open(os.path.join(repo, 'roadmap', 'claims', 'CLAIM-lane1.md'), 'w', encoding='utf-8', newline='\n').write(
-            '---\nagent: lane1\ntask: WT\nstatus: active\nallowed_paths:\n  - src/ok.txt\n'
-            'lease_expires: 2099-01-01T00:00:00Z\n---\n')
+        w(os.path.join('roadmap', 'claims', 'CLAIM-int.md'),
+          '---\nagent: int\ntask: WT\nstatus: active\nlease_expires: 2099-01-01T00:00:00Z\n---\n')
+        run(['git', 'add', 'roadmap/claims'], cwd=repo)
+
+        # active_task none while claims exist: blocked (was the reviewer's bypass).
+        w(os.path.join('roadmap', 'STATUS.md'), STATUS_NONE)
+        run(['git', 'add', 'roadmap/STATUS.md'], cwd=repo)
+        r = gate(repo)
+        check('B:none-with-claims-blocked', r.returncode == 1, r.stdout[-300:])
+        w(os.path.join('roadmap', 'STATUS.md'), STATUS_ACTIVE)
+        run(['git', 'add', 'roadmap/STATUS.md'], cwd=repo)
+
+        # Second lane: identity becomes mandatory without AEGIS_AGENT.
+        w(os.path.join('roadmap', 'work', 'WT2.md'), WORK_WT.replace('id: WT', 'id: WT2'))
+        w(os.path.join('roadmap', 'claims', 'CLAIM-lane1.md'),
+          '---\nagent: lane1\ntask: WT2\nstatus: active\nallowed_paths:\n  - src/ok.txt\n'
+          'lease_expires: 2099-01-01T00:00:00Z\n---\n')
+        run(['git', 'add', 'roadmap', 'src'], cwd=repo)
+        # The integrator commits claim/charter setup before lanes commit (real flow).
+        run(['git', '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '-m', 'claims', '--no-verify'], cwd=repo)
+        open(os.path.join(repo, 'src', 'ok.txt'), 'a', encoding='utf-8').write('more\n')
+        run(['git', 'add', 'src/ok.txt'], cwd=repo)
+        r = gate(repo)
+        check('B:multi-claim-requires-identity', r.returncode == 1 and 'identity is mandatory' in r.stdout, r.stdout[-300:])
+        check('B:integrator-identity-passes', gate(repo, env={'AEGIS_AGENT': 'int'}).returncode == 0)
+
+        # Lane confinement: claim-narrowed paths, no cross-lane roadmap access, capture stays open.
         os.makedirs(os.path.join(repo, 'src2'), exist_ok=True)
-        open(os.path.join(repo, 'src2', 'other.txt'), 'w', encoding='utf-8', newline='\n').write('x\n')
-        run(['git', 'add', 'roadmap/claims', 'src2'], cwd=repo)
+        w(os.path.join('src2', 'other.txt'), 'x\n')
+        run(['git', 'add', 'src2'], cwd=repo)
         r = gate(repo, env={'AEGIS_AGENT': 'lane1'})
         check('B:agent-claim-scope-blocks', r.returncode == 1 and 'src2/other.txt' in r.stdout, r.stdout[-300:])
         run(['git', 'reset', '-q', '--', 'src2'], cwd=repo)
+        os.makedirs(os.path.join(repo, 'roadmap', 'research', 'OTHER'), exist_ok=True)
+        w(os.path.join('roadmap', 'research', 'OTHER', 'x.md'), 'x\n')
+        run(['git', 'add', 'roadmap/research'], cwd=repo)
+        r = gate(repo, env={'AEGIS_AGENT': 'lane1'})
+        check('B:lane-cannot-touch-roadmap', r.returncode == 1 and 'OTHER/x.md' in r.stdout, r.stdout[-300:])
+        run(['git', 'rm', '-rq', '--cached', 'roadmap/research'], cwd=repo)
+        os.makedirs(os.path.join(repo, 'roadmap', 'ideas'), exist_ok=True)
+        w(os.path.join('roadmap', 'ideas', 'IDEA-t.md'), 'x\n')
+        run(['git', 'add', 'roadmap/ideas'], cwd=repo)
+        check('B:lane-capture-allowed', gate(repo, env={'AEGIS_AGENT': 'lane1'}).returncode == 0)
+        run(['git', 'rm', '-rq', '--cached', 'roadmap/ideas'], cwd=repo)
+        open(os.path.join(repo, 'roadmap', 'work', 'WT2.md'), 'a', encoding='utf-8').write('edit\n')
+        run(['git', 'add', 'roadmap/work/WT2.md'], cwd=repo)
+        r = gate(repo, env={'AEGIS_AGENT': 'lane1'})
+        check('B:lane-charter-edit-blocked', r.returncode == 1 and 'WT2.md' in r.stdout, r.stdout[-300:])
         r = gate(repo, env={'AEGIS_AGENT': 'ghost'})
         check('B:unknown-agent-fails-closed', r.returncode == 1, r.stdout[-300:])
-        run(['git', 'rm', '-rq', '--cached', 'roadmap/claims'], cwd=repo)
-        os.remove(os.path.join(repo, 'roadmap', 'claims', 'CLAIM-lane1.md'))
+
+        # Cleanup lane state before the fingerprint section.
+        run(['git', 'rm', '-rq', '--cached', 'roadmap/claims', 'roadmap/work/WT2.md'], cwd=repo)
+        for junk in ('roadmap/claims/CLAIM-int.md', 'roadmap/claims/CLAIM-lane1.md',
+                     'roadmap/work/WT2.md', 'roadmap/ideas/IDEA-t.md', 'roadmap/research/OTHER/x.md'):
+            os.remove(os.path.join(repo, junk))
 
         # Evidence fingerprint: stamp an achieved item, then change a staged input.
         edit(os.path.join(repo, 'roadmap', 'work', 'WT.md'),

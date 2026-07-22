@@ -28,7 +28,8 @@ Dependency-gated: an item can't be certified while anything it depends on is unp
 | W0B | Harden control plane per external review ([[D-005]], [[R-001]]) | P0 | W0A | Correct + Robust | achieved |
 | W0C | Identity scrub: purge work email, prevent recurrence ([[R-002]]) | P0 | W0B | Correct | committed |
 | W0D | Parallelism prep: claims model + lane charters ([[D-006]]) | P0 | W0B | Correct + Robust | achieved |
-| W1 | Canonical report core: schemas, JCS canonicalization, SHA-256 report hash | P1 | W0 | Correct + Robust | active |
+| W0E | Lane hardening per second review (gate v3, CI diff review) | P1 | W0D | Correct + Robust | active |
+| W1 | Canonical report core: schemas, JCS canonicalization, SHA-256 report hash | P1 | W0 | Correct + Robust | committed |
 | W2 | Manifest model + trust root (approved-hash / reviewer-threshold policy) | P1 | W1 | Correct + Robust | unfiled |
 | W3 | Finalized-block selection + two independent RPC adapters + quorum/conflict semantics | P1 | W1 | Correct + Robust | unfiled |
 | W4 | Identity adapters (direct / EIP-1967 / beacon / clone) + code-hash-scoped ABI registry | P1 | W2, W3 | Correct + Robust | unfiled |

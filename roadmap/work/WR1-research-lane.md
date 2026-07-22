@@ -11,6 +11,8 @@ blocked_by: []
 informs: [H0]
 allowed_paths:
   - roadmap/research/WR1/**
+deliverables:
+  - roadmap/research/WR1/expected-route-policy.md
 review_when: phase:P1:exit
 updated: 2026-07-21
 ---

@@ -11,6 +11,8 @@ blocked_by: []
 informs: [H0]
 allowed_paths:
   - roadmap/research/WR6/**
+deliverables:
+  - roadmap/research/WR6/adversarial-vectors.md
 review_when: phase:P1:exit
 updated: 2026-07-21
 ---

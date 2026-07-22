@@ -74,6 +74,11 @@ def main():
         if not task:
             print("open requires <task-id>")
             return 2
+        for other in glob.glob(os.path.join(CLAIMS, 'CLAIM-*.md')):
+            body = open(other, encoding='utf-8').read()
+            if f'task: {task}\n' in body and 'status: active' in body and other != path:
+                print(f"task '{task}' already claimed by {os.path.basename(other)} -- release it first")
+                return 1
         hours = float(arg('--hours', '24'))
         paths = [p for p in (arg('--paths', '') or '').split(',') if p]
         lines = ['---', f'agent: {agent}', f'task: {task}', 'status: active',

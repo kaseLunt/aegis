@@ -12,7 +12,7 @@ informs: [H0]
 allowed_paths:
   - roadmap/**
   - .githooks/**
-review_when: now
+review_when: event:repo-deletion-auth
 invalidated_by:
   - .githooks/**
   - roadmap/work/W0C-identity-scrub.md

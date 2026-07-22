@@ -1,6 +1,6 @@
 ---
 active_phase: P1
-active_task: W1
+active_task: W0E
 updated: 2026-07-21
 ---
 
@@ -13,9 +13,9 @@ updated: 2026-07-21
 **Health:** 🟢 on track
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W1 — canonical report core** — single owner fable-main (critical path, [[D-006]]).
-Parallel lanes: WR1–WR6 research agents running under claims wr1–wr6.
-W0C parked pending owner action (see Blockers).
+**W0E — lane hardening (second review)** — fable-main; W1 parked until this lands.
+Parallel lanes: WR1–WR6 under claims wr1–wr6 (WR2/WR3/WR6 delivered, pending review-commit;
+WR1/WR4/WR5 died on usage limit, relaunch pending). W0C parked pending owner action (Blockers).
 
 ## Recently completed
 - **W0B — control-plane hardening per external review** (commit 6bf2c03): staged-index scope
@@ -30,9 +30,9 @@ W0C parked pending owner action (see Blockers).
   source register, interview brief) — authority hierarchy in `docs/README.md`.
 
 ## Next up
-1. Open P1 (M1 — canonical evidence spine) when owner gives the word: activate W1
-   (canonical report core), draft W2–W5 work orders.
-2. Start route research capture (`docs/SOURCE_REGISTER.md` blockers) in parallel as ideas/insights.
+1. Close W0E (lane hardening), commit WR2/WR3/WR6 research under their claims, relaunch
+   WR1/WR4/WR5 (Claude usage limit killed them mid-run; relaunch on Codex).
+2. Resume W1 (canonical report core) — fable-main reclaims after W0E.
 3. R-001 residual (owner, low urgency): enable branch protection requiring the "Control plane"
    check once PR flow starts mattering.
 

@@ -3,7 +3,7 @@ id: W1
 type: work
 title: Canonical report core — schemas, JCS canonicalization, SHA-256 report identity
 phase: P1
-status: active
+status: committed
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0]

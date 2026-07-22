@@ -27,6 +27,10 @@ Adopt the two-layer architecture explicitly:
 - **Governance layer (this repo): roadmap/ + gates.** It owns intent, scope, evidence,
   capture, and transition rules. It is deliberately scheduler-agnostic.
 
+> **Amended by [[D-006]] (2026-07-21):** contract items 1 and 4 — WIP=1 is now per agent via
+> claims (`roadmap/claims/`), and research/read-only lanes are in contract; concurrent
+> *committing* writers still require per-writer worktrees/branches.
+
 ## Repository contract for any scheduler
 1. Serial commit authority: one active work item repo-wide (WIP=1); doctor-enforced.
 2. Commits judged against staged control-plane state (scope gate); protected files are

@@ -11,6 +11,8 @@ blocked_by: []
 informs: [H0]
 allowed_paths:
   - roadmap/research/WR4/**
+deliverables:
+  - roadmap/research/WR4/rewind-candidates.md
 review_when: phase:P1:exit
 updated: 2026-07-21
 ---

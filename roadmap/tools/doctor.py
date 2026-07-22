@@ -201,6 +201,11 @@ for oid, (rel, fm, _txt) in objs.items():
             errors.append(f"{rel}: work-like object missing evidence_target")
         if 'evidence_level' in fm:
             errors.append(f"{rel}: evidence_level is hand-set (derived field -- use evidence_target)")
+        # W0E: an achieved item's promised deliverables must actually exist.
+        if fm.get('status') == 'achieved':
+            for d in (fm.get('deliverables') or []):
+                if not os.path.exists(os.path.join(REPO, d)):
+                    errors.append(f"{rel}: achieved but deliverable missing: {d}")
         # W0B: evidence attestation. Achieved items carry a tool-written fingerprint of their
         # invalidated_by inputs; a mismatch means the evidence no longer covers current bytes.
         if fm.get('status') == 'achieved':
@@ -260,6 +265,9 @@ if status_fm:
         errors.append(f"STATUS active_phase '{ap}' not in ROADMAP phases {sorted(phase_ids)}")
     if at and at in ids and active_work and at not in active_work:
         errors.append(f"active_task '{at}' is not an active work object {active_work}")
+    # W0E: 'none' may not disable accountability while work is active.
+    if (not at or at == 'none') and active_work:
+        errors.append(f"STATUS active_task is 'none' while active work exists: {sorted(active_work)}")
 
 # D-006 claims model: WIP=1 is PER AGENT. Every active work item needs exactly one active,
 # unexpired claim; each agent holds at most one active claim; claim scope must be a subset
@@ -273,18 +281,28 @@ for cpath in glob.glob(os.path.join(ROADMAP, 'claims', 'CLAIM-*.md')):
         continue
     claims.append((crel, cfm))
 now_utc = datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+LEASE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$')
 agents_seen = {}
 claimed_tasks = {}
+effective_paths = {}
 for crel, cfm in claims:
     if cfm.get('status') != 'active':
         continue
     agent, task = cfm.get('agent'), cfm.get('task')
+    # W0E: claim identity and lease are validated strictly, not decoratively.
+    if os.path.basename(crel) != f'CLAIM-{agent}.md':
+        errors.append(f"{crel}: agent '{agent}' does not match claim filename")
     if agent in agents_seen:
         errors.append(f"{crel}: agent '{agent}' holds more than one active claim (also {agents_seen[agent]})")
     agents_seen[agent] = crel
     exp = cfm.get('lease_expires', '')
-    if not exp or exp < now_utc:
-        errors.append(f"{crel}: lease expired ({exp or 'missing'}) -- renew (claim.py renew {agent}) or release")
+    if not LEASE_RE.match(exp):
+        errors.append(f"{crel}: lease_expires '{exp or 'missing'}' is not strict UTC (YYYY-MM-DDTHH:MM:SSZ)")
+    elif exp < now_utc:
+        errors.append(f"{crel}: lease expired ({exp}) -- renew (claim.py renew {agent}) or release")
+    bc = cfm.get('base_commit', '')
+    if bc and not re.match(r'^[0-9a-f]{7,40}$', bc):
+        errors.append(f"{crel}: base_commit '{bc}' is not a commit hash")
     if task not in ids or objs[task][1].get('type') not in WORKLIKE:
         errors.append(f"{crel}: claim task '{task}' is not a work-like object")
         continue

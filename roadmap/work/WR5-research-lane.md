@@ -11,6 +11,8 @@ blocked_by: []
 informs: [H0]
 allowed_paths:
   - roadmap/research/WR5/**
+deliverables:
+  - roadmap/research/WR5/rehearse-candidates.md
 review_when: phase:P1:exit
 updated: 2026-07-21
 ---
