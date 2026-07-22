@@ -20,7 +20,7 @@ invalidated_by:
   - roadmap/tools/**
   - roadmap/work/W0E-lane-hardening.md
 updated: 2026-07-22
-evidence_fingerprint: sha256:8a802568ec3c30cf
+evidence_fingerprint: sha256:f6d931480ede222e
 ---
 
 # W0E — Lane hardening (second external review)
@@ -67,3 +67,10 @@ python roadmap/tools/doctor.py && python roadmap/tools/selftest.py
 - 2026-07-22: 28/28 selftests (incl. none-with-claims block, identity-mandatory, lane
   confinement, charter-edit block, strict lease/filename, deliverable checks); doctor green.
 - 2026-07-22: commit 7196c94; first three real lane commits (wr2/wr3/wr6) passed gate v3.
+- 2026-07-22: STALE-GREEN INCIDENT (external audit #2): the achieved-deps mutation
+  depended on live W1 being unachieved — W1 achieving made it vacuous, selftest went red
+  in CI for 4 runs while this item stayed achieved (fingerprint covers tools, not live
+  roadmap state). Fixed: mutation now fully synthetic; the promised duplicate-effective-
+  path check (declared, never enforced) implemented in doctor + negative-tested
+  (A:lane-path-overlap-rejected). 30/30 selftests; re-stamped. Honest note: between the
+  W1 status flip and this fix, "28/28 selftests" above was no longer reproducible.

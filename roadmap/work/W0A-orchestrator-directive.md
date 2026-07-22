@@ -22,7 +22,7 @@ invalidated_by:
   - roadmap/work/W0A-orchestrator-directive.md
 review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:72924b8c6bd81a51
+evidence_fingerprint: sha256:f6f8e21ea707def9
 ---
 
 # W0A — Adopt the orchestrator directive (right-sized)

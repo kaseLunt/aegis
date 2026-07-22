@@ -96,9 +96,15 @@ def part_a():
     mutate('active-requires-handoff', "missing '## Handoff'", fab_active_no_handoff)
 
     def fab_active_unachieved_dep(rm):
+        # Fully synthetic dependency pair (external audit #2): the mutation must never
+        # depend on the live status of a real work item -- W1 flipping to achieved once
+        # made this check vacuous while W0E stayed stale-green.
+        open(os.path.join(rm, 'work', 'WTESTDEP-fab.md'), 'w', encoding='utf-8', newline='\n').write(
+            '---\nid: WTESTDEP\ntype: work\ntitle: fab dep\nphase: P0\nstatus: committed\n'
+            'evidence_target: "Correct"\ndepends_on: []\nblocked_by: []\nallowed_paths:\n  - src/**\n---\n\n# t\n')
         open(os.path.join(rm, 'work', 'WTEST2-fab.md'), 'w', encoding='utf-8', newline='\n').write(
             '---\nid: WTEST2\ntype: work\ntitle: fab\nphase: P0\nstatus: active\n'
-            'evidence_target: "Correct"\ndepends_on: [W1]\nblocked_by: []\nallowed_paths:\n  - src/**\n---\n\n# t\n\n'
+            'evidence_target: "Correct"\ndepends_on: [WTESTDEP]\nblocked_by: []\nallowed_paths:\n  - src/**\n---\n\n# t\n\n'
             '## Handoff\n- next: placeholder next steps long enough to satisfy the resumability check for tests.\n'
             '- read_first: none\n- hazards: none\n')
     mutate('active-requires-achieved-deps', 'not achieved', fab_active_unachieved_dep)
@@ -122,6 +128,22 @@ def part_a():
         fab_claim(rm, 'agentz', '---\nagent: agentz\ntask: W1\nstatus: active\n'
                   'lease_expires: 2099-01-01T00:00:00Z\n---\n')
     mutate('one-claim-per-agent', 'more than one active claim', fab_double_claim)
+
+    def fab_overlapping_lanes(rm):
+        # W0E charter: two agents' active lanes must never own the same path space --
+        # 'src/deep/**' is inside 'src/**', so these writers could race on one file.
+        # Fully synthetic tasks + claims (never reference live work-item IDs).
+        handoff = ('## Handoff\n- next: placeholder next steps long enough to satisfy the resumability check.\n'
+                   '- read_first: none\n- hazards: none\n')
+        for tid, paths in (('WTESTA', 'src/**'), ('WTESTB', 'src/deep/**')):
+            open(os.path.join(rm, 'work', f'{tid}-fab.md'), 'w', encoding='utf-8', newline='\n').write(
+                f'---\nid: {tid}\ntype: work\ntitle: fab\nphase: P0\nstatus: active\n'
+                f'evidence_target: "Correct"\ndepends_on: []\nblocked_by: []\nallowed_paths:\n  - {paths}\n---\n\n# t\n\n{handoff}')
+        fab_claim(rm, 'agenta', '---\nagent: agenta\ntask: WTESTA\nstatus: active\n'
+                  'lease_expires: 2099-01-01T00:00:00Z\n---\n')
+        fab_claim(rm, 'agentb', '---\nagent: agentb\ntask: WTESTB\nstatus: active\n'
+                  'lease_expires: 2099-01-01T00:00:00Z\n---\n')
+    mutate('lane-path-overlap-rejected', 'effective paths overlap', fab_overlapping_lanes)
 
     mutate('none-with-active-work', "while active work exists",
            lambda rm: edit(os.path.join(rm, 'STATUS.md'),

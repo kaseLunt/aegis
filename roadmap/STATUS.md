@@ -10,7 +10,10 @@ updated: 2026-07-22
 > Full rules: `SYSTEM.md` · `RULES.md`.
 
 **Active phase:** P1 — M1 canonical evidence spine (P0→P1 review: owner ratification 2026-07-21)
-**Health:** 🟢 on track
+**Health:** 🔴 control-plane CI red (external audit #2, roadmap/reviews/
+control-plane-codex-audit-2026-07-22.md) — selftest + overlap check fixed locally;
+next push still fails scope-diff until the owner-approval items in Blockers are resolved.
+Product CI green.
 
 ## Current task (WIP = 1 per agent, [[D-006]])
 **W3 — finalized-block selection + quorum/conflict semantics + RPC adapters** — fable-main
@@ -48,6 +51,14 @@ need real archive/trace providers). W0C parked pending owner action (Blockers).
    check once PR flow starts mattering.
 
 ## Blockers
+- OWNER: W2→W3 claim transition needs an AEGIS-OWNER-APPROVED commit in the push range
+  (scope_diff policy) — without it the next push is guaranteed red. Same commit should
+  carry the CI step-ordering fix (.github/** is W0E surface, outside W3 scope).
+- OWNER: main is unprotected (R-001 residual) — enable required checks
+  (Control plane + Product tests) now that CI is load-bearing.
+- OWNER: 25 commits authored as "Review Test" (23 pushed; audit tool's config accident,
+  email always correct). Rewrite needs force-push + roadmap SHA-reference updates —
+  recommendation: don't rewrite; decision recorded on answer.
 - W0C (parked): GitHub repo deletion needs owner auth — run
   `gh auth refresh -h github.com -s delete_repo` or delete kaseLunt/aegis via web; agent
   then recreates, pushes, verifies, and closes W0C.

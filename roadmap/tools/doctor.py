@@ -313,6 +313,23 @@ for crel, cfm in claims:
     for p in (cfm.get('allowed_paths') or []):
         if p not in task_paths:
             errors.append(f"{crel}: claim path '{p}' not declared in {task}'s allowed_paths (claims may only narrow)")
+    effective_paths[agent] = [str(p) for p in (cfm.get('allowed_paths') or task_paths)]
+# W0E: two agents' active lanes must never own the same path space (external audit #2 --
+# effective_paths was declared but never enforced). Effective set = the claim's narrowed
+# paths, else the task's declared paths. 'dir/**' owns the dir subtree; any other spec
+# owns its exact literal path (\x00 terminator prevents 'lib/a' matching 'lib/aegis/').
+def _path_domain(spec):
+    s = str(spec).replace('\\', '/')
+    return s[:-2] if s.endswith('/**') else s + '\x00'
+_lanes = sorted(effective_paths)
+for _i, _a in enumerate(_lanes):
+    for _b in _lanes[_i + 1:]:
+        for _pa in effective_paths[_a]:
+            for _pb in effective_paths[_b]:
+                _da, _db = _path_domain(_pa), _path_domain(_pb)
+                if _da.startswith(_db) or _db.startswith(_da):
+                    errors.append(f"lanes '{_a}' and '{_b}': effective paths overlap ('{_pa}' vs '{_pb}') "
+                                  "-- two writers must never own the same path space")
 for w in active_work:
     n = len(claimed_tasks.get(w, []))
     if n != 1:
