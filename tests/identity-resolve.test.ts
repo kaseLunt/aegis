@@ -213,10 +213,13 @@ describe("strategy dispatch and input contract", () => {
     expect(() => deriveIdentity("direct", "0xnothex", observation({}))).toThrow(IdentityError);
   });
 
-  test("malformed observed code bytes throw at hashing (odd-length / non-hex)", () => {
-    expect(() =>
-      deriveIdentity("direct", PROXY, observation({ code: { [PROXY]: "0x123" } })),
-    ).toThrow(IdentityError);
+  test("malformed observed code bytes are typed unknown (malformed evidence), path retained", () => {
+    // Codex W4 review finding 4: malformed OBSERVED data is missing/malformed evidence,
+    // never a throw out of derivation and never resolution through a garbage read.
+    const r = deriveIdentity("direct", PROXY, observation({ code: { [PROXY]: "0x123" } }));
+    expect(r.status).toBe("unknown");
+    expect(r.reasonCodes).toContain("malformed_code_hex");
+    expect(r.path).toEqual([{ role: "direct", address: PROXY }]);
   });
 });
 

@@ -72,9 +72,15 @@ npm test
 
 ## Handoff
 
-- next: Codex senior review of all three slices (per the ratified senior-reviewer
-  decision), disposition findings TDD, then narrow invalidated_by (see hazards) and stamp
-  achieved. DONE: slice 3 — compareIdentityTarget (one W1-shaped Verification per
+- next: narrow invalidated_by (see hazards), verify at the landing commit, mint the
+  receipt and stamp achieved. DONE: Codex senior review dispositioned — 4 P0 + 5 P1 +
+  test gaps, all accepted rows fixed TDD same-day (roadmap/reviews/W4-codex-review.md;
+  20 new tests, 297/297): reads hash-keyed via EIP-1898 form, strategy binding +
+  evidence-required comparison, ABI selection gated on observed==expected==registered,
+  malformed observed data typed (never resolution, never a throw), conflict distinguished
+  from missing evidence end to end, ERC-1967 logic-slot-empty precondition for beacons,
+  required manifest evidence + honest freshness, audit-sufficient evidence refs,
+  path retention on every unknown. DONE: slice 3 — compareIdentityTarget (one W1-shaped Verification per
   declared manifest expectation, invariantId deployment.code_identity/<targetId>/<kind>;
   drift-requiring-review language; unknown identity can never pass, reasons travel as
   typed limitations; evidence refs from ok-observations at the pinned boundary) +

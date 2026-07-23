@@ -40,31 +40,38 @@ export interface ChainAdapter {
   getBlockByNumber(chainId: number, number: string): Promise<PinnedBlock>;
 }
 
-// W4 identity reads. Every read is AT a pinned block number (established by the W3
-// boundary pass) so provider observations are comparable; the value travels with the
-// integrity-verified raw-result hash the quorum layer compares. Recorded mode returns the
-// loader-verified rawResponseSha256; a live adapter must thread its captured raw-response
-// hash the same way (probe-step work, see W3 handoff). Block numbers use the recording
-// canon (decimal strings, as in PinnedBlock) — live transports translate to JSON-RPC hex.
+// W4 identity reads. Every read is AT the established pin and keyed by its BLOCK HASH
+// (EIP-1898 request form, Codex W4 review finding 1): a number alone proves nothing
+// about which block answered, so the recording envelope — and a live provider honoring
+// {blockHash} — binds the exact block. The value travels with the integrity-verified
+// raw-result hash the quorum layer compares, plus the envelope's capture time and the
+// adapter-declared source mode (finding 8: provenance is not caller-labelable).
+export interface BlockPin {
+  number: string;
+  hash: string;
+}
+
 export interface IdentityReadResult {
   value: string;
   rawResultHash: string;
+  capturedAt: string;
+  sourceMode: "live" | "recorded" | "simulation";
 }
 
 export interface IdentityReadAdapter {
   readonly providerId: string;
   readonly administrativeDomain: string;
-  getCode(chainId: number, address: string, blockNumber: string): Promise<IdentityReadResult>;
+  getCode(chainId: number, address: string, pin: BlockPin): Promise<IdentityReadResult>;
   getStorageWord(
     chainId: number,
     address: string,
     slot: string,
-    blockNumber: string,
+    pin: BlockPin,
   ): Promise<IdentityReadResult>;
   call(
     chainId: number,
     request: { to: string; data: string },
-    blockNumber: string,
+    pin: BlockPin,
   ): Promise<IdentityReadResult>;
 }
 
@@ -181,14 +188,20 @@ export function recordedAdapter(
     return cap!;
   };
   // The recorded raw hash was integrity-verified at load; it IS sha256(jcs(result)), so
-  // returning it binds the quorum comparison to the verified recording.
+  // returning it binds the quorum comparison to the verified recording. Capture time
+  // and source mode come from the envelope/adapter, never from the caller.
   const readOf = (chainId: number, method: string, params: unknown[], path: string): IdentityReadResult => {
     capabilities(chainId);
     const r = lookupRaw(chainId, method, params, path);
     if (typeof r.result !== "string") {
       bad("malformed_recorded_result", path, `${method} result must be a hex string, got ${typeof r.result}`);
     }
-    return { value: r.result as string, rawResultHash: r.rawResponseSha256 };
+    return {
+      value: r.result as string,
+      rawResultHash: r.rawResponseSha256,
+      capturedAt: r.capturedAt,
+      sourceMode: "recorded",
+    };
   };
   return {
     providerId: provider.providerId,
@@ -207,25 +220,25 @@ export function recordedAdapter(
       capabilities(chainId);
       return lookup(chainId, "eth_getBlockByNumber", [number, false], "/blockByNumber");
     },
-    async getCode(chainId: number, address: string, blockNumber: string): Promise<IdentityReadResult> {
-      return readOf(chainId, "eth_getCode", [address, blockNumber], "/getCode");
+    async getCode(chainId: number, address: string, pin: BlockPin): Promise<IdentityReadResult> {
+      return readOf(chainId, "eth_getCode", [address, { blockHash: pin.hash }], "/getCode");
     },
     async getStorageWord(
       chainId: number,
       address: string,
       slot: string,
-      blockNumber: string,
+      pin: BlockPin,
     ): Promise<IdentityReadResult> {
-      return readOf(chainId, "eth_getStorageAt", [address, slot, blockNumber], "/getStorageAt");
+      return readOf(chainId, "eth_getStorageAt", [address, slot, { blockHash: pin.hash }], "/getStorageAt");
     },
     async call(
       chainId: number,
       request: { to: string; data: string },
-      blockNumber: string,
+      pin: BlockPin,
     ): Promise<IdentityReadResult> {
       // The recorded key canonicalizes the request object (JCS), so property order in the
       // caller's literal never matters.
-      return readOf(chainId, "eth_call", [{ data: request.data, to: request.to }, blockNumber], "/call");
+      return readOf(chainId, "eth_call", [{ data: request.data, to: request.to }, { blockHash: pin.hash }], "/call");
     },
   };
 }

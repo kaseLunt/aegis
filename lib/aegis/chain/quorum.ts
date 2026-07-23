@@ -24,6 +24,11 @@ export interface ProviderObservation {
   block?: { chainId: number; number: string; hash: string };
   rawResultHash?: string;
   decodedValueHash?: string;
+  // Response provenance (Codex W4 review finding 8): capture time and source mode travel
+  // from the adapter response so downstream evidence cannot be caller-relabeled. Ignored
+  // by quorum evaluation.
+  capturedAt?: string;
+  sourceMode?: string;
 }
 
 export interface QuorumPolicy {

@@ -55,10 +55,10 @@ const QUORUM: QuorumPolicy = {
   minAgreeing: 2,
 };
 
+const MANIFEST_EV_ID = shaOf("manifest-evidence:identity-compare");
 const CONTEXT = {
-  sourceMode: "recorded" as const,
   provenanceClass: "reference_scenario",
-  capturedAt: "2026-07-20T23:59:59Z",
+  manifestEvidenceId: MANIFEST_EV_ID,
 };
 
 const TARGET = {
@@ -107,36 +107,37 @@ describe("code-hash-scoped ABI registry", () => {
     { runtimeCodeHash: IMPL_CODE_HASH, abiId: "weeth-impl@v1" },
   ]);
 
-  test("selection requires a resolved identity whose terminal hash is registered", () => {
-    const s = selectAbi(registry, RESOLVED);
+  test("selection requires a resolved identity whose terminal hash matches the expectation", () => {
+    const s = selectAbi(registry, RESOLVED, IMPL_CODE_HASH);
     expect(s).toEqual({ status: "selected", abiId: "weeth-impl@v1", runtimeCodeHash: IMPL_CODE_HASH });
   });
 
   test("an unresolved identity can NEVER select an ABI, whatever the registry holds", () => {
     for (const reason of ["observation_unresolved", "code_absent", "implementation_slot_empty"]) {
-      const s = selectAbi(registry, { ...UNKNOWN, reasonCodes: [reason] });
+      const s = selectAbi(registry, { ...UNKNOWN, reasonCodes: [reason] }, IMPL_CODE_HASH);
       expect(s.status).toBe("refused");
       if (s.status === "refused") expect(s.reasonCodes).toEqual(["identity_unresolved"]);
     }
   });
 
   test("a resolved identity with an unregistered hash is refused, never approximated", () => {
-    const s = selectAbi(registry, { ...RESOLVED, runtimeCodeHash: `sha256:${"9".repeat(64)}` });
+    const unregistered = `sha256:${"9".repeat(64)}`;
+    const s = selectAbi(registry, { ...RESOLVED, runtimeCodeHash: unregistered }, unregistered);
     expect(s.status).toBe("refused");
     if (s.status === "refused") expect(s.reasonCodes).toEqual(["abi_unregistered"]);
   });
 
   test("registry construction rejects malformed hashes and duplicates", () => {
     expect(() => createAbiRegistry([{ runtimeCodeHash: "sha256:short", abiId: "x" }]))
-      .toThrowError(/invalid_registry_entry/);
+      .toThrow(/invalid_registry_entry/);
     expect(() => createAbiRegistry([{ runtimeCodeHash: IMPL_CODE_HASH, abiId: "" }]))
-      .toThrowError(/invalid_registry_entry/);
+      .toThrow(/invalid_registry_entry/);
     expect(() =>
       createAbiRegistry([
         { runtimeCodeHash: IMPL_CODE_HASH, abiId: "a" },
         { runtimeCodeHash: IMPL_CODE_HASH, abiId: "b" },
       ]),
-    ).toThrowError(/duplicate_registry_hash/);
+    ).toThrow(/duplicate_registry_hash/);
   });
 });
 
@@ -219,16 +220,16 @@ describe("manifest comparison — W1-shaped verifications", () => {
   test("caller defects are typed errors: wrong chain, wrong root address, malformed target", async () => {
     const observed = await observedEip1967();
     expect(() => compareIdentityTarget({ ...TARGET, chainId: 10 }, observed, PIN, CONTEXT))
-      .toThrowError(/target_chain_mismatch/);
+      .toThrow(/target_chain_mismatch/);
     expect(() =>
       compareIdentityTarget({ ...TARGET, address: `0x${"55".repeat(20)}` }, observed, PIN, CONTEXT),
-    ).toThrowError(/target_address_mismatch/);
+    ).toThrow(/target_address_mismatch/);
     expect(() =>
       compareIdentityTarget({ ...TARGET, expectedRuntimeCodeHash: "keccak:nope" }, observed, PIN, CONTEXT),
-    ).toThrowError(/invalid_target/);
+    ).toThrow(/invalid_target/);
     expect(() =>
       compareIdentityTarget({ ...TARGET, address: "0xNOT" }, observed, PIN, CONTEXT),
-    ).toThrowError(/invalid_target/);
+    ).toThrow(/invalid_target/);
   });
 
   test("evidence refs carry the read provenance: kinds, methods, pinned boundary", async () => {
@@ -283,6 +284,20 @@ describe("end-to-end: W1-valid payload from boundary + identity + manifest", () 
     );
     expect(policyTrust.state).toBe("trusted");
 
+    // The manifest itself is expected-side evidence (kind "manifest"), carrying the id
+    // every verification's expectedEvidenceIds names.
+    const manifestEvidence = {
+      id: MANIFEST_EV_ID,
+      kind: "manifest",
+      provenanceClass: "reference_scenario",
+      sourceMode: "recorded",
+      boundary: {
+        kind: "source_snapshot",
+        snapshot: { sourceId: "manifest", contentHash: manifestHash },
+      },
+      rawResultHash: manifestHash,
+      capturedAt: "2026-07-22T00:00:00Z",
+    };
     const payload = {
       schemaVersion: "1",
       engineVersion: "1",
@@ -294,7 +309,7 @@ describe("end-to-end: W1-valid payload from boundary + identity + manifest", () 
       sourceMode: "recorded",
       requestHash: shaOf("identity-compare-e2e"),
       observationBoundaries: [boundary.boundary],
-      evidence,
+      evidence: [manifestEvidence, ...evidence],
       verifications,
       facts: [],
       coverage: { supported: ["deployment.code_identity"], unsupported: [], excluded: [] },

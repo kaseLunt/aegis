@@ -1,8 +1,17 @@
 // W4 identity derivation (ENGINEERING_SPEC §Target invariant, deployment code identity).
 // Pure evaluator: adapters perform the reads and hand a pre-fetched observation set here;
 // this module never performs I/O. Every strategy verifies code exists, retains the full
-// indirection path, and derives an identity ONLY from the terminal runtime code. An
-// undeclared or unsupported pattern is `unknown` — Aegis never guesses a proxy type.
+// indirection path — including on every unknown outcome — and derives an identity ONLY
+// from the terminal runtime code. An undeclared or unsupported pattern is `unknown` —
+// Aegis never guesses a proxy type.
+//
+// Outcome taxonomy (Codex W4 review):
+//   - caller-contract violations (malformed target address, unknown strategy) THROW;
+//   - malformed OBSERVED data (non-hex code, bad storage word) is typed unknown with the
+//     walked path retained — malformed evidence is missing evidence, never a value;
+//   - a reader may throw ObservationUnavailable to signal that a read had no
+//     quorum-agreed value; derivation converts it to a typed unknown AT that step, so
+//     the path walked so far survives (finding 9).
 import { createHash } from "node:crypto";
 
 export class IdentityError extends Error {
@@ -15,7 +24,24 @@ export class IdentityError extends Error {
   }
 }
 
-// EIP-1967 storage slots: keccak256(label) - 1.
+// Thrown BY observation readers (never by this module) when a read produced no usable
+// value: no quorum agreement (conflict) or missing/insufficient evidence (unresolved).
+export class ObservationUnavailable extends Error {
+  constructor(public readonly code: "observation_unresolved" | "observation_conflict") {
+    super(code);
+    this.name = "ObservationUnavailable";
+  }
+}
+
+// Internal control flow: a typed dead end in the walk (absent code, empty slot, ...).
+class DerivationHalt extends Error {
+  constructor(public readonly reason: string) {
+    super(reason);
+    this.name = "DerivationHalt";
+  }
+}
+
+// EIP-1967 storage slots: keccak256(label) - 1 (asserted against the ERC literals in tests).
 export const EIP1967_IMPLEMENTATION_SLOT =
   "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
 export const EIP1967_BEACON_SLOT =
@@ -27,6 +53,7 @@ const EIP1167_SUFFIX = "5af43d82803e903d91602b57fd5bf3";
 
 const ADDRESS_RE = /^0x[0-9a-f]{40}$/;
 const HEX_RE = /^0x([0-9a-f]{2})*$/; // 0x + whole bytes
+const WORD_RE = /^0x[0-9a-f]{64}$/;
 const ZERO_ADDRESS = `0x${"0".repeat(40)}`;
 
 export type IdentityStrategy = "direct" | "eip1967" | "beacon" | "eip1167_clone" | "custom";
@@ -34,6 +61,7 @@ const SUPPORTED = new Set(["direct", "eip1967", "beacon", "eip1167_clone"]);
 const KNOWN = new Set([...SUPPORTED, "custom"]);
 
 export type StepRole =
+  | "root"
   | "direct"
   | "proxy"
   | "implementation"
@@ -59,6 +87,7 @@ export interface IdentityResult {
 // A pre-fetched observation set. getCode returns runtime code hex (or null/"0x" for an
 // account with no code); getStorageWord returns a 32-byte word; getBeaconImplementation
 // returns the beacon's implementation() result (or null if the beacon did not answer).
+// Any reader may throw ObservationUnavailable when the read has no usable value.
 export interface CodeObservation {
   getCode(address: string): string | null;
   getStorageWord(address: string, slot: string): string;
@@ -72,29 +101,58 @@ const requireAddress = (address: string): string => {
   return address;
 };
 
-const hasCode = (code: string | null): code is string =>
-  typeof code === "string" && code.length > 2 && code !== "0x";
+// Observed code, strictly validated: null/"0x" is ABSENT; non-hex is MALFORMED observed
+// data (typed dead end, never resolution through a garbage intermediate — finding 4).
+function codeAt(reader: CodeObservation, address: string): string | null {
+  const code = reader.getCode(address);
+  if (code === null || code === "0x" || code === "") return null;
+  if (typeof code !== "string" || !HEX_RE.test(code)) {
+    throw new DerivationHalt("malformed_code_hex");
+  }
+  return code;
+}
+
+// Observed storage word, strictly validated (typed dead end when malformed).
+function wordAt(reader: CodeObservation, address: string, slot: string): string {
+  const word = reader.getStorageWord(address, slot);
+  if (typeof word !== "string" || !WORD_RE.test(word)) {
+    throw new DerivationHalt("malformed_storage_word");
+  }
+  return word;
+}
+
+// The low 20 bytes of a validated 32-byte storage word (ERC-1967 slot convention).
+const addressFromWord = (word: string): string => `0x${word.slice(26)}`;
 
 // OUR content addressing: sha256 over the returned code BYTES (never the hex string,
-// never an on-chain keccak codehash).
-function hashRuntimeCode(code: string): string {
-  if (!HEX_RE.test(code)) throw new IdentityError("malformed_code_hex", code.slice(0, 16));
-  return `sha256:${createHash("sha256").update(Buffer.from(code.slice(2), "hex")).digest("hex")}`;
-}
+// never an on-chain keccak codehash). Input is pre-validated hex.
+const hashRuntimeCode = (code: string): string =>
+  `sha256:${createHash("sha256").update(Buffer.from(code.slice(2), "hex")).digest("hex")}`;
 
-// The low 20 bytes of a 32-byte storage word, as a checksum-free lowercase address.
-function addressFromWord(word: string): string {
-  if (typeof word !== "string" || !/^0x[0-9a-f]{64}$/.test(word)) {
-    throw new IdentityError("malformed_storage_word", String(word));
-  }
-  return `0x${word.slice(26)}`;
-}
+const unknown = (strategy: string, path: IdentityStep[], reason: string): IdentityResult => ({
+  strategy,
+  status: "unknown",
+  path: [...path],
+  terminalAddress: null,
+  runtimeCodeHash: null,
+  reasonCodes: [reason],
+});
 
-const unknown = (
+// Runs a strategy walk; typed dead ends and unavailable observations become unknown
+// results carrying the path accumulated so far.
+function walk(
   strategy: string,
   path: IdentityStep[],
-  reason: string,
-): IdentityResult => ({ strategy, status: "unknown", path, terminalAddress: null, runtimeCodeHash: null, reasonCodes: [reason] });
+  steps: () => IdentityResult,
+): IdentityResult {
+  try {
+    return steps();
+  } catch (e) {
+    if (e instanceof DerivationHalt) return unknown(strategy, path, e.reason);
+    if (e instanceof ObservationUnavailable) return unknown(strategy, path, e.code);
+    throw e;
+  }
+}
 
 // Terminal step shared by every strategy: the resolved address must carry code, and the
 // identity is the sha256 of that code. Absent code is unknown, never a fallback.
@@ -104,78 +162,88 @@ function terminal(
   address: string,
   reader: CodeObservation,
 ): IdentityResult {
-  const code = reader.getCode(address);
-  if (!hasCode(code)) return unknown(strategy, path, "code_absent");
+  const code = codeAt(reader, address);
+  if (code === null) throw new DerivationHalt("code_absent");
   return {
     strategy,
     status: "resolved",
-    path,
+    path: [...path],
     terminalAddress: address,
     runtimeCodeHash: hashRuntimeCode(code),
     reasonCodes: [],
   };
 }
 
-function deriveDirect(address: string, reader: CodeObservation): IdentityResult {
-  return terminal("direct", [{ role: "direct", address }], address, reader);
-}
-
 // A proxy must itself have code before any slot is read (an EOA/empty account is not a
-// proxy). The slot address must be non-zero to count as declared.
-function resolveVia(
-  strategy: string,
-  proxyRole: StepRole,
-  address: string,
+// proxy); the slot address must be non-zero to count as declared.
+function slotTarget(
+  reader: CodeObservation,
+  proxy: string,
   slot: string,
   emptyReason: string,
-  reader: CodeObservation,
-): { path: IdentityStep[]; next: string } | IdentityResult {
-  if (!hasCode(reader.getCode(address))) {
-    return unknown(strategy, [{ role: proxyRole, address }], "code_absent");
-  }
-  const next = addressFromWord(reader.getStorageWord(address, slot));
-  if (next === ZERO_ADDRESS) {
-    return unknown(strategy, [{ role: proxyRole, address }], emptyReason);
-  }
-  return { path: [{ role: proxyRole, address }], next };
+): string {
+  if (codeAt(reader, proxy) === null) throw new DerivationHalt("code_absent");
+  const next = addressFromWord(wordAt(reader, proxy, slot));
+  if (next === ZERO_ADDRESS) throw new DerivationHalt(emptyReason);
+  return next;
+}
+
+function deriveDirect(address: string, reader: CodeObservation): IdentityResult {
+  const path: IdentityStep[] = [{ role: "direct", address }];
+  return walk("direct", path, () => terminal("direct", path, address, reader));
 }
 
 function deriveEip1967(address: string, reader: CodeObservation): IdentityResult {
-  const step = resolveVia("eip1967", "proxy", address, EIP1967_IMPLEMENTATION_SLOT, "implementation_slot_empty", reader);
-  if ("status" in step) return step;
-  return terminal("eip1967", [...step.path, { role: "implementation", address: step.next }], step.next, reader);
+  const path: IdentityStep[] = [{ role: "proxy", address }];
+  return walk("eip1967", path, () => {
+    const impl = slotTarget(reader, address, EIP1967_IMPLEMENTATION_SLOT, "implementation_slot_empty");
+    path.push({ role: "implementation", address: impl });
+    return terminal("eip1967", path, impl, reader);
+  });
 }
 
 function deriveBeacon(address: string, reader: CodeObservation): IdentityResult {
-  const step = resolveVia("beacon", "proxy", address, EIP1967_BEACON_SLOT, "beacon_slot_empty", reader);
-  if ("status" in step) return step;
-  const beacon = step.next;
-  const path = [...step.path, { role: "beacon" as const, address: beacon }];
-  if (!hasCode(reader.getCode(beacon))) return unknown("beacon", path, "code_absent");
-  const impl = reader.getBeaconImplementation(beacon);
-  if (impl === null || !ADDRESS_RE.test(impl) || impl === ZERO_ADDRESS) {
-    return unknown("beacon", path, "beacon_implementation_unresolved");
-  }
-  return terminal("beacon", [...path, { role: "beacon_implementation", address: impl }], impl, reader);
+  const path: IdentityStep[] = [{ role: "proxy", address }];
+  return walk("beacon", path, () => {
+    if (codeAt(reader, address) === null) throw new DerivationHalt("code_absent");
+    // ERC-1967: the beacon applies only while the direct logic slot is EMPTY. A
+    // populated logic slot alongside a beacon claim is ambiguous, nonconforming
+    // identity — never resolved through the beacon (finding 6).
+    if (addressFromWord(wordAt(reader, address, EIP1967_IMPLEMENTATION_SLOT)) !== ZERO_ADDRESS) {
+      throw new DerivationHalt("logic_slot_populated");
+    }
+    const beacon = addressFromWord(wordAt(reader, address, EIP1967_BEACON_SLOT));
+    if (beacon === ZERO_ADDRESS) throw new DerivationHalt("beacon_slot_empty");
+    path.push({ role: "beacon", address: beacon });
+    if (codeAt(reader, beacon) === null) throw new DerivationHalt("code_absent");
+    const impl = reader.getBeaconImplementation(beacon);
+    if (impl === null || !ADDRESS_RE.test(impl) || impl === ZERO_ADDRESS) {
+      throw new DerivationHalt("beacon_implementation_unresolved");
+    }
+    path.push({ role: "beacon_implementation", address: impl });
+    return terminal("beacon", path, impl, reader);
+  });
 }
 
 function deriveClone(address: string, reader: CodeObservation): IdentityResult {
   const path: IdentityStep[] = [{ role: "clone", address }];
-  const code = reader.getCode(address);
-  if (!hasCode(code)) return unknown("eip1167_clone", path, "code_absent");
-  if (!HEX_RE.test(code)) throw new IdentityError("malformed_code_hex", code.slice(0, 16));
-  const body = code.slice(2);
-  const expectedLen = EIP1167_PREFIX.length + 40 + EIP1167_SUFFIX.length;
-  if (
-    body.length !== expectedLen ||
-    !body.startsWith(EIP1167_PREFIX) ||
-    !body.endsWith(EIP1167_SUFFIX)
-  ) {
-    return unknown("eip1167_clone", path, "not_eip1167_clone");
-  }
-  const target = `0x${body.slice(EIP1167_PREFIX.length, EIP1167_PREFIX.length + 40)}`;
-  if (target === ZERO_ADDRESS) return unknown("eip1167_clone", path, "clone_target_zero");
-  return terminal("eip1167_clone", [...path, { role: "clone_target", address: target }], target, reader);
+  return walk("eip1167_clone", path, () => {
+    const code = codeAt(reader, address);
+    if (code === null) throw new DerivationHalt("code_absent");
+    const body = code.slice(2);
+    const expectedLen = EIP1167_PREFIX.length + 40 + EIP1167_SUFFIX.length;
+    if (
+      body.length !== expectedLen ||
+      !body.startsWith(EIP1167_PREFIX) ||
+      !body.endsWith(EIP1167_SUFFIX)
+    ) {
+      throw new DerivationHalt("not_eip1167_clone");
+    }
+    const target = `0x${body.slice(EIP1167_PREFIX.length, EIP1167_PREFIX.length + 40)}`;
+    if (target === ZERO_ADDRESS) throw new DerivationHalt("clone_target_zero");
+    path.push({ role: "clone_target", address: target });
+    return terminal("eip1167_clone", path, target, reader);
+  });
 }
 
 export function deriveIdentity(
@@ -186,8 +254,10 @@ export function deriveIdentity(
   if (!KNOWN.has(strategy)) throw new IdentityError("unknown_strategy", strategy);
   requireAddress(address);
   // The custom strategy is the separately-reviewed indirection path (W4 non-goal): it is
-  // known but unsupported here — unknown, never guessed.
-  if (strategy === "custom") return unknown("custom", [], "unsupported_strategy");
+  // known but unsupported here — unknown with the declared root retained, never guessed.
+  if (strategy === "custom") {
+    return unknown("custom", [{ role: "root", address }], "unsupported_strategy");
+  }
   switch (strategy) {
     case "direct": return deriveDirect(address, reader);
     case "eip1967": return deriveEip1967(address, reader);

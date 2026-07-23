@@ -68,6 +68,11 @@ const IMPL_WORD = `0x${"00".repeat(12)}${IMPL.slice(2)}`;
 const BEACON_WORD = `0x${"00".repeat(12)}${BEACON.slice(2)}`;
 const BEACON_IMPL_WORD = `0x${"00".repeat(12)}${BEACON_IMPL.slice(2)}`;
 const IMPLEMENTATION_SELECTOR = "0x5c60da1b";
+const ZERO32 = `0x${"0".repeat(64)}`;
+// Recording canon after the Codex W4 review: reads are keyed by the pinned block HASH
+// (EIP-1898 request form), so the envelope binds which block answered.
+const AT_PIN = { blockHash: PIN.hash };
+const PIN_ARG = { number: PIN.number, hash: PIN.hash };
 
 const QUORUM: QuorumPolicy = {
   policyId: "pq-reference",
@@ -83,17 +88,19 @@ interface ReadSpec {
 }
 
 const READS: ReadSpec[] = [
-  { method: "eth_getCode", params: [PROXY, PIN.number], result: PROXY_CODE },
-  { method: "eth_getStorageAt", params: [PROXY, EIP1967_IMPLEMENTATION_SLOT, PIN.number], result: IMPL_WORD },
-  { method: "eth_getCode", params: [IMPL, PIN.number], result: IMPL_CODE },
-  { method: "eth_getCode", params: [BEACON_PROXY, PIN.number], result: BEACON_CODE.replace("bb", "ee") },
-  { method: "eth_getStorageAt", params: [BEACON_PROXY, EIP1967_BEACON_SLOT, PIN.number], result: BEACON_WORD },
-  { method: "eth_getCode", params: [BEACON, PIN.number], result: BEACON_CODE },
-  { method: "eth_call", params: [{ data: IMPLEMENTATION_SELECTOR, to: BEACON }, PIN.number], result: BEACON_IMPL_WORD },
-  { method: "eth_getCode", params: [BEACON_IMPL, PIN.number], result: BEACON_IMPL_CODE },
-  { method: "eth_getCode", params: [CLONE, PIN.number], result: CLONE_CODE },
-  { method: "eth_getCode", params: [CLONE_TARGET, PIN.number], result: CLONE_TARGET_CODE },
-  { method: "eth_getCode", params: [DIRECT, PIN.number], result: DIRECT_CODE },
+  { method: "eth_getCode", params: [PROXY, AT_PIN], result: PROXY_CODE },
+  { method: "eth_getStorageAt", params: [PROXY, EIP1967_IMPLEMENTATION_SLOT, AT_PIN], result: IMPL_WORD },
+  { method: "eth_getCode", params: [IMPL, AT_PIN], result: IMPL_CODE },
+  { method: "eth_getCode", params: [BEACON_PROXY, AT_PIN], result: BEACON_CODE.replace("bb", "ee") },
+  // ERC-1967: the beacon applies only while the direct logic slot is empty.
+  { method: "eth_getStorageAt", params: [BEACON_PROXY, EIP1967_IMPLEMENTATION_SLOT, AT_PIN], result: ZERO32 },
+  { method: "eth_getStorageAt", params: [BEACON_PROXY, EIP1967_BEACON_SLOT, AT_PIN], result: BEACON_WORD },
+  { method: "eth_getCode", params: [BEACON, AT_PIN], result: BEACON_CODE },
+  { method: "eth_call", params: [{ data: IMPLEMENTATION_SELECTOR, to: BEACON }, AT_PIN], result: BEACON_IMPL_WORD },
+  { method: "eth_getCode", params: [BEACON_IMPL, AT_PIN], result: BEACON_IMPL_CODE },
+  { method: "eth_getCode", params: [CLONE, AT_PIN], result: CLONE_CODE },
+  { method: "eth_getCode", params: [CLONE_TARGET, AT_PIN], result: CLONE_TARGET_CODE },
+  { method: "eth_getCode", params: [DIRECT, AT_PIN], result: DIRECT_CODE },
 ];
 
 function sealBundle(
@@ -133,32 +140,34 @@ const adaptersFor = (bundle: RecordingBundle): IdentityReadAdapter[] => [
 ];
 
 describe("recorded adapter identity reads", () => {
-  test("getCode at the pinned block returns the recorded code with its raw hash", async () => {
+  test("getCode at the pinned block returns the recorded code with its raw hash and provenance", async () => {
     const [alchemy] = adaptersFor(sealBundle(READS));
-    const read = await alchemy.getCode(1, DIRECT, PIN.number);
+    const read = await alchemy.getCode(1, DIRECT, PIN_ARG);
     expect(read.value).toBe(DIRECT_CODE);
     expect(read.rawResultHash).toBe(shaOf(DIRECT_CODE));
+    expect(read.sourceMode).toBe("recorded");
+    expect(read.capturedAt).toBe("2026-07-20T23:59:59Z");
   });
 
   test("getStorageWord returns the recorded 32-byte word", async () => {
     const [alchemy] = adaptersFor(sealBundle(READS));
-    const read = await alchemy.getStorageWord(1, PROXY, EIP1967_IMPLEMENTATION_SLOT, PIN.number);
+    const read = await alchemy.getStorageWord(1, PROXY, EIP1967_IMPLEMENTATION_SLOT, PIN_ARG);
     expect(read.value).toBe(IMPL_WORD);
   });
 
   test("call keys the recording by canonicalized request object", async () => {
     const [alchemy] = adaptersFor(sealBundle(READS));
     // Key order in the request object must not matter (JCS canonicalization).
-    const read = await alchemy.call(1, { to: BEACON, data: IMPLEMENTATION_SELECTOR }, PIN.number);
+    const read = await alchemy.call(1, { to: BEACON, data: IMPLEMENTATION_SELECTOR }, PIN_ARG);
     expect(read.value).toBe(BEACON_IMPL_WORD);
   });
 
   test("a missing recording is a typed failure, never an invented value", async () => {
     const [alchemy] = adaptersFor(sealBundle(READS));
-    await expect(alchemy.getCode(1, `0x${"99".repeat(20)}`, PIN.number)).rejects.toMatchObject({
+    await expect(alchemy.getCode(1, `0x${"99".repeat(20)}`, PIN_ARG)).rejects.toMatchObject({
       code: "recording_missing",
     });
-    await expect(alchemy.getCode(999, DIRECT, PIN.number)).rejects.toMatchObject({
+    await expect(alchemy.getCode(999, DIRECT, PIN_ARG)).rejects.toMatchObject({
       code: "unknown_chain",
     });
   });
@@ -216,8 +225,9 @@ describe("observeIdentity — quorum-wired identity derivation", () => {
     });
     const r = await observeIdentity("direct", DIRECT, adaptersFor(diverged), PIN, QUORUM);
     expect(r.identity.status).toBe("unknown");
-    expect(r.identity.reasonCodes).toEqual(["observation_unresolved"]);
+    expect(r.identity.reasonCodes).toEqual(["observation_conflict"]);
     expect(r.identity.runtimeCodeHash).toBeNull();
+    expect(r.identity.path).toEqual([{ role: "direct", address: DIRECT }]);
     expect(r.reads).toHaveLength(1);
     expect(r.reads[0].quorum.outcome).toBe("conflict");
     expect(r.reads[0].quorum.reasonCodes).toContain("raw_result_mismatch");
@@ -254,7 +264,7 @@ describe("observeIdentity — quorum-wired identity derivation", () => {
 
   test("quorum-agreed ABSENCE is evidence: '0x' yields the derivation-typed code_absent", async () => {
     const absent = sealBundle(
-      [{ method: "eth_getCode", params: [DIRECT, PIN.number], result: "0x" }],
+      [{ method: "eth_getCode", params: [DIRECT, AT_PIN], result: "0x" }],
     );
     const r = await observeIdentity("direct", DIRECT, adaptersFor(absent), PIN, QUORUM);
     expect(r.identity.status).toBe("unknown");

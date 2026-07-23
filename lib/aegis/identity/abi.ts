@@ -37,9 +37,26 @@ export function createAbiRegistry(entries: readonly AbiRegistryEntry[]): AbiRegi
   return { byRuntimeCodeHash };
 }
 
-export function selectAbi(registry: AbiRegistry, identity: IdentityResult): AbiSelection {
+// Selection requires the FULL chain of custody (Codex W4 review finding 3): a resolved
+// identity, whose terminal hash EQUALS the manifest expectation, and a registry entry
+// for that hash. Registry membership alone must never authorize decoding an unapproved
+// upgrade — the spec selects an ABI only after the terminal runtime hash matches.
+export function selectAbi(
+  registry: AbiRegistry,
+  identity: IdentityResult,
+  expectedRuntimeCodeHash: string | undefined,
+): AbiSelection {
   if (identity.status !== "resolved" || identity.runtimeCodeHash === null) {
     return { status: "refused", reasonCodes: ["identity_unresolved"] };
+  }
+  if (expectedRuntimeCodeHash === undefined) {
+    return { status: "refused", reasonCodes: ["missing_expectation"] };
+  }
+  if (!SHA256_STRICT.test(expectedRuntimeCodeHash)) {
+    throw new IdentityError("invalid_expectation", expectedRuntimeCodeHash);
+  }
+  if (identity.runtimeCodeHash !== expectedRuntimeCodeHash) {
+    return { status: "refused", reasonCodes: ["manifest_mismatch"] };
   }
   const abiId = registry.byRuntimeCodeHash.get(identity.runtimeCodeHash);
   if (abiId === undefined) {
