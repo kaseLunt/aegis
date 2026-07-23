@@ -70,6 +70,35 @@ narrower shapes, plus one new medium — all accepted and fixed TDD (4 more test
 | F7a: `in`-operator membership accepted prototype-chain names ("toString", "__proto__") as freshness states, deriving an optimistic aggregate | ACCEPTED — own-property membership only (Object.hasOwn) for both states and the aggregate |
 | NEW (medium): the worst-of ranking put stale above unknown, reversing ENGINEERING_SPEC §Freshness ("unknown outranks stale, which outranks aging, which outranks current") | ACCEPTED — rank reordered to the canonical precedence, verified against the spec text; mixed stale+unknown derives to unknown |
 
+## Convergence pass 5 (2026-07-23, Codex session 019f8dbe-8d50-7bc1-adb5-2acc39851dcc)
+
+Scoped to the three pass-4 closures (7b804ba..59b11e5): F7a and the freshness precedence
+CONFIRMED; F2 NOT CONFIRMED a THIRD time — a relabeled observation clone (one provider's
+authentic response re-tagged as a second provider/domain) still forged administrative
+independence, because the comparator was authenticating a caller-supplied structural
+object. Root-cause fix accepted (net −5 tests after consolidation; suite 309/309):
+
+- The comparator now accepts ONLY observations produced by observeIdentity — a
+  WeakSet provenance brand (mirroring the chain adapter's VERIFIED_BUNDLES idiom).
+  A hand-built observation carries no brand and is refused (`unverified_observation`)
+  BEFORE any independence logic runs. The provider/administrative-domain labels on a
+  branded observation are exactly those observeIdentity read from the reviewed adapter
+  configs — which is the established WR3/W3 independence trust boundary; authenticating
+  them inside the comparator was the wrong layer and could never be complete (three
+  passes of relabel-a-different-field proved it).
+- Consequently the entire transcript-authentication apparatus built over passes 2–4
+  (quorum recompute, raw-hash authentication, derivation replay, duplicate-key checks)
+  was REMOVED: a branded observation is internally consistent by construction
+  (its identity IS deriveIdentity over exactly its reads, each a quorum-agreement
+  outcome). Less code, and the forgery class is closed at the source rather than chased
+  field-by-field. Guard mutation-tested (removing it fails the relabeled-clone and
+  hand-built-observation tests).
+
+Methodology note: F2 recurred three times because each fix authenticated a forgeable
+input instead of refusing forgeable inputs. The lesson (captured as an insight) — when
+review keeps finding new forgery shapes against a validator, the validator is at the
+wrong layer; make the input unforgeable (provenance) instead.
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

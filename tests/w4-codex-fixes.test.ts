@@ -79,7 +79,6 @@ const CONTEXT = {
     capturedAt: "2026-07-22T00:00:00Z",
   },
   freshness: FRESH_CURRENT,
-  quorumPolicy: QUORUM,
 };
 
 interface ReadSpec {
@@ -184,17 +183,57 @@ describe("finding 2 — comparison binds strategy and requires observation evide
     expect(() => compareIdentityTarget(target, observed, PIN, CONTEXT)).toThrow(/strategy_mismatch/);
   });
 
-  test("a resolved identity with no observation evidence is a typed defect, never compared", () => {
-    const target = {
-      targetId: "t",
-      chainId: 1,
-      address: PROXY,
-      identityStrategy: "eip1967",
-      expectedRuntimeCodeHash: codeHash(IMPL_CODE),
+});
+
+describe("provenance boundary — only pipeline-produced observations may be compared", () => {
+  const target = {
+    targetId: "t",
+    chainId: 1,
+    address: DIRECT,
+    identityStrategy: "direct",
+    expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+  };
+
+  test("a real observeIdentity result is accepted", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const { verifications } = compareIdentityTarget(target, observed, PIN, CONTEXT);
+    expect(verifications[0].state).toBe("pass");
+  });
+
+  test("an otherwise-perfect hand-built observation carries no brand and is refused", async () => {
+    const real = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    // Structurally identical, but reconstructed by the caller — no pipeline provenance.
+    const cloned = { identity: real.identity, reads: real.reads.map((r) => ({ ...r })) };
+    expect(() => compareIdentityTarget(target, cloned, PIN, CONTEXT)).toThrow(/unverified_observation/);
+  });
+
+  test("the relabeled-clone independence forgery is refused at the boundary", async () => {
+    // Codex pass-5 scenario: clone one authentic provider's observation, relabel it as a
+    // second independent provider/domain, and present a two-provider 'agreement'. A
+    // hand-built observation cannot carry the pipeline brand, so it never reaches the
+    // independence logic at all.
+    const real = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const read = real.reads[0];
+    const alchemy = read.observations.find((o) => o.providerId === "alchemy")!;
+    const relabeledClone = {
+      ...alchemy,
+      providerId: "quicknode",
+      administrativeDomain: "QuickNode, Inc.",
     };
-    expect(() =>
-      compareIdentityTarget(target, { identity: RESOLVED, reads: [] }, PIN, CONTEXT),
-    ).toThrow(/missing_observation_evidence/);
+    const forged = {
+      identity: real.identity,
+      reads: [{
+        ...read,
+        observations: [alchemy, relabeledClone],
+        quorum: {
+          outcome: "agreement" as const,
+          reasonCodes: [],
+          agreeingProviders: ["alchemy", "quicknode"],
+          missingProviders: [],
+        },
+      }],
+    };
+    expect(() => compareIdentityTarget(target, forged, PIN, CONTEXT)).toThrow(/unverified_observation/);
   });
 });
 
@@ -434,8 +473,7 @@ describe("verification-pass residuals (F1/F2/F7)", () => {
     manifestHash: MANIFEST_HASH,
     manifestEvidence: MANIFEST_EVIDENCE,
     freshness: FRESH_CURRENT,
-    quorumPolicy: QUORUM,
-  };
+    };
   const DIRECT_TARGET = {
     targetId: "t",
     chainId: 1,
@@ -458,41 +496,6 @@ describe("verification-pass residuals (F1/F2/F7)", () => {
     await expect(
       alchemy.getCode(1, DIRECT, { number: PIN.number, hash: PIN.hash }),
     ).rejects.toMatchObject({ code: "recording_missing" });
-  });
-
-  test("R2: a resolved transcript containing a non-agreed read is inconsistent", async () => {
-    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
-    const forged = {
-      identity: observed.identity,
-      reads: [
-        ...observed.reads,
-        {
-          kind: "code" as const,
-          address: DIRECT,
-          agreedValue: null,
-          quorum: { outcome: "conflict" as const, reasonCodes: ["raw_result_mismatch"], agreeingProviders: [], missingProviders: [] },
-          observations: [],
-        },
-      ],
-    };
-    expect(() => compareIdentityTarget(DIRECT_TARGET, forged, PIN, CTX)).toThrow(/inconsistent_observation/);
-  });
-
-  test("R2: an unrelated agreed read (off the resolved path) is inconsistent", async () => {
-    const direct = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
-    const proxyReads = await observeIdentity("eip1967", PROXY, adaptersFor(sealBundle(READS)), PIN, QUORUM);
-    const forged = { identity: direct.identity, reads: [...direct.reads, ...proxyReads.reads] };
-    expect(() => compareIdentityTarget(DIRECT_TARGET, forged, PIN, CTX)).toThrow(/inconsistent_observation/);
-  });
-
-  test("R2: a claimed terminal hash that the transcript's terminal read cannot reproduce is inconsistent", async () => {
-    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
-    const forged = {
-      identity: { ...observed.identity, runtimeCodeHash: `sha256:${"5".repeat(64)}` },
-      reads: observed.reads,
-    };
-    const target = { ...DIRECT_TARGET, expectedRuntimeCodeHash: `sha256:${"5".repeat(64)}` };
-    expect(() => compareIdentityTarget(target, forged, PIN, CTX)).toThrow(/inconsistent_observation/);
   });
 
   test("R3: stale freshness caps a matching comparison at 'stale', never pass", async () => {
@@ -574,8 +577,7 @@ describe("confirmation-pass closures (F2/F7a survivors)", () => {
       capturedAt: "2026-07-22T00:00:00Z",
     },
     freshness: FRESH_OK,
-    quorumPolicy: QUORUM,
-  };
+    };
   const DIRECT_TARGET2 = {
     targetId: "t",
     chainId: 1,
@@ -583,40 +585,6 @@ describe("confirmation-pass closures (F2/F7a survivors)", () => {
     identityStrategy: "direct",
     expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
   };
-
-  test("F2: a forged agreed value is unmasked by the quorum-committed raw hashes", async () => {
-    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
-    const FORGED_CODE = "0x6080604099";
-    const forged = {
-      identity: { ...observed.identity, runtimeCodeHash: codeHash(FORGED_CODE) },
-      reads: observed.reads.map((r) => ({ ...r, agreedValue: FORGED_CODE })),
-    };
-    const target = { ...DIRECT_TARGET2, expectedRuntimeCodeHash: codeHash(FORGED_CODE) };
-    // agreedValue and the claimed hash are internally consistent — but the providers'
-    // raw hashes committed to DIFFERENT code. The forgery must not pass.
-    expect(() => compareIdentityTarget(target, forged, PIN, CTX2)).toThrow(/inconsistent_observation/);
-  });
-
-  test("F2: a claim the authenticated transcript does not re-derive to is inconsistent", async () => {
-    const observed = await observeIdentity("eip1967", PROXY, adaptersFor(sealBundle(READS)), PIN, QUORUM);
-    const forged = {
-      identity: {
-        ...observed.identity,
-        // Consistent transcript, but the claim swaps the terminal to the proxy itself.
-        terminalAddress: PROXY,
-        runtimeCodeHash: codeHash("0x60806040aa"),
-      },
-      reads: observed.reads,
-    };
-    const target = {
-      targetId: "t",
-      chainId: 1,
-      address: PROXY,
-      identityStrategy: "eip1967",
-      expectedRuntimeCodeHash: codeHash("0x60806040aa"),
-    };
-    expect(() => compareIdentityTarget(target, forged, PIN, CTX2)).toThrow(/inconsistent_observation/);
-  });
 
   test("F7a: a claimed 'current' aggregate over a stale assessment is rejected", async () => {
     const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
@@ -679,7 +647,6 @@ describe("convergence pass 4 closures (quorum recompute, prototype states, spec 
       capturedAt: "2026-07-22T00:00:00Z",
     },
     freshness: FRESH4,
-    quorumPolicy: QUORUM,
   };
   const T4 = {
     targetId: "t",
@@ -688,42 +655,6 @@ describe("convergence pass 4 closures (quorum recompute, prototype states, spec 
     identityStrategy: "direct",
     expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
   };
-
-  test("F2: forged quorum membership over authentic disagreeing observations is inconsistent", async () => {
-    // Providers COMMIT to different code (authentic raw hashes each); the forged quorum
-    // block claims a unilateral agreement on alchemy's value.
-    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
-    const real = observed.reads[0];
-    const OTHER = "0x6080604002";
-    const forged = {
-      identity: observed.identity,
-      reads: [{
-        ...real,
-        observations: real.observations.map((o) =>
-          o.providerId === "quicknode"
-            ? { ...o, rawResultHash: shaOf(OTHER) }
-            : o,
-        ),
-        quorum: {
-          outcome: "agreement" as const,
-          reasonCodes: [],
-          agreeingProviders: ["alchemy"],
-          missingProviders: [],
-        },
-      }],
-    };
-    expect(() => compareIdentityTarget(T4, forged, PIN, CTX4)).toThrow(/inconsistent_observation/);
-  });
-
-  test("F2: contradictory duplicate reads for one request key are inconsistent", async () => {
-    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
-    const real = observed.reads[0];
-    const forged = {
-      identity: observed.identity,
-      reads: [real, { ...real, agreedValue: "0x6080604002" }],
-    };
-    expect(() => compareIdentityTarget(T4, forged, PIN, CTX4)).toThrow(/inconsistent_observation/);
-  });
 
   test("F7a: prototype-chain property names are not freshness states", async () => {
     const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);

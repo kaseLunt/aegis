@@ -52,6 +52,20 @@ export interface ObservedIdentity {
   reads: IdentityReadEvidence[];
 }
 
+// Provenance brand (Codex W4 convergence pass 5): the ONLY sound defense against a
+// caller forging provider independence — a relabeled clone of one provider's response
+// presented as a second, independent provider — is to refuse any observation the trusted
+// pipeline did not itself produce. A hand-built ObservedIdentity is unforgeable-in and
+// carries no brand; observeIdentity stamps every result it returns. The provider and
+// administrative-domain labels on a branded observation come from the reviewed adapter
+// configs (WR3 provider matrix), which is the established independence trust boundary —
+// authenticating those labels inside the comparator is impossible and was the wrong
+// layer. Mirrors the VERIFIED_BUNDLES idiom in the chain adapter.
+const VERIFIED_OBSERVATIONS = new WeakSet<ObservedIdentity>();
+
+export const isVerifiedObservation = (observed: ObservedIdentity): boolean =>
+  VERIFIED_OBSERVATIONS.has(observed);
+
 interface ReadRequest {
   kind: "code" | "storage" | "call";
   address: string;
@@ -183,7 +197,9 @@ export async function observeIdentity(
   for (;;) {
     try {
       const identity = deriveIdentity(strategy, address, shim(cache));
-      return { identity, reads: [...cache.values()].map((o) => o.evidence) };
+      const observed = { identity, reads: [...cache.values()].map((o) => o.evidence) };
+      VERIFIED_OBSERVATIONS.add(observed);
+      return observed;
     } catch (e) {
       if (e instanceof ReadNeeded) {
         if (cache.size >= MAX_READS) {

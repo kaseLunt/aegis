@@ -14,7 +14,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
-import { loadRecordingBytes, recordedAdapter } from "../lib/aegis/chain/adapter";
+import { type RecordingBundle, loadRecordingBytes, recordedAdapter } from "../lib/aegis/chain/adapter";
 import { establishBoundary } from "../lib/aegis/chain/engine";
 import { PROVIDERS } from "../lib/aegis/chain/providers";
 import type { QuorumPolicy } from "../lib/aegis/chain/quorum";
@@ -55,6 +55,48 @@ const QUORUM: QuorumPolicy = {
   minAgreeing: 2,
 };
 
+// Seal an in-memory recording (both hashes recomputed, loader-verified) so tests can
+// produce GENUINE observeIdentity outcomes — provenance forbids hand-built observations.
+const AT_PIN = { blockHash: PIN.hash, requireCanonical: true };
+function sealBundle(
+  reads: Array<{ method: string; params: unknown[]; result: unknown }>,
+  providers: string[] = ["alchemy", "quicknode"],
+): RecordingBundle {
+  const bundle = {
+    recordingId: "compare-unknowns",
+    capturedAt: "2026-07-20T23:59:59Z",
+    responses: providers.flatMap((providerId) =>
+      reads.map((r) => ({
+        providerId, chainId: 1, method: r.method, params: r.params, result: r.result,
+        rawResponseSha256: shaOf(r.result), envelopeSha256: "sha256:" + "0".repeat(64),
+        capturedAt: "2026-07-20T23:59:59Z",
+      })),
+    ),
+  } as unknown as RecordingBundle;
+  for (const r of bundle.responses) {
+    const env: Record<string, unknown> = { ...r };
+    delete env.envelopeSha256;
+    r.envelopeSha256 = shaOf(env);
+  }
+  return loadRecordingBytes(new TextEncoder().encode(JSON.stringify(bundle)));
+}
+const observeOver = (
+  strategy: string,
+  address: string,
+  reads: Array<{ method: string; params: unknown[]; result: unknown }>,
+  providers?: string[],
+): Promise<ObservedIdentity> =>
+  observeIdentity(
+    strategy,
+    address,
+    [recordedAdapter(sealBundle(reads, providers), PROVIDERS.alchemy),
+     recordedAdapter(sealBundle(reads, providers), PROVIDERS.quicknode)],
+    PIN,
+    QUORUM,
+  );
+const IMPL_SLOT = "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+const ZERO32 = `0x${"0".repeat(64)}`;
+
 const manifestEvidenceFor = (hash: string) => ({
   id: shaOf(["manifest-ev", hash]),
   kind: "manifest" as const,
@@ -83,7 +125,6 @@ const CONTEXT = {
   manifestHash: UNIT_MANIFEST_HASH,
   manifestEvidence: manifestEvidenceFor(UNIT_MANIFEST_HASH),
   freshness: FRESH_CURRENT,
-  quorumPolicy: QUORUM,
 };
 
 const TARGET = {
@@ -203,7 +244,15 @@ describe("manifest comparison — W1-shaped verifications", () => {
   });
 
   test("an unknown identity can never produce pass; the reason travels as a limitation", async () => {
-    const observed: ObservedIdentity = { identity: UNKNOWN, reads: [] };
+    // A genuine unresolved eip1967 observation: quicknode has no proxy-code recording, so
+    // the first read is insufficient (missing evidence), never a value.
+    const observed = await observeOver(
+      "eip1967",
+      PROXY,
+      [{ method: "eth_getCode", params: [PROXY, AT_PIN], result: "0x60806040aa" }],
+      ["alchemy"],
+    );
+    expect(observed.identity.reasonCodes).toEqual(["observation_unresolved"]);
     const { verifications } = compareIdentityTarget(TARGET, observed, PIN, CONTEXT);
     expect(verifications).toHaveLength(2);
     for (const v of verifications) {
@@ -214,16 +263,27 @@ describe("manifest comparison — W1-shaped verifications", () => {
     }
   });
 
-  test("derivation-typed unknowns (code_absent, slot empty) also stay unknown, never fail", async () => {
-    for (const reason of ["code_absent", "implementation_slot_empty", "not_eip1167_clone"]) {
-      const observed: ObservedIdentity = {
-        identity: { ...UNKNOWN, reasonCodes: [reason] },
-        reads: [],
-      };
-      const { verifications } = compareIdentityTarget(TARGET, observed, PIN, CONTEXT);
+  test("derivation-typed unknowns (code_absent, slot empty) stay unknown, never fail", async () => {
+    const cases = [
+      {
+        reason: "code_absent",
+        observed: () => observeOver("eip1967", PROXY, [
+          { method: "eth_getCode", params: [PROXY, AT_PIN], result: "0x" },
+        ]),
+      },
+      {
+        reason: "implementation_slot_empty",
+        observed: () => observeOver("eip1967", PROXY, [
+          { method: "eth_getCode", params: [PROXY, AT_PIN], result: "0x60806040aa" },
+          { method: "eth_getStorageAt", params: [PROXY, IMPL_SLOT, AT_PIN], result: ZERO32 },
+        ]),
+      },
+    ];
+    for (const c of cases) {
+      const { verifications } = compareIdentityTarget(TARGET, await c.observed(), PIN, CONTEXT);
       for (const v of verifications) {
         expect(v.state).toBe("unknown");
-        expect(v.limitations[0].code).toBe(reason);
+        expect(v.limitations[0].code).toBe(c.reason);
       }
     }
   });
@@ -322,7 +382,6 @@ describe("end-to-end: W1-valid payload from boundary + identity + manifest", () 
             },
           ],
         },
-        quorumPolicy: QUORUM,
       },
     );
     expect(verifications.every((v) => v.state === "pass")).toBe(true);

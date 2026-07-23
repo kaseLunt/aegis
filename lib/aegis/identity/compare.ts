@@ -5,28 +5,23 @@
 // can create a mismatch, so the language never asserts compromise. A mismatched or
 // unknown identity can never produce pass; provider disagreement surfaces as the
 // canonical `conflict` state, distinct from missing evidence (Codex W4 finding 5).
-// The declared strategy must equal the observed one, and a resolved identity without
-// observation evidence is a typed defect (finding 2). Evidence refs carry the envelope's
-// capture time, the adapter-declared source mode, the storage slot as calldata, and the
-// quorum-agreed value (finding 8) — emitted for the payload's top level and referenced
-// by id through the W1 role lists.
+// The declared strategy must equal the observed one. Provider independence and read
+// authenticity are guaranteed at the source (Codex W4 convergence pass 5): the
+// comparator accepts ONLY observations produced by observeIdentity (provenance brand),
+// so a caller cannot hand-forge a relabeled-clone observation to fake independence —
+// authenticating labels inside the comparator was the wrong layer and is unnecessary.
+// Evidence refs carry the envelope's capture time, the adapter-declared source mode, the
+// storage slot as calldata, and the quorum-agreed value (finding 8) — emitted for the
+// payload's top level and referenced by id through the W1 role lists.
 import { createHash } from "node:crypto";
-import { type QuorumPolicy, evaluateQuorum } from "../chain/quorum";
 import type { PinnedBlock } from "../chain/selection";
 import { jcsSerialize } from "../report/canonical";
 import {
-  IMPLEMENTATION_SELECTOR,
-  decodeImplementationWord,
   type IdentityReadEvidence,
   type ObservedIdentity,
+  isVerifiedObservation,
 } from "./observe";
-import {
-  IdentityError,
-  ObservationUnavailable,
-  type CodeObservation,
-  type IdentityResult,
-  deriveIdentity,
-} from "./resolve";
+import { IdentityError } from "./resolve";
 
 export const CODE_IDENTITY_EVALUATOR_VERSION = "1";
 export const CODE_IDENTITY_INVARIANT = "deployment.code_identity";
@@ -80,10 +75,6 @@ export interface IdentityComparisonContext {
   manifestHash: string;
   manifestEvidence: IdentityManifestEvidence;
   freshness: EvaluatedFreshness;
-  // The applied quorum policy: transcript quorum verdicts are RECOMPUTED from the
-  // observations under this policy, never trusted (Codex pass-4 finding — forged
-  // agreeingProviders could otherwise turn disagreement into a unilateral pass).
-  quorumPolicy: QuorumPolicy;
 }
 
 export interface IdentityEvidenceRef {
@@ -200,113 +191,12 @@ function validateContext(context: IdentityComparisonContext): void {
     !Array.isArray(fresh.assessments) ||
     // The claimed aggregate must be DERIVABLE from its own assessments (F7a survivor):
     // an optimistic label over stale/absent assessments is rejected, not trusted.
-    derivedAggregate(fresh.assessments) !== fresh.aggregate ||
-    typeof context?.quorumPolicy !== "object" || context.quorumPolicy === null ||
-    typeof context.quorumPolicy.policyId !== "string" ||
-    !Array.isArray(context.quorumPolicy.requiredProviders) ||
-    !Number.isInteger(context.quorumPolicy.minAgreeing)
+    derivedAggregate(fresh.assessments) !== fresh.aggregate
   ) {
     throw new IdentityError(
       "invalid_context",
       "requires provenanceClass, the trusted manifestHash, a manifest EvidenceRef bound to it, and a freshness block whose aggregate matches its assessments",
     );
-  }
-}
-
-// A resolved identity must be backed by a coherent derivation transcript. Confirmation
-// pass (F2 survivor): the transcript's values are AUTHENTICATED against the
-// quorum-committed raw hashes — a value the agreeing providers did not commit to is a
-// forgery — and the identity claim must be REPRODUCED by re-running the pure derivation
-// over the authenticated transcript. Anything else is a forged or corrupted observation.
-const inconsistent = (detail: string): never => {
-  throw new IdentityError("inconsistent_observation", detail);
-};
-
-const transcriptKey = (kind: string, address: string, slot?: string, data?: string): string =>
-  `${kind}\0${address}\0${slot ?? ""}\0${data ?? ""}`;
-
-function validateTranscript(
-  target: IdentityTarget,
-  identity: IdentityResult,
-  reads: readonly IdentityReadEvidence[],
-  policy: QuorumPolicy,
-): void {
-  const values = new Map<string, string>();
-  for (const read of reads) {
-    if (read.quorum.outcome !== "agreement" || read.agreedValue === null) {
-      inconsistent("a resolved identity cannot cite a non-agreed read");
-    }
-    // The recorded quorum verdict is NEVER trusted: recompute it from the observations
-    // under the applied policy and require exact canonical equality (Codex pass-4 —
-    // forged agreeingProviders could otherwise turn disagreement into agreement).
-    let recomputed;
-    try {
-      recomputed = evaluateQuorum(read.observations, policy);
-    } catch {
-      inconsistent("transcript observations do not evaluate under the applied quorum policy");
-    }
-    if (
-      jcsSerialize(recomputed as unknown as Record<string, unknown>) !==
-      jcsSerialize(read.quorum as unknown as Record<string, unknown>)
-    ) {
-      inconsistent("the recorded quorum verdict is not reproduced by the observations");
-    }
-    const agreeing = new Set(read.quorum.agreeingProviders);
-    if (agreeing.size === 0) inconsistent("an agreed read must name its agreeing providers");
-    // The recorded raw hash convention is sha256 over the JCS form of the result; every
-    // agreeing observation must have committed to exactly this value.
-    const valueHash = `sha256:${createHash("sha256")
-      .update(Buffer.from(jcsSerialize(read.agreedValue), "utf-8"))
-      .digest("hex")}`;
-    const seen = new Set<string>();
-    for (const o of read.observations) {
-      if (!agreeing.has(o.providerId)) continue;
-      seen.add(o.providerId);
-      if (o.status !== "ok" || o.rawResultHash !== valueHash) {
-        inconsistent("transcript value differs from the quorum-committed raw result");
-      }
-    }
-    for (const p of agreeing) {
-      if (!seen.has(p)) inconsistent("an agreeing provider has no observation in the transcript");
-    }
-    const key = transcriptKey(read.kind, read.address, read.slot, read.data);
-    // Duplicate request keys may not contradict: last-write-wins would let array order
-    // pick between two authenticated-but-different values (Codex pass-4).
-    const existing = values.get(key);
-    if (existing !== undefined && existing !== read.agreedValue) {
-      inconsistent("contradictory duplicate reads for one request key");
-    }
-    values.set(key, read.agreedValue!);
-  }
-  // No reads outside the resolved indirection path: unrelated evidence is incoherent.
-  const pathAddresses = new Set(identity.path.map((s) => s.address));
-  for (const read of reads) {
-    if (!pathAddresses.has(read.address)) {
-      inconsistent("transcript read addresses differ from the resolved indirection path");
-    }
-  }
-  // Replay the pure derivation over the authenticated transcript; the claim must be
-  // reproduced EXACTLY — path, terminal, hash, status, everything.
-  const reader: CodeObservation = {
-    getCode: (address) => {
-      const v = values.get(transcriptKey("code", address));
-      if (v === undefined) throw new ObservationUnavailable("observation_unresolved");
-      return v;
-    },
-    getStorageWord: (address, slot) => {
-      const v = values.get(transcriptKey("storage", address, slot));
-      if (v === undefined) throw new ObservationUnavailable("observation_unresolved");
-      return v;
-    },
-    getBeaconImplementation: (address) => {
-      const v = values.get(transcriptKey("call", address, undefined, IMPLEMENTATION_SELECTOR));
-      if (v === undefined) throw new ObservationUnavailable("observation_unresolved");
-      return decodeImplementationWord(v);
-    },
-  };
-  const rederived = deriveIdentity(target.identityStrategy, target.address, reader);
-  if (jcsSerialize(rederived as unknown as Record<string, unknown>) !== jcsSerialize(identity as unknown as Record<string, unknown>)) {
-    inconsistent("the transcript does not re-derive to the claimed identity");
   }
 }
 
@@ -366,6 +256,17 @@ export function compareIdentityTarget(
   pinned: PinnedBlock,
   context: IdentityComparisonContext,
 ): IdentityComparison {
+  // Provenance FIRST (Codex W4 convergence pass 5): only an observation the trusted
+  // pipeline produced may be compared. This closes the relabeled-clone independence
+  // forgery at the root — a hand-built observation carries no brand — so the provider
+  // and administrative-domain labels are exactly those observeIdentity read from the
+  // reviewed adapters, and no per-field authentication in the comparator is needed.
+  if (!isVerifiedObservation(observed)) {
+    throw new IdentityError(
+      "unverified_observation",
+      "observation must be produced by observeIdentity",
+    );
+  }
   validateTarget(target);
   validateContext(context);
   if (target.chainId !== pinned.chainId) {
@@ -388,17 +289,13 @@ export function compareIdentityTarget(
     throw new IdentityError("target_address_mismatch", `${target.address} != observed ${root}`);
   }
 
+  // A branded resolved observation is internally consistent by construction: its identity
+  // IS deriveIdentity() over exactly these reads, each read is a quorum-agreement outcome
+  // (observeIdentity turns any non-agreement into an unknown, not a resolution), and read
+  // values carry the adapters' loader-verified raw hashes. No transcript re-authentication
+  // is therefore possible or needed once provenance holds.
   const readEvidence = evidenceFromReads(observed.reads, pinned, context);
   const actualIds = [...new Set(readEvidence.map((e) => e.id))].sort();
-  if (identity.status === "resolved") {
-    // A resolved identity that cites no observation evidence is incoherent — it cannot
-    // have been derived from quorum-agreed reads (finding 2)...
-    if (actualIds.length === 0) {
-      throw new IdentityError("missing_observation_evidence", target.targetId);
-    }
-    // ...and the transcript it cites must actually support it (F2 residual).
-    validateTranscript(target, identity, observed.reads, context.quorumPolicy);
-  }
   const evidence: Array<IdentityEvidenceRef | IdentityManifestEvidence> = [
     context.manifestEvidence,
     ...readEvidence,
