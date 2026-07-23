@@ -1213,6 +1213,53 @@ describe("convergence pass 11 — proxies refused, required runtime hash enforce
   });
 });
 
+describe("convergence pass 12 — RegExp.test coercion closed; required field on type; surrogate-key coverage", () => {
+  const observedAtPin12 = () =>
+    observeIdentity(
+      "direct",
+      DIRECT,
+      adaptersFor(sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE }])),
+      PIN,
+      QUORUM,
+    );
+  const goodTarget = () => ({
+    targetId: "t",
+    chainId: 1,
+    address: DIRECT,
+    identityStrategy: "direct",
+    expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+  });
+
+  test("HIGH: a one-element array manifestEvidence.id is refused — RegExp.test coercion cannot forge a string field", async () => {
+    // ["sha256:…"] stringifies to the hash and would pass a bare SHA256_STRICT.test; the
+    // type guard refuses it, so an array-valued id can never reach the emitted linkage.
+    const observed = await observedAtPin12();
+    const context = {
+      ...CONTEXT,
+      manifestEvidence: { ...CONTEXT.manifestEvidence, id: [CONTEXT.manifestEvidence.id] },
+    };
+    expect(() => compareIdentityTarget(goodTarget(), observed, PIN, context as never)).toThrow(/invalid_context/);
+  });
+
+  test("HIGH: a one-element array expectedImplementation is refused (invalid_target), never emitted as a fail", async () => {
+    const observed = await observedAtPin12();
+    const target = { ...goodTarget(), expectedImplementation: [IMPL] };
+    expect(() => compareIdentityTarget(target as never, observed, PIN, CONTEXT)).toThrow(/invalid_target/);
+  });
+
+  test("P2: a lone-surrogate object KEY is refused up front (invalid_context)", async () => {
+    const observed = await observedAtPin12();
+    const context = {
+      ...CONTEXT,
+      freshness: {
+        ...FRESH_CURRENT,
+        assessments: [{ ...FRESH_CURRENT.assessments[0], ["k\uD800"]: 1 }],
+      },
+    };
+    expect(() => compareIdentityTarget(goodTarget(), observed, PIN, context as never)).toThrow(/invalid_context/);
+  });
+});
+
 describe("review test-quality items", () => {
   test("T2: the exported slot constants equal the official ERC-1967 literals", () => {
     expect(EIP1967_IMPLEMENTATION_SLOT).toBe(

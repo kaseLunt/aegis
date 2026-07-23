@@ -219,6 +219,28 @@ Process note: `git checkout` on the uncommitted file during mutation testing rev
 whole pass-11 delta (recurrence of the observe.ts hazard) — re-applied from context, then
 finished mutation tests with in-place Python reverts only. 336/336, lint clean.
 
+## Convergence pass 12 (2026-07-23, Codex session 019f8e85-0457-7953-b214-d80b4cca17ab)
+
+Scoped re-verify of the pass-11 fixes (773b46c..11a4b0a), neutral+static brief, run in
+place (no worktree — the prior worktree attempt caused the shared-temp incident,
+[[INS-fa971e14-587c-4565-907e-839ec51a3101]]). Q1 (isolation) PASS — no accessor / toJSON
+/ proxy trap / Symbol.toPrimitive path remains; the isProxy check confirmed to precede
+every reflective op at every depth. Q3 (regression) PASS. Q2 surfaced a NEW class:
+RegExp.test coerces its argument to a string.
+
+| Finding | Disposition |
+|---------|-------------|
+| P1: `SHA256_STRICT.test(me.id)` had no `typeof` guard — RegExp.test coerces, so a one-element array `["sha256:…"]` stringifies to the hash and validates, emitting an array-valued `id` in the expected-evidence linkage (contradicts the declared string field) | ACCEPTED — introduced type-guard helpers `isSha256`/`isAddress` (`typeof === "string" && RE.test`) and routed EVERY format check through them. Array-valued id → invalid_context. Test + mutation-tested |
+| P1: same coercion on optional `expectedImplementation` (`ADDRESS_RE.test` unguarded) — an array-valued impl validated, then strict-compared false, emitting a `fail` with an array-valued expected identity instead of invalid_target | ACCEPTED — `isAddress` guard; array-valued expectedImplementation → invalid_target. Test + mutation-tested |
+| P2: exported `IdentityTarget.expectedRuntimeCodeHash` still typed optional despite the runtime + manifest requiring it | ACCEPTED — made the field required on the interface (used only within compare.ts; no external constructor). Lint/tsc clean |
+| P2: no test reached the lone-surrogate-KEY branch (only the value branch was covered) | ACCEPTED — added a lone-surrogate object-key test (invalid_context) |
+
+Class note: this is the third input-domain layer — after "refuse active objects" (pass 10)
+and "refuse programmable reflection / proxies" (pass 11) comes "refuse type-coerced
+scalars" (pass 12). JS coercion (`RegExp.test`, `String()`, `==`) is one more way a
+non-string can wear a string's clothes; the guarded-helper pattern closes it uniformly.
+339/339, lint clean.
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

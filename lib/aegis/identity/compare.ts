@@ -34,13 +34,22 @@ const SHA256_STRICT = /^sha256:[0-9a-f]{64}$/;
 // the inert-input snapshot must reject it up front rather than pass it through (pass-11).
 const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 
+// RegExp.test coerces its argument to a string, so a bare `RE.test(x)` accepts non-string
+// inputs like a one-element array ["0x…"] via String() coercion (Codex pass-12). Every
+// format check goes through a type guard that confirms `typeof x === "string"` first, so a
+// coerced value can never validate and be emitted in a field the type declares as string.
+const isSha256 = (v: unknown): v is string => typeof v === "string" && SHA256_STRICT.test(v);
+const isAddress = (v: unknown): v is string => typeof v === "string" && ADDRESS_RE.test(v);
+
 export interface IdentityTarget {
   targetId: string;
   chainId: number;
   address: string;
   identityStrategy: string;
   expectedImplementation?: string;
-  expectedRuntimeCodeHash?: string;
+  // Required (Codex pass-11): matches the manifest schema (trust.ts TARGET_MANDATORY); a
+  // target must declare the terminal runtime-hash expectation or there is nothing to check.
+  expectedRuntimeCodeHash: string;
 }
 
 // The manifest-side EvidenceRef (kind "manifest") every verification cites as its
@@ -132,17 +141,16 @@ function validateTarget(target: IdentityTarget): void {
   if (
     typeof target.targetId !== "string" || target.targetId.length === 0 ||
     !Number.isInteger(target.chainId) ||
-    typeof target.address !== "string" || !ADDRESS_RE.test(target.address) ||
+    !isAddress(target.address) ||
     typeof target.identityStrategy !== "string" || target.identityStrategy.length === 0 ||
-    (target.expectedImplementation !== undefined && !ADDRESS_RE.test(target.expectedImplementation)) ||
+    (target.expectedImplementation !== undefined && !isAddress(target.expectedImplementation)) ||
     // expectedRuntimeCodeHash is MANDATORY, matching the manifest schema (trust.ts
     // TARGET_MANDATORY): the terminal runtime-hash check is the primary identity
     // assertion. Without it a target would declare no expectation and the evaluator
     // would emit ZERO verifications — a vacuous "nothing to check" pass (Codex pass-11).
-    typeof target.expectedRuntimeCodeHash !== "string" ||
-    !SHA256_STRICT.test(target.expectedRuntimeCodeHash)
+    !isSha256(target.expectedRuntimeCodeHash)
   ) {
-    throw new IdentityError("invalid_target", target.targetId ?? "<missing targetId>");
+    throw new IdentityError("invalid_target", typeof target.targetId === "string" ? target.targetId : "<missing targetId>");
   }
 }
 
@@ -316,9 +324,12 @@ function validateContext(context: IdentityComparisonContext, observedPin: Pinned
   const fresh = context?.freshness;
   if (
     typeof context?.provenanceClass !== "string" || context.provenanceClass.length === 0 ||
-    typeof context?.manifestHash !== "string" || !SHA256_STRICT.test(context.manifestHash) ||
+    !isSha256(context?.manifestHash) ||
     typeof me !== "object" || me === null ||
-    !SHA256_STRICT.test(me.id) ||
+    // me.id must be a string BEFORE the format test: RegExp.test coerces, so a bare
+    // SHA256_STRICT.test(me.id) would accept e.g. ["sha256:…"] and emit an array-valued
+    // id in the expected-evidence linkage (Codex pass-12).
+    !isSha256(me.id) ||
     me.kind !== "manifest" ||
     // The manifest ref must be BOUND to the trusted manifest hash — both its raw result
     // and its snapshot boundary. Anything else lets observed evidence masquerade as
