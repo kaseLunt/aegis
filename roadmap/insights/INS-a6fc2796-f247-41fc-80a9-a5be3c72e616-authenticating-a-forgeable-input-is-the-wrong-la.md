@@ -52,3 +52,16 @@ is always one more label to relabel.
   provenance-branded engine results, not re-validate structural copies.
 - Mirrors the control-plane's own design (evidence is valid only for its recorded
   fingerprint/provenance, not re-checked structurally) — same principle, code layer.
+
+## Addendum (pass 8, 2026-07-23): after unforgeable, read over exactly ONE channel
+The brand closes forged CONSTRUCTION; pass 8 showed the remaining hole is forged
+OBSERVATION of a legitimate-typed input: JS exposes multiple read channels (own methods
+like `every`, Symbol.iterator, live getters, toJSON), and a validator that reads one
+channel while serialization reads another can be shown two different values without any
+mutation — `validateContext` dispatched the caller array's `every` while JSON
+serialization read its indices. Fix idiom: SNAPSHOT the untrusted input once into plain
+data (JSON round-trip = exactly the serializer's view), then validate AND emit only the
+snapshot; internal indexed loops, never caller-dispatched methods. A hostile object can
+still lie, but only consistently — the report carries exactly what was validated.
+Same W5 consequence: engine output handed across a trust boundary should be plain
+frozen data, so surfaces cannot be channel-split either.
