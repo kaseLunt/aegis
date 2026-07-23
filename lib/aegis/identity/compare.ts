@@ -11,6 +11,7 @@
 // quorum-agreed value (finding 8) — emitted for the payload's top level and referenced
 // by id through the W1 role lists.
 import { createHash } from "node:crypto";
+import { type QuorumPolicy, evaluateQuorum } from "../chain/quorum";
 import type { PinnedBlock } from "../chain/selection";
 import { jcsSerialize } from "../report/canonical";
 import {
@@ -79,6 +80,10 @@ export interface IdentityComparisonContext {
   manifestHash: string;
   manifestEvidence: IdentityManifestEvidence;
   freshness: EvaluatedFreshness;
+  // The applied quorum policy: transcript quorum verdicts are RECOMPUTED from the
+  // observations under this policy, never trusted (Codex pass-4 finding — forged
+  // agreeingProviders could otherwise turn disagreement into a unilateral pass).
+  quorumPolicy: QuorumPolicy;
 }
 
 export interface IdentityEvidenceRef {
@@ -140,14 +145,20 @@ function validateTarget(target: IdentityTarget): void {
   }
 }
 
-// Worst-of ranking for deriving the aggregate: an affirmative staleness outranks the
-// mere absence of an assessment.
+// Worst-of ranking for deriving the aggregate, in the CANONICAL spec precedence
+// (ENGINEERING_SPEC §Freshness: "unknown outranks stale, which outranks aging, which
+// outranks current") — spec-implementation lockstep, Codex pass-4 finding.
 const FRESHNESS_RANK: Record<FreshnessState, number> = {
   current: 0,
   aging: 1,
-  unknown: 2,
-  stale: 3,
+  stale: 2,
+  unknown: 3,
 };
+
+// Membership via own-property lookup only: the `in` operator would accept
+// prototype-chain names like "toString" as states (Codex pass-4 finding).
+const isFreshnessState = (state: unknown): state is FreshnessState =>
+  typeof state === "string" && Object.hasOwn(FRESHNESS_RANK, state);
 
 function derivedAggregate(assessments: readonly FreshnessAssessment[]): FreshnessState | null {
   if (assessments.length === 0) return "unknown";
@@ -157,7 +168,7 @@ function derivedAggregate(assessments: readonly FreshnessAssessment[]): Freshnes
       typeof a !== "object" || a === null ||
       typeof a.policyId !== "string" || a.policyId.length === 0 ||
       typeof a.boundary !== "object" || a.boundary === null ||
-      !(a.state in FRESHNESS_RANK)
+      !isFreshnessState(a.state)
     ) {
       return null;
     }
@@ -185,11 +196,15 @@ function validateContext(context: IdentityComparisonContext): void {
     typeof me.sourceMode !== "string" || me.sourceMode.length === 0 ||
     typeof me.capturedAt !== "string" || me.capturedAt.length === 0 ||
     typeof fresh !== "object" || fresh === null ||
-    !(fresh.aggregate in FRESHNESS_RANK) ||
+    !isFreshnessState(fresh.aggregate) ||
     !Array.isArray(fresh.assessments) ||
     // The claimed aggregate must be DERIVABLE from its own assessments (F7a survivor):
     // an optimistic label over stale/absent assessments is rejected, not trusted.
-    derivedAggregate(fresh.assessments) !== fresh.aggregate
+    derivedAggregate(fresh.assessments) !== fresh.aggregate ||
+    typeof context?.quorumPolicy !== "object" || context.quorumPolicy === null ||
+    typeof context.quorumPolicy.policyId !== "string" ||
+    !Array.isArray(context.quorumPolicy.requiredProviders) ||
+    !Number.isInteger(context.quorumPolicy.minAgreeing)
   ) {
     throw new IdentityError(
       "invalid_context",
@@ -214,11 +229,27 @@ function validateTranscript(
   target: IdentityTarget,
   identity: IdentityResult,
   reads: readonly IdentityReadEvidence[],
+  policy: QuorumPolicy,
 ): void {
   const values = new Map<string, string>();
   for (const read of reads) {
     if (read.quorum.outcome !== "agreement" || read.agreedValue === null) {
       inconsistent("a resolved identity cannot cite a non-agreed read");
+    }
+    // The recorded quorum verdict is NEVER trusted: recompute it from the observations
+    // under the applied policy and require exact canonical equality (Codex pass-4 —
+    // forged agreeingProviders could otherwise turn disagreement into agreement).
+    let recomputed;
+    try {
+      recomputed = evaluateQuorum(read.observations, policy);
+    } catch {
+      inconsistent("transcript observations do not evaluate under the applied quorum policy");
+    }
+    if (
+      jcsSerialize(recomputed as unknown as Record<string, unknown>) !==
+      jcsSerialize(read.quorum as unknown as Record<string, unknown>)
+    ) {
+      inconsistent("the recorded quorum verdict is not reproduced by the observations");
     }
     const agreeing = new Set(read.quorum.agreeingProviders);
     if (agreeing.size === 0) inconsistent("an agreed read must name its agreeing providers");
@@ -238,7 +269,14 @@ function validateTranscript(
     for (const p of agreeing) {
       if (!seen.has(p)) inconsistent("an agreeing provider has no observation in the transcript");
     }
-    values.set(transcriptKey(read.kind, read.address, read.slot, read.data), read.agreedValue!);
+    const key = transcriptKey(read.kind, read.address, read.slot, read.data);
+    // Duplicate request keys may not contradict: last-write-wins would let array order
+    // pick between two authenticated-but-different values (Codex pass-4).
+    const existing = values.get(key);
+    if (existing !== undefined && existing !== read.agreedValue) {
+      inconsistent("contradictory duplicate reads for one request key");
+    }
+    values.set(key, read.agreedValue!);
   }
   // No reads outside the resolved indirection path: unrelated evidence is incoherent.
   const pathAddresses = new Set(identity.path.map((s) => s.address));
@@ -359,7 +397,7 @@ export function compareIdentityTarget(
       throw new IdentityError("missing_observation_evidence", target.targetId);
     }
     // ...and the transcript it cites must actually support it (F2 residual).
-    validateTranscript(target, identity, observed.reads);
+    validateTranscript(target, identity, observed.reads, context.quorumPolicy);
   }
   const evidence: Array<IdentityEvidenceRef | IdentityManifestEvidence> = [
     context.manifestEvidence,

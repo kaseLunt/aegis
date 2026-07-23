@@ -58,6 +58,18 @@ F7a NOT CONFIRMED — each survived in a narrower shape. Both accepted and close
 Under [[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]] (convergence gate) the achieved stamp
 remains blocked until a Codex pass returns clean at HEAD.
 
+## Convergence pass 4 (2026-07-23, Codex session 019f8daf-a92f-7fb1-8418-d2ccabf6620d)
+
+Scoped to the two survivor closures (5930a4f..7b804ba): both NOT CONFIRMED again, in
+narrower shapes, plus one new medium — all accepted and fixed TDD (4 more tests, suite
+314/314):
+
+| Finding | Disposition |
+|---------|-------------|
+| F2: the recorded quorum verdict (outcome/agreeingProviders) was trusted — forged membership turned two-provider disagreement into a unilateral "agreement" | ACCEPTED — the applied QuorumPolicy travels in the comparison context and every read's quorum is RECOMPUTED from its observations with exact canonical equality required; contradictory duplicate request keys are rejected |
+| F7a: `in`-operator membership accepted prototype-chain names ("toString", "__proto__") as freshness states, deriving an optimistic aggregate | ACCEPTED — own-property membership only (Object.hasOwn) for both states and the aggregate |
+| NEW (medium): the worst-of ranking put stale above unknown, reversing ENGINEERING_SPEC §Freshness ("unknown outranks stale, which outranks aging, which outranks current") | ACCEPTED — rank reordered to the canonical precedence, verified against the spec text; mixed stale+unknown derives to unknown |
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

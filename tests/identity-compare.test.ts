@@ -83,6 +83,7 @@ const CONTEXT = {
   manifestHash: UNIT_MANIFEST_HASH,
   manifestEvidence: manifestEvidenceFor(UNIT_MANIFEST_HASH),
   freshness: FRESH_CURRENT,
+  quorumPolicy: QUORUM,
 };
 
 const TARGET = {
@@ -321,6 +322,7 @@ describe("end-to-end: W1-valid payload from boundary + identity + manifest", () 
             },
           ],
         },
+        quorumPolicy: QUORUM,
       },
     );
     expect(verifications.every((v) => v.state === "pass")).toBe(true);

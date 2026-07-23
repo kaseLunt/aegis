@@ -79,6 +79,7 @@ const CONTEXT = {
     capturedAt: "2026-07-22T00:00:00Z",
   },
   freshness: FRESH_CURRENT,
+  quorumPolicy: QUORUM,
 };
 
 interface ReadSpec {
@@ -433,6 +434,7 @@ describe("verification-pass residuals (F1/F2/F7)", () => {
     manifestHash: MANIFEST_HASH,
     manifestEvidence: MANIFEST_EVIDENCE,
     freshness: FRESH_CURRENT,
+    quorumPolicy: QUORUM,
   };
   const DIRECT_TARGET = {
     targetId: "t",
@@ -572,6 +574,7 @@ describe("confirmation-pass closures (F2/F7a survivors)", () => {
       capturedAt: "2026-07-22T00:00:00Z",
     },
     freshness: FRESH_OK,
+    quorumPolicy: QUORUM,
   };
   const DIRECT_TARGET2 = {
     targetId: "t",
@@ -648,6 +651,117 @@ describe("confirmation-pass closures (F2/F7a survivors)", () => {
     const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
     const { verifications } = compareIdentityTarget(DIRECT_TARGET2, observed, PIN, CTX2);
     expect(verifications[0].state).toBe("pass");
+  });
+});
+
+describe("convergence pass 4 closures (quorum recompute, prototype states, spec precedence)", () => {
+  const HASH4 = shaOf("pass4-manifest");
+  const FRESH4 = {
+    aggregate: "current" as const,
+    assessments: [
+      {
+        policyId: "fp-reference",
+        boundary: { kind: "execution_block", block: PIN },
+        state: "current" as const,
+      },
+    ],
+  };
+  const CTX4 = {
+    provenanceClass: "reference_scenario",
+    manifestHash: HASH4,
+    manifestEvidence: {
+      id: shaOf(["manifest-ev", HASH4]),
+      kind: "manifest" as const,
+      provenanceClass: "reference_scenario",
+      sourceMode: "recorded",
+      boundary: { kind: "source_snapshot" as const, snapshot: { sourceId: "manifest", contentHash: HASH4 } },
+      rawResultHash: HASH4,
+      capturedAt: "2026-07-22T00:00:00Z",
+    },
+    freshness: FRESH4,
+    quorumPolicy: QUORUM,
+  };
+  const T4 = {
+    targetId: "t",
+    chainId: 1,
+    address: DIRECT,
+    identityStrategy: "direct",
+    expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+  };
+
+  test("F2: forged quorum membership over authentic disagreeing observations is inconsistent", async () => {
+    // Providers COMMIT to different code (authentic raw hashes each); the forged quorum
+    // block claims a unilateral agreement on alchemy's value.
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const real = observed.reads[0];
+    const OTHER = "0x6080604002";
+    const forged = {
+      identity: observed.identity,
+      reads: [{
+        ...real,
+        observations: real.observations.map((o) =>
+          o.providerId === "quicknode"
+            ? { ...o, rawResultHash: shaOf(OTHER) }
+            : o,
+        ),
+        quorum: {
+          outcome: "agreement" as const,
+          reasonCodes: [],
+          agreeingProviders: ["alchemy"],
+          missingProviders: [],
+        },
+      }],
+    };
+    expect(() => compareIdentityTarget(T4, forged, PIN, CTX4)).toThrow(/inconsistent_observation/);
+  });
+
+  test("F2: contradictory duplicate reads for one request key are inconsistent", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const real = observed.reads[0];
+    const forged = {
+      identity: observed.identity,
+      reads: [real, { ...real, agreedValue: "0x6080604002" }],
+    };
+    expect(() => compareIdentityTarget(T4, forged, PIN, CTX4)).toThrow(/inconsistent_observation/);
+  });
+
+  test("F7a: prototype-chain property names are not freshness states", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    for (const state of ["toString", "__proto__", "constructor"]) {
+      expect(() =>
+        compareIdentityTarget(T4, observed, PIN, {
+          ...CTX4,
+          freshness: {
+            aggregate: "current",
+            assessments: [{
+              policyId: "fp-reference",
+              boundary: { kind: "execution_block", block: PIN },
+              state: state as never,
+            }],
+          },
+        }),
+      ).toThrow(/invalid_context/);
+    }
+  });
+
+  test("spec precedence: unknown outranks stale in the derived aggregate", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const mixed = [
+      { policyId: "fp-a", boundary: { kind: "execution_block", block: PIN }, state: "stale" as const },
+      { policyId: "fp-b", boundary: { kind: "execution_block", block: PIN }, state: "unknown" as const },
+    ];
+    // ENGINEERING_SPEC: "unknown outranks stale" — the mixed derivation is unknown.
+    expect(() =>
+      compareIdentityTarget(T4, observed, PIN, {
+        ...CTX4,
+        freshness: { aggregate: "stale", assessments: mixed },
+      }),
+    ).toThrow(/invalid_context/);
+    const { verifications } = compareIdentityTarget(T4, observed, PIN, {
+      ...CTX4,
+      freshness: { aggregate: "unknown", assessments: mixed },
+    });
+    expect(verifications[0].state).toBe("unknown");
   });
 });
 
