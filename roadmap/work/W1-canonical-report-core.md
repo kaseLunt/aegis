@@ -20,8 +20,7 @@ deliverables:
 evidence_receipts:
   - roadmap/evidence/EV-W1.md
 invalidated_by:
-  - lib/**
-  - package-lock.json
+  - lib/aegis/report/**
 review_when: phase:P1:exit
 updated: 2026-07-22
 evidence_fingerprint: sha256:a3c46ef47f302429161ba06e025d2083912b5deb14bafcf7336b101c47102496
@@ -64,6 +63,13 @@ npm run test:property
 ```
 
 ## Evidence
+- 2026-07-22: verification basis re-scoped from `lib/** + package-lock.json` to
+  `lib/aegis/report/**` (module-scoped, matching the W2/W3 convention). Rationale: the
+  broad scope invalidated W1's receipt whenever ANY lib module changed (first hit: W4's
+  new lib/aegis/identity/), forcing a re-attestation chain per unrelated change. W1's
+  verification truly depends on its own module + its named deliverables (both still
+  hashed). Owner-reviewed transition; receipt superseded EV-W1 -> EV-W1-R2 per the
+  append-only law, prior receipt archived.
 - 2026-07-22: W2 adversarial review added a deterministic nesting cap (1024, typed
   nesting_depth_exceeded) to assertJsonDomain — a raw RangeError escaped the typed-error
   contract at depth ~10k (empirically probed). Canonical bytes for valid payloads are
