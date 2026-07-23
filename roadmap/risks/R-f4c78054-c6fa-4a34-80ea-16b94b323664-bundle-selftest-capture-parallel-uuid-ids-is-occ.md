@@ -23,12 +23,14 @@ a real defect in id generation).
   Watch for it; if it recurs in CI, make the parallel-capture test deterministic (seed or
   serialize the id draw) — this is bundle-owned code, so the fix is an upstream report or
   a documented local patch under W0F's tool scope.
-- 2026-07-23 recurrence log: three sightings in one session (full-selftest run during the
-  historical-receipt fix; the W4 slice-3 pre-push gate — blocked one push, passed on
-  retry). Failure text each time: `capture: FAIL -- capture target: destination escapes
-  repository root` from one of ten parallel new.py invocations — points at a path-
-  resolution race on Windows, not id collision. Flake rate is high enough to sting:
-  fix it BUNDLED WITH THE NEXT roadmap/tools/** change so the six tool receipts'
-  re-attestation is paid once (see INS-58ac6162 for the recipe).
+- 2026-07-23 recurrence log: now 5+ sightings in one session (full-selftest run during the
+  historical-receipt fix; W4 slice-3 pre-push gate; and the W4 pass-9→10 STATUS push —
+  blocked one push, passed on the immediate retry). Failure text each time: `capture: FAIL
+  -- capture target: destination escapes repository root` from one of ten parallel new.py
+  invocations — points at a path-resolution race on Windows, not id collision. Flake rate
+  is high enough to sting: fix it BUNDLED WITH THE NEXT roadmap/tools/** change so the six
+  tool receipts' re-attestation is paid once (see INS-58ac6162 for the recipe). Standing
+  operational rule until then: a red on this one check is retried ONCE; a second
+  consecutive red is treated as real and halts.
 
 owner: klunt · review_when: date:2026-08-06
