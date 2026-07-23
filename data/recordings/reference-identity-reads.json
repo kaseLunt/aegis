@@ -9,13 +9,14 @@
       "params": [
         "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
         {
-          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7"
+          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7",
+          "requireCanonical": true
         }
       ],
       "result": "0x60806040aa",
       "rawResponseSha256": "sha256:0c49c5cdc10880506de78c2d9f60d0b29b4345253a0a4f834d628156e013a666",
       "capturedAt": "2026-07-20T23:59:59Z",
-      "envelopeSha256": "sha256:23f8fe594000f4ebbcfdaeb2609e834fd100425477b5a5c68c9c7ce2fd30f327"
+      "envelopeSha256": "sha256:3b1cf289f9fd307eb3221cc4e55bb03f0a745f5cfa1ec707dee40efcaa06d872"
     },
     {
       "providerId": "alchemy",
@@ -25,13 +26,14 @@
         "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
         "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
         {
-          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7"
+          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7",
+          "requireCanonical": true
         }
       ],
       "result": "0x000000000000000000000000b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
       "rawResponseSha256": "sha256:a26a8df7be7572e520a3dc08e4340b5fc1ad04eae7e60930e9f0f8cf49615014",
       "capturedAt": "2026-07-20T23:59:59Z",
-      "envelopeSha256": "sha256:a080bfe287ef35184d38735db19d9bc2067a960da85f28ab26ec186f2e8ada36"
+      "envelopeSha256": "sha256:f9c3630212a27a82d41eab6968e5ac374d51824a72d626e6b68467bb82afec37"
     },
     {
       "providerId": "alchemy",
@@ -40,13 +42,14 @@
       "params": [
         "0xb2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
         {
-          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7"
+          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7",
+          "requireCanonical": true
         }
       ],
       "result": "0x608060405f",
       "rawResponseSha256": "sha256:9cbd18c05ef5aa088997aee344ef36e99bbe930d2bf41bb9a7c338e7dd608b73",
       "capturedAt": "2026-07-20T23:59:59Z",
-      "envelopeSha256": "sha256:b01d24d18826556cf86199b42897345c227320b99d27523f7aaeb60fc912989e"
+      "envelopeSha256": "sha256:8ef42888e603237774b6ee9ffe6612c5334f243c502cdff940694b1b61c24c03"
     },
     {
       "providerId": "quicknode",
@@ -55,13 +58,14 @@
       "params": [
         "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
         {
-          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7"
+          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7",
+          "requireCanonical": true
         }
       ],
       "result": "0x60806040aa",
       "rawResponseSha256": "sha256:0c49c5cdc10880506de78c2d9f60d0b29b4345253a0a4f834d628156e013a666",
       "capturedAt": "2026-07-20T23:59:59Z",
-      "envelopeSha256": "sha256:8ef5cb42adde8c3c4c2d1bf94054595a3cd8163bf5257ddd0a2cf59308cb8254"
+      "envelopeSha256": "sha256:b1cc9ae56fadd9c821de5bce2487ef0a5762e2ef08eed82c7683dc6f6a8e2fdd"
     },
     {
       "providerId": "quicknode",
@@ -71,13 +75,14 @@
         "0xa1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
         "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc",
         {
-          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7"
+          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7",
+          "requireCanonical": true
         }
       ],
       "result": "0x000000000000000000000000b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
       "rawResponseSha256": "sha256:a26a8df7be7572e520a3dc08e4340b5fc1ad04eae7e60930e9f0f8cf49615014",
       "capturedAt": "2026-07-20T23:59:59Z",
-      "envelopeSha256": "sha256:be7bcff004d1041648074e4303d47b7f8ddae76c50ec6e5801ffe76d6e49bf12"
+      "envelopeSha256": "sha256:225a975956caf9b897bd663a108b6554c10b9575d669da84d012237b6df47ad0"
     },
     {
       "providerId": "quicknode",
@@ -86,13 +91,14 @@
       "params": [
         "0xb2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
         {
-          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7"
+          "blockHash": "0x26997307bf47a13c29abb3e325fbb195cb9182632268f89a5627499f10f7afc7",
+          "requireCanonical": true
         }
       ],
       "result": "0x608060405f",
       "rawResponseSha256": "sha256:9cbd18c05ef5aa088997aee344ef36e99bbe930d2bf41bb9a7c338e7dd608b73",
       "capturedAt": "2026-07-20T23:59:59Z",
-      "envelopeSha256": "sha256:498763601e5493ad5816f90f3b76b41e76e70a3e91988ed9ebbc90dbdbe7fed9"
+      "envelopeSha256": "sha256:6ee98d2c678bf22a2c07ce1f746d05d7e4bfb94da75c7a250af1c8e93f32fc70"
     }
   ]
 }

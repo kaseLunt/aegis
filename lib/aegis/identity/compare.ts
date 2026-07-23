@@ -31,11 +31,33 @@ export interface IdentityTarget {
   expectedRuntimeCodeHash?: string;
 }
 
+// The manifest-side EvidenceRef (kind "manifest") every verification cites as its
+// expected-side provenance. It must be BOUND to the trusted manifest hash — a
+// format-checked id proves nothing (Codex W4 verification pass, F7 residual).
+export interface IdentityManifestEvidence {
+  id: string;
+  kind: "manifest";
+  provenanceClass: string;
+  sourceMode: string;
+  boundary: { kind: "source_snapshot"; snapshot: { sourceId: string; contentHash: string } };
+  rawResultHash: string;
+  capturedAt: string;
+}
+
+// Freshness is an EVALUATED INPUT to the verification state (F7 residual): the caller
+// (W5 wires the freshness policies) supplies the assessed aggregate for the boundary,
+// and no comparison may claim pass beyond what that assessment supports.
+export interface EvaluatedFreshness {
+  aggregate: "current" | "aging" | "stale" | "unknown";
+  assessments: unknown[];
+}
+
 export interface IdentityComparisonContext {
   provenanceClass: string;
-  // The manifest-side EvidenceRef id (kind "manifest") the composed payload must carry —
-  // every verification names its expected-side provenance (Codex W4 finding 7).
-  manifestEvidenceId: string;
+  // The trusted manifest content hash (from the policy-trust result).
+  manifestHash: string;
+  manifestEvidence: IdentityManifestEvidence;
+  freshness: EvaluatedFreshness;
 }
 
 export interface IdentityEvidenceRef {
@@ -56,7 +78,7 @@ export interface IdentityEvidenceRef {
 export interface IdentityVerification {
   invariantId: string;
   evaluatorVersion: string;
-  state: "pass" | "fail" | "unknown" | "conflict";
+  state: "pass" | "fail" | "unknown" | "conflict" | "stale";
   severity: "high";
   claimKind: "derived";
   statement: string;
@@ -66,13 +88,13 @@ export interface IdentityVerification {
   expectedEvidenceIds: string[];
   actualEvidenceIds: string[];
   derivationInputIds: string[];
-  freshness: { aggregate: "unknown"; assessments: never[] };
+  freshness: EvaluatedFreshness;
   limitations: Array<{ code: string; text: string }>;
 }
 
 export interface IdentityComparison {
   verifications: IdentityVerification[];
-  evidence: IdentityEvidenceRef[];
+  evidence: Array<IdentityEvidenceRef | IdentityManifestEvidence>;
 }
 
 const DRIFT_CLAUSE =
@@ -97,14 +119,78 @@ function validateTarget(target: IdentityTarget): void {
   }
 }
 
+const FRESHNESS_AGGREGATES = new Set(["current", "aging", "stale", "unknown"]);
+const HEX_RE = /^0x([0-9a-f]{2})*$/;
+
 function validateContext(context: IdentityComparisonContext): void {
+  const me = context?.manifestEvidence;
+  const fresh = context?.freshness;
   if (
     typeof context?.provenanceClass !== "string" || context.provenanceClass.length === 0 ||
-    typeof context?.manifestEvidenceId !== "string" || !SHA256_STRICT.test(context.manifestEvidenceId)
+    typeof context?.manifestHash !== "string" || !SHA256_STRICT.test(context.manifestHash) ||
+    typeof me !== "object" || me === null ||
+    !SHA256_STRICT.test(me.id) ||
+    me.kind !== "manifest" ||
+    // The manifest ref must be BOUND to the trusted manifest hash — both its raw result
+    // and its snapshot boundary. Anything else lets observed evidence masquerade as
+    // expected policy (F7 residual).
+    me.rawResultHash !== context.manifestHash ||
+    me.boundary?.kind !== "source_snapshot" ||
+    me.boundary?.snapshot?.contentHash !== context.manifestHash ||
+    typeof me.provenanceClass !== "string" || me.provenanceClass.length === 0 ||
+    typeof me.sourceMode !== "string" || me.sourceMode.length === 0 ||
+    typeof me.capturedAt !== "string" || me.capturedAt.length === 0 ||
+    typeof fresh !== "object" || fresh === null ||
+    !FRESHNESS_AGGREGATES.has(fresh.aggregate) ||
+    !Array.isArray(fresh.assessments)
   ) {
     throw new IdentityError(
       "invalid_context",
-      "provenanceClass and a sha256 manifestEvidenceId are required",
+      "requires provenanceClass, the trusted manifestHash, a manifest EvidenceRef bound to it, and an evaluated freshness block",
+    );
+  }
+}
+
+// A resolved identity must be backed by a coherent derivation transcript (F2 residual):
+// every read agreed under quorum, the read addresses are exactly the resolved path's
+// addresses, and the claimed terminal hash is REPRODUCIBLE from the transcript's
+// terminal code read. Anything else is a forged or corrupted observation.
+function validateTranscript(
+  identity: { path: Array<{ address: string }>; terminalAddress: string | null; runtimeCodeHash: string | null },
+  reads: readonly IdentityReadEvidence[],
+): void {
+  for (const read of reads) {
+    if (read.quorum.outcome !== "agreement" || read.agreedValue === null) {
+      throw new IdentityError(
+        "inconsistent_observation",
+        "a resolved identity cannot cite a non-agreed read",
+      );
+    }
+  }
+  const readAddresses = new Set(reads.map((r) => r.address));
+  const pathAddresses = new Set(identity.path.map((s) => s.address));
+  if (
+    readAddresses.size !== pathAddresses.size ||
+    [...readAddresses].some((a) => !pathAddresses.has(a))
+  ) {
+    throw new IdentityError(
+      "inconsistent_observation",
+      "transcript read addresses differ from the resolved indirection path",
+    );
+  }
+  const terminalRead = reads.find(
+    (r) => r.kind === "code" && r.address === identity.terminalAddress,
+  );
+  if (
+    terminalRead === undefined ||
+    terminalRead.agreedValue === null ||
+    !HEX_RE.test(terminalRead.agreedValue) ||
+    identity.runtimeCodeHash !==
+      `sha256:${createHash("sha256").update(Buffer.from(terminalRead.agreedValue.slice(2), "hex")).digest("hex")}`
+  ) {
+    throw new IdentityError(
+      "inconsistent_observation",
+      "the claimed terminal hash is not reproducible from the transcript's terminal code read",
     );
   }
 }
@@ -187,14 +273,22 @@ export function compareIdentityTarget(
     throw new IdentityError("target_address_mismatch", `${target.address} != observed ${root}`);
   }
 
-  const evidence = evidenceFromReads(observed.reads, pinned, context);
-  const actualIds = [...new Set(evidence.map((e) => e.id))].sort();
-  // A resolved identity that cites no observation evidence is incoherent — it cannot
-  // have been derived from quorum-agreed reads (finding 2).
-  if (identity.status === "resolved" && actualIds.length === 0) {
-    throw new IdentityError("missing_observation_evidence", target.targetId);
+  const readEvidence = evidenceFromReads(observed.reads, pinned, context);
+  const actualIds = [...new Set(readEvidence.map((e) => e.id))].sort();
+  if (identity.status === "resolved") {
+    // A resolved identity that cites no observation evidence is incoherent — it cannot
+    // have been derived from quorum-agreed reads (finding 2)...
+    if (actualIds.length === 0) {
+      throw new IdentityError("missing_observation_evidence", target.targetId);
+    }
+    // ...and the transcript it cites must actually support it (F2 residual).
+    validateTranscript(identity, observed.reads);
   }
-  const expectedIds = [context.manifestEvidenceId];
+  const evidence: Array<IdentityEvidenceRef | IdentityManifestEvidence> = [
+    context.manifestEvidence,
+    ...readEvidence,
+  ];
+  const expectedIds = [context.manifestEvidence.id];
   const conflicted = identity.reasonCodes.includes("observation_conflict");
   const unknownLimitations: Array<{ code: string; text: string }> =
     identity.status === "unknown"
@@ -212,22 +306,41 @@ export function compareIdentityTarget(
     actual: string | null,
     subject: string,
   ): IdentityVerification => {
-    const state: IdentityVerification["state"] =
-      identity.status !== "resolved"
-        ? conflicted
-          ? "conflict"
-          : "unknown"
-        : actual === expected
-          ? "pass"
-          : "fail";
-    const statement =
-      state === "pass"
-        ? `${subject} matches the manifest expectation.`
-        : state === "fail"
-          ? `${subject} differs from the manifest expectation. ${DRIFT_CLAUSE}`
-          : state === "conflict"
-            ? `${subject} could not be compared: independent providers disagreed about the observed state. Disagreement is preserved as conflict, never averaged away.`
-            : `${subject} could not be compared: identity is unknown. Missing evidence is never a value.`;
+    let state: IdentityVerification["state"];
+    let statement: string;
+    let limitations = unknownLimitations;
+    if (identity.status !== "resolved") {
+      state = conflicted ? "conflict" : "unknown";
+      statement = conflicted
+        ? `${subject} could not be compared: independent providers disagreed about the observed state. Disagreement is preserved as conflict, never averaged away.`
+        : `${subject} could not be compared: identity is unknown. Missing evidence is never a value.`;
+    } else {
+      const matched = actual === expected;
+      // Freshness gates the verdict (F7 residual): a comparison may never claim more
+      // than its evaluated freshness supports — stale evidence yields a stale result
+      // and an unassessed policy yields unknown, whether or not the values matched.
+      if (context.freshness.aggregate === "stale") {
+        state = "stale";
+        statement = `${subject} was compared on evidence assessed STALE under the freshness policy; the result is stale, not a current verdict.`;
+        limitations = [{
+          code: "freshness_stale",
+          text: "The freshness assessment for the observation boundary is stale.",
+        }];
+      } else if (context.freshness.aggregate === "unknown") {
+        state = "unknown";
+        statement = `${subject} was compared without an evaluated freshness result; the outcome is unknown, not a current verdict.`;
+        limitations = [{
+          code: "freshness_unassessed",
+          text: "No freshness assessment accompanied the observation boundary.",
+        }];
+      } else if (matched) {
+        state = "pass";
+        statement = `${subject} matches the manifest expectation.`;
+      } else {
+        state = "fail";
+        statement = `${subject} differs from the manifest expectation. ${DRIFT_CLAUSE}`;
+      }
+    }
     return {
       invariantId: `${CODE_IDENTITY_INVARIANT}/${target.targetId}/${expectation}`,
       evaluatorVersion: CODE_IDENTITY_EVALUATOR_VERSION,
@@ -241,10 +354,8 @@ export function compareIdentityTarget(
       expectedEvidenceIds: expectedIds,
       actualEvidenceIds: actualIds,
       derivationInputIds: actualIds,
-      // Honestly unassessed (a freshness policy applies but none ran here); W5 wires the
-      // freshness policies — never "not_applicable" for an applicable predicate.
-      freshness: { aggregate: "unknown", assessments: [] },
-      limitations: unknownLimitations,
+      freshness: context.freshness,
+      limitations,
     };
   };
 

@@ -30,6 +30,20 @@ drift-requiring-review wording as correct. The reviewer's environment could not 
 vitest (`spawn EPERM`); the 277/277 baseline is attested by EV-W3-R2 and re-verified at
 disposition landing.
 
+## Verification pass (2026-07-23, Codex session 019f8d80-2df6-7e53-93bd-5956dc9d5923)
+
+Scoped re-review of the disposition diff (a66837e..885ce8e): findings 3, 4, 5, 6, 8, 9
+CLOSED (incl. the finding-9 DECLINED rationale assessed as sound); F1, F2, F7 PARTIALLY
+CLOSED with four high residuals — all accepted and fixed TDD same-day (8 more tests,
+suite 305/305):
+
+| Residual | Disposition |
+|----------|-------------|
+| F1: `{blockHash}` alone permits EIP-1898 serving a known-but-orphaned block (requireCanonical defaults false) | ACCEPTED — the read canon is `{blockHash, requireCanonical: true}` everywhere (recorded keys + live instruction); a noncanonical answer is a failed read, missing evidence. Boundary revalidation before report emission recorded as W5 composition scope |
+| F2: the evidence gate accepted ANY nonempty evidence — conflicted/unrelated reads satisfied it | ACCEPTED — resolved identities require a coherent derivation transcript: every read quorum-agreed, read addresses ≡ path addresses, and the claimed terminal hash REPRODUCED from the transcript's terminal code read (typed `inconsistent_observation`) |
+| F7a: pass emitted alongside freshness unknown | ACCEPTED — freshness is an evaluated INPUT: stale caps the state at `stale`, unassessed at `unknown`, only current/aging can pass or fail; typed limitations |
+| F7b: manifestEvidenceId was format-checked only | ACCEPTED — the comparison takes the full manifest EvidenceRef bound to the trusted manifest hash (raw hash + snapshot hash both must equal it), emits it itself, and cites it in expectedEvidenceIds |
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

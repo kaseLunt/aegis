@@ -52,9 +52,23 @@ const QUORUM: QuorumPolicy = {
   minAgreeing: 2,
 };
 
+const CONTEXT_MANIFEST_HASH = shaOf("w4-fixes-manifest");
 const CONTEXT = {
   provenanceClass: "reference_scenario",
-  manifestEvidenceId: shaOf("manifest-evidence"),
+  manifestHash: CONTEXT_MANIFEST_HASH,
+  manifestEvidence: {
+    id: shaOf(["manifest-ev", CONTEXT_MANIFEST_HASH]),
+    kind: "manifest" as const,
+    provenanceClass: "reference_scenario",
+    sourceMode: "recorded",
+    boundary: {
+      kind: "source_snapshot" as const,
+      snapshot: { sourceId: "manifest", contentHash: CONTEXT_MANIFEST_HASH },
+    },
+    rawResultHash: CONTEXT_MANIFEST_HASH,
+    capturedAt: "2026-07-22T00:00:00Z",
+  },
+  freshness: { aggregate: "current" as const, assessments: [] },
 };
 
 interface ReadSpec {
@@ -65,7 +79,7 @@ interface ReadSpec {
 
 // Recording canon after finding 1: reads are keyed by the pinned BLOCK HASH
 // (EIP-1898 request form), so the envelope itself binds which block answered.
-const atPin = (hash: string) => ({ blockHash: hash });
+const atPin = (hash: string) => ({ blockHash: hash, requireCanonical: true });
 const READS: ReadSpec[] = [
   { method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE },
   { method: "eth_getCode", params: [PROXY, atPin(PIN.hash)], result: "0x60806040aa" },
@@ -327,7 +341,7 @@ describe("finding 7 — provenance honesty in composed verifications", () => {
     ).toThrow(/invalid_context/);
   });
 
-  test("freshness is honestly 'unknown' (assessed-never), not 'not_applicable'", async () => {
+  test("the evaluated freshness travels verbatim; expected side names the bound manifest ref", async () => {
     const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
     const target = {
       targetId: "t",
@@ -337,8 +351,8 @@ describe("finding 7 — provenance honesty in composed verifications", () => {
       expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
     };
     const { verifications } = compareIdentityTarget(target, observed, PIN, CONTEXT);
-    expect(verifications[0].freshness).toEqual({ aggregate: "unknown", assessments: [] });
-    expect(verifications[0].expectedEvidenceIds).toEqual([CONTEXT.manifestEvidenceId]);
+    expect(verifications[0].freshness).toEqual({ aggregate: "current", assessments: [] });
+    expect(verifications[0].expectedEvidenceIds).toEqual([CONTEXT.manifestEvidence.id]);
   });
 });
 
@@ -353,13 +367,16 @@ describe("finding 8 — evidence refs are audit-sufficient", () => {
       expectedRuntimeCodeHash: codeHash(IMPL_CODE),
     };
     const { evidence } = compareIdentityTarget(target, observed, PIN, CONTEXT);
-    const storage = evidence.filter((e) => e.kind === "storage_read");
+    const reads = evidence.filter(
+      (e): e is Exclude<typeof e, { kind: "manifest" }> => e.kind !== "manifest",
+    );
+    const storage = reads.filter((e) => e.kind === "storage_read");
     expect(storage.length).toBeGreaterThan(0);
     for (const e of storage) expect(e.calldata).toBe(EIP1967_IMPLEMENTATION_SLOT);
-    for (const e of evidence) {
+    for (const e of reads) {
       expect(e.capturedAt).toBe("2026-07-20T23:59:59Z"); // the ENVELOPE's capture time
       expect(e.sourceMode).toBe("recorded"); // adapter-declared, not caller-labeled
-      expect(typeof e.decodedResult).toBe("string"); // the quorum-agreed value
+      expect("decodedResult" in e && typeof e.decodedResult === "string").toBe(true); // the quorum-agreed value
     }
   });
 });
@@ -387,6 +404,127 @@ describe("finding 9 — indirection paths survive unresolved reads and custom ta
     });
     expect(r.status).toBe("unknown");
     expect(r.path).toEqual([{ role: "root", address: PROXY }]);
+  });
+});
+
+describe("verification-pass residuals (F1/F2/F7)", () => {
+  const MANIFEST_HASH = shaOf("residuals-manifest");
+  const MANIFEST_EVIDENCE = {
+    id: shaOf(["manifest-ev", MANIFEST_HASH]),
+    kind: "manifest" as const,
+    provenanceClass: "reference_scenario",
+    sourceMode: "recorded",
+    boundary: { kind: "source_snapshot" as const, snapshot: { sourceId: "manifest", contentHash: MANIFEST_HASH } },
+    rawResultHash: MANIFEST_HASH,
+    capturedAt: "2026-07-22T00:00:00Z",
+  };
+  const CTX = {
+    provenanceClass: "reference_scenario",
+    manifestHash: MANIFEST_HASH,
+    manifestEvidence: MANIFEST_EVIDENCE,
+    freshness: { aggregate: "current" as const, assessments: [] },
+  };
+  const DIRECT_TARGET = {
+    targetId: "t",
+    chainId: 1,
+    address: DIRECT,
+    identityStrategy: "direct",
+    expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+  };
+
+  test("R1: the read canon demands canonicality — a blockHash-only recording never matches", async () => {
+    const legacyKeyed = READS.map((r) => ({
+      ...r,
+      params: r.params.map((p) =>
+        typeof p === "object" && p !== null && "blockHash" in (p as object)
+          ? { blockHash: (p as { blockHash: string }).blockHash }
+          : p,
+      ),
+    }));
+    // Strip requireCanonical from the recorded keys: the adapter must not find them.
+    const [alchemy] = adaptersFor(sealBundle(legacyKeyed));
+    await expect(
+      alchemy.getCode(1, DIRECT, { number: PIN.number, hash: PIN.hash }),
+    ).rejects.toMatchObject({ code: "recording_missing" });
+  });
+
+  test("R2: a resolved transcript containing a non-agreed read is inconsistent", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const forged = {
+      identity: observed.identity,
+      reads: [
+        ...observed.reads,
+        {
+          kind: "code" as const,
+          address: DIRECT,
+          agreedValue: null,
+          quorum: { outcome: "conflict" as const, reasonCodes: ["raw_result_mismatch"], agreeingProviders: [], missingProviders: [] },
+          observations: [],
+        },
+      ],
+    };
+    expect(() => compareIdentityTarget(DIRECT_TARGET, forged, PIN, CTX)).toThrow(/inconsistent_observation/);
+  });
+
+  test("R2: an unrelated agreed read (off the resolved path) is inconsistent", async () => {
+    const direct = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const proxyReads = await observeIdentity("eip1967", PROXY, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const forged = { identity: direct.identity, reads: [...direct.reads, ...proxyReads.reads] };
+    expect(() => compareIdentityTarget(DIRECT_TARGET, forged, PIN, CTX)).toThrow(/inconsistent_observation/);
+  });
+
+  test("R2: a claimed terminal hash that the transcript's terminal read cannot reproduce is inconsistent", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const forged = {
+      identity: { ...observed.identity, runtimeCodeHash: `sha256:${"5".repeat(64)}` },
+      reads: observed.reads,
+    };
+    const target = { ...DIRECT_TARGET, expectedRuntimeCodeHash: `sha256:${"5".repeat(64)}` };
+    expect(() => compareIdentityTarget(target, forged, PIN, CTX)).toThrow(/inconsistent_observation/);
+  });
+
+  test("R3: stale freshness caps a matching comparison at 'stale', never pass", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const { verifications } = compareIdentityTarget(DIRECT_TARGET, observed, PIN, {
+      ...CTX,
+      freshness: { aggregate: "stale", assessments: [] },
+    });
+    expect(verifications[0].state).toBe("stale");
+    expect(verifications[0].limitations.map((l) => l.code)).toContain("freshness_stale");
+  });
+
+  test("R3: unassessed freshness caps a matching comparison at 'unknown', never pass", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const { verifications } = compareIdentityTarget(DIRECT_TARGET, observed, PIN, {
+      ...CTX,
+      freshness: { aggregate: "unknown", assessments: [] },
+    });
+    expect(verifications[0].state).toBe("unknown");
+    expect(verifications[0].limitations.map((l) => l.code)).toContain("freshness_unassessed");
+  });
+
+  test("R4: manifest evidence must be a manifest-kind ref bound to the trusted hash", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const otherHash = shaOf("some-other-manifest");
+    expect(() =>
+      compareIdentityTarget(DIRECT_TARGET, observed, PIN, {
+        ...CTX,
+        manifestEvidence: { ...MANIFEST_EVIDENCE, rawResultHash: otherHash },
+      }),
+    ).toThrow(/invalid_context/);
+    expect(() =>
+      compareIdentityTarget(DIRECT_TARGET, observed, PIN, {
+        ...CTX,
+        manifestEvidence: { ...MANIFEST_EVIDENCE, kind: "rpc_call" as never },
+      }),
+    ).toThrow(/invalid_context/);
+  });
+
+  test("R4: the comparison emits the bound manifest ref itself as evidence", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const { verifications, evidence } = compareIdentityTarget(DIRECT_TARGET, observed, PIN, CTX);
+    expect(evidence.some((e) => e.id === MANIFEST_EVIDENCE.id && e.kind === "manifest")).toBe(true);
+    expect(verifications[0].expectedEvidenceIds).toEqual([MANIFEST_EVIDENCE.id]);
   });
 });
 

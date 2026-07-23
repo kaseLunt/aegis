@@ -220,8 +220,18 @@ export function recordedAdapter(
       capabilities(chainId);
       return lookup(chainId, "eth_getBlockByNumber", [number, false], "/blockByNumber");
     },
+    // Canonicality is REQUIRED (Codex W4 verification pass, F1 residual): EIP-1898
+    // defaults requireCanonical to false and permits serving a known-but-orphaned
+    // block. The recording canon and every live request carry requireCanonical: true;
+    // a provider's noncanonical error is a failed read — missing evidence, never a
+    // value from an orphaned branch.
     async getCode(chainId: number, address: string, pin: BlockPin): Promise<IdentityReadResult> {
-      return readOf(chainId, "eth_getCode", [address, { blockHash: pin.hash }], "/getCode");
+      return readOf(
+        chainId,
+        "eth_getCode",
+        [address, { blockHash: pin.hash, requireCanonical: true }],
+        "/getCode",
+      );
     },
     async getStorageWord(
       chainId: number,
@@ -229,7 +239,12 @@ export function recordedAdapter(
       slot: string,
       pin: BlockPin,
     ): Promise<IdentityReadResult> {
-      return readOf(chainId, "eth_getStorageAt", [address, slot, { blockHash: pin.hash }], "/getStorageAt");
+      return readOf(
+        chainId,
+        "eth_getStorageAt",
+        [address, slot, { blockHash: pin.hash, requireCanonical: true }],
+        "/getStorageAt",
+      );
     },
     async call(
       chainId: number,
@@ -238,7 +253,12 @@ export function recordedAdapter(
     ): Promise<IdentityReadResult> {
       // The recorded key canonicalizes the request object (JCS), so property order in the
       // caller's literal never matters.
-      return readOf(chainId, "eth_call", [{ data: request.data, to: request.to }, { blockHash: pin.hash }], "/call");
+      return readOf(
+        chainId,
+        "eth_call",
+        [{ data: request.data, to: request.to }, { blockHash: pin.hash, requireCanonical: true }],
+        "/call",
+      );
     },
   };
 }

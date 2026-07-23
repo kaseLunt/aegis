@@ -55,10 +55,24 @@ const QUORUM: QuorumPolicy = {
   minAgreeing: 2,
 };
 
-const MANIFEST_EV_ID = shaOf("manifest-evidence:identity-compare");
+const manifestEvidenceFor = (hash: string) => ({
+  id: shaOf(["manifest-ev", hash]),
+  kind: "manifest" as const,
+  provenanceClass: "reference_scenario",
+  sourceMode: "recorded",
+  boundary: {
+    kind: "source_snapshot" as const,
+    snapshot: { sourceId: "manifest", contentHash: hash },
+  },
+  rawResultHash: hash,
+  capturedAt: "2026-07-22T00:00:00Z",
+});
+const UNIT_MANIFEST_HASH = shaOf("manifest:identity-compare-unit");
 const CONTEXT = {
   provenanceClass: "reference_scenario",
-  manifestEvidenceId: MANIFEST_EV_ID,
+  manifestHash: UNIT_MANIFEST_HASH,
+  manifestEvidence: manifestEvidenceFor(UNIT_MANIFEST_HASH),
+  freshness: { aggregate: "current" as const, assessments: [] },
 };
 
 const TARGET = {
@@ -236,8 +250,9 @@ describe("manifest comparison — W1-shaped verifications", () => {
     const observed = await observedEip1967();
     const { evidence } = compareIdentityTarget(TARGET, observed, PIN, CONTEXT);
     const kinds = new Set(evidence.map((e) => e.kind));
-    expect(kinds).toEqual(new Set(["rpc_call", "storage_read"]));
+    expect(kinds).toEqual(new Set(["manifest", "rpc_call", "storage_read"]));
     for (const e of evidence) {
+      if (e.kind === "manifest") continue; // bound manifest ref carries its own boundary
       expect(e.boundary).toEqual({ kind: "execution_block", block: PIN });
       expect(e.rawResultHash).toMatch(/^sha256:[0-9a-f]{64}$/);
       expect(e.sourceMode).toBe("recorded");
@@ -255,15 +270,6 @@ describe("end-to-end: W1-valid payload from boundary + identity + manifest", () 
     );
     expect(boundary.status).toBe("pinned");
     if (boundary.status !== "pinned") return;
-
-    const observed = await observedEip1967();
-    const { verifications, evidence } = compareIdentityTarget(
-      TARGET,
-      observed,
-      boundary.boundary.block,
-      CONTEXT,
-    );
-    expect(verifications.every((v) => v.state === "pass")).toBe(true);
 
     // Full W2 manifest shape: the committed reference manifest with our target swapped
     // in and the content hash re-sealed (the loader verifies embedded integrity).
@@ -284,20 +290,22 @@ describe("end-to-end: W1-valid payload from boundary + identity + manifest", () 
     );
     expect(policyTrust.state).toBe("trusted");
 
-    // The manifest itself is expected-side evidence (kind "manifest"), carrying the id
-    // every verification's expectedEvidenceIds names.
-    const manifestEvidence = {
-      id: MANIFEST_EV_ID,
-      kind: "manifest",
-      provenanceClass: "reference_scenario",
-      sourceMode: "recorded",
-      boundary: {
-        kind: "source_snapshot",
-        snapshot: { sourceId: "manifest", contentHash: manifestHash },
+    // The comparison context is BOUND to the trusted manifest hash; the comparison
+    // itself emits the manifest EvidenceRef the verifications cite.
+    const observed = await observedEip1967();
+    const { verifications, evidence } = compareIdentityTarget(
+      TARGET,
+      observed,
+      boundary.boundary.block,
+      {
+        provenanceClass: "reference_scenario",
+        manifestHash,
+        manifestEvidence: manifestEvidenceFor(manifestHash),
+        freshness: { aggregate: "current", assessments: [] },
       },
-      rawResultHash: manifestHash,
-      capturedAt: "2026-07-22T00:00:00Z",
-    };
+    );
+    expect(verifications.every((v) => v.state === "pass")).toBe(true);
+
     const payload = {
       schemaVersion: "1",
       engineVersion: "1",
@@ -309,7 +317,7 @@ describe("end-to-end: W1-valid payload from boundary + identity + manifest", () 
       sourceMode: "recorded",
       requestHash: shaOf("identity-compare-e2e"),
       observationBoundaries: [boundary.boundary],
-      evidence: [manifestEvidence, ...evidence],
+      evidence,
       verifications,
       facts: [],
       coverage: { supported: ["deployment.code_identity"], unsupported: [], excluded: [] },

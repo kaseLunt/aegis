@@ -71,7 +71,7 @@ const IMPLEMENTATION_SELECTOR = "0x5c60da1b";
 const ZERO32 = `0x${"0".repeat(64)}`;
 // Recording canon after the Codex W4 review: reads are keyed by the pinned block HASH
 // (EIP-1898 request form), so the envelope binds which block answered.
-const AT_PIN = { blockHash: PIN.hash };
+const AT_PIN = { blockHash: PIN.hash, requireCanonical: true };
 const PIN_ARG = { number: PIN.number, hash: PIN.hash };
 
 const QUORUM: QuorumPolicy = {
