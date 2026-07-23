@@ -2,7 +2,8 @@
 id: EV-W3-R3
 type: evidence
 title: W3 verification re-attested at the Codex W4 disposition commit
-status: recorded
+status: superseded
+superseded_by: EV-W3-R4
 work: W3
 result: pass
 commands:
