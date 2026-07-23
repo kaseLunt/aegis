@@ -41,3 +41,10 @@ failed with "Filename too long".
    advancing main during a review is the integrator's own STATUS commits — holding those
    until the verdict lands removes the diff-skew that motivated pinning.
 4. These constraints are now part of every codex-reviewer brief (see the pass-12 re-dispatch).
+5. Clean-tree false positive (2nd pass-12 halt): the reviewer read this repo's Executor
+   Discipline and treated the intentional untracked `.serena/` (Serena MCP local config) as
+   a dirty tree, declining a READ-ONLY review. The brief must state that `.serena/` untracked
+   is expected and that the clean-tree precondition governs COMMITTING agents, not read-only
+   reviews. Durable fix: gitignore `.serena/` — but that touches root `.gitignore`, OUTSIDE
+   W4 allowed_paths (`lib/**`,`tests/**`,`data/recordings/**`), so it needs an owner scope
+   amend or a tooling-scoped task; parked here, not pushed through the scope gate.
