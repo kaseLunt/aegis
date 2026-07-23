@@ -21,24 +21,25 @@ the migrated workflows after push. main protected; residuals in [[R-005]] under 
 
 ## Current task (WIP = 1 per agent, [[D-006]])
 **W4 — identity adapters + code-hash-scoped ABI registry** — fable-main (serial writer).
-All three slices IMPLEMENTED (HEAD 11a4b0a, 336 tests, lint clean): slice 1 pure
+All three slices IMPLEMENTED (HEAD e971bef, 339 tests, lint clean): slice 1 pure
 derivation (resolve.ts), slice 2 quorum-wired observation (observe.ts) + adapter reads,
 slice 3 manifest comparison (compare.ts) + ABI registry (abi.ts). W4's invalidated_by
 already narrowed pre-receipt to the consumed modules.
 
 **IN CODEX CONVERGENCE ([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]] — no achieved stamp
-until Codex returns clean).** Eleven passes dispositioned, ALL in
-roadmap/reviews/W4-codex-review.md (full finding/fix table): 20 findings down the
-"active caller input" arc — brand (5) → single-channel snapshot (8) → snapshot
-all-before-validate (9) → REFUSE active inputs (10: descriptor clone, zero caller code) →
-reject proxies + require runtime hash + tighten I-JSON (11: descriptor reflection still
-dispatches PROXY traps; a target with no expected field emitted zero verifications).
-Lesson thread: [[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] (3 addenda). Manifest→target
-binding deferred to W5 ([[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Neutral+static
-Codex brief is the DEFAULT shape ([[INS-004]]). Pass 12 (scoped re-verify of
-773b46c..11a4b0a) dispatched at 11a4b0a, verdict pending.
+until Codex returns clean).** Twelve passes dispositioned, ALL in
+roadmap/reviews/W4-codex-review.md (full finding/fix table): 24 findings down the
+input-domain hardening arc on compareIdentityTarget — provenance brand (5) → single-channel
+snapshot (8) → snapshot-all-before-validate (9) → REFUSE active inputs (10) → reject
+proxies + require runtime hash (11) → type-guard against RegExp.test coercion (12). Three
+input-domain layers now closed: no active objects, no programmable reflection, no coerced
+scalars. Q1 isolation + Q3 regression confirmed PASS at pass 12. Lesson thread:
+[[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]. Manifest→target binding deferred to W5
+([[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Codex-dispatch guardrails (no worktree,
+neutral+static, .serena/ clarification) in [[INS-004]] + [[INS-fa971e14-587c-4565-907e-839ec51a3101]].
+Pass 13 (scoped re-verify of 11a4b0a..e971bef) dispatched at e971bef, verdict pending.
 
-**On the next resume:** check the pass-12 Codex result. If SHIP-READY → mint EV-W4 at the
+**On the next resume:** check the pass-13 Codex result. If SHIP-READY → mint EV-W4 at the
 landing commit (`python roadmap/tools/doctor.py --receipt-basis W4 --snapshot <HEAD>`,
 honest `npm test` run), stamp achieved (`--stamp W4`), flip the ladder row + this block,
 push. If findings remain → reproduce each as a failing test, fix, re-verify, loop.
