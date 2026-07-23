@@ -93,7 +93,11 @@ npm test
   implementation slot is unknown, not a direct fallback; clone decoding must match the
   exact EIP-1167 pattern (variants are unsupported → unknown); ABI selection before a
   terminal hash match is the failure mode the registry exists to prevent; identity
-  mismatch is drift requiring review — never assert compromise.
+  mismatch is drift requiring review — never assert compromise; BEFORE the achieved
+  stamp, narrow invalidated_by from lib/aegis/** to the modules W4 actually consumes
+  (identity/chain/report/manifest, excluding surfaces/**) — contract changes are free
+  pre-receipt, and W5's surfaces work must not tax W4's receipt the way W4 taxed W1
+  ([[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]]).
 
 ## Evidence
 
