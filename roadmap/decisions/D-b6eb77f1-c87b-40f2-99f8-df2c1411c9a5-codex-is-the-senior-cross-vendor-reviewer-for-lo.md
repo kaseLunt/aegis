@@ -2,7 +2,8 @@
 id: D-b6eb77f1-c87b-40f2-99f8-df2c1411c9a5
 type: decision
 title: "Codex is the senior cross-vendor reviewer for load-bearing work"
-status: accepted
+status: superseded
+superseded_by: D-b4ab3c69-c110-4d78-bc4c-f9a332489db4
 approved_by: klunt (2026-07-22, senior-reviewer directive)
 date: 2026-07-23
 supersedes: []
