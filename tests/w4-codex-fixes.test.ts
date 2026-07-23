@@ -203,7 +203,7 @@ describe("provenance boundary — only pipeline-produced observations may be com
   test("an otherwise-perfect hand-built observation carries no brand and is refused", async () => {
     const real = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
     // Structurally identical, but reconstructed by the caller — no pipeline provenance.
-    const cloned = { identity: real.identity, reads: real.reads.map((r) => ({ ...r })) };
+    const cloned = { identity: real.identity, reads: real.reads.map((r) => ({ ...r })), pinned: PIN };
     expect(() => compareIdentityTarget(target, cloned, PIN, CONTEXT)).toThrow(/unverified_observation/);
   });
 
@@ -232,6 +232,7 @@ describe("provenance boundary — only pipeline-produced observations may be com
           missingProviders: [],
         },
       }],
+      pinned: PIN,
     };
     expect(() => compareIdentityTarget(target, forged, PIN, CONTEXT)).toThrow(/unverified_observation/);
   });
@@ -693,6 +694,112 @@ describe("convergence pass 4 closures (quorum recompute, prototype states, spec 
       freshness: { aggregate: "unknown", assessments: mixed },
     });
     expect(verifications[0].state).toBe("unknown");
+  });
+});
+
+describe("convergence pass 6 — branded observations are immutable, hash-bound, and pin-bound", () => {
+  const HASH6 = shaOf("pass6-manifest");
+  const CTX6 = {
+    provenanceClass: "reference_scenario",
+    manifestHash: HASH6,
+    manifestEvidence: {
+      id: shaOf(["manifest-ev", HASH6]),
+      kind: "manifest" as const,
+      provenanceClass: "reference_scenario",
+      sourceMode: "recorded",
+      boundary: { kind: "source_snapshot" as const, snapshot: { sourceId: "manifest", contentHash: HASH6 } },
+      rawResultHash: HASH6,
+      capturedAt: "2026-07-22T00:00:00Z",
+    },
+    freshness: {
+      aggregate: "current" as const,
+      assessments: [{ policyId: "fp", boundary: { kind: "execution_block", block: PIN }, state: "current" as const }],
+    },
+  };
+  const T6 = {
+    targetId: "t",
+    chainId: 1,
+    address: DIRECT,
+    identityStrategy: "direct",
+    expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+  };
+
+  test("P0: a branded observation is deeply frozen — post-hoc mutation cannot manufacture a pass", async () => {
+    // A genuine UNKNOWN observation (absent code). A caller then tries to mutate it into a
+    // resolved match. Freezing makes the graph immutable, so the outcome stays unknown.
+    const observed = await observeIdentity(
+      "direct",
+      DIRECT,
+      adaptersFor(sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: "0x" }])),
+      PIN,
+      QUORUM,
+    );
+    expect(observed.identity.status).toBe("unknown");
+    expect(Object.isFrozen(observed.identity)).toBe(true);
+    expect(Object.isFrozen(observed.reads)).toBe(true);
+    // The mutation must not take effect (frozen); comparison sees the original unknown.
+    try {
+      (observed.identity as { status: string }).status = "resolved";
+      (observed.identity as { runtimeCodeHash: string | null }).runtimeCodeHash = codeHash(DIRECT_CODE);
+      (observed.identity as { terminalAddress: string | null }).terminalAddress = DIRECT;
+    } catch {
+      /* strict-mode TypeError is acceptable — the point is the field cannot change */
+    }
+    expect(observed.identity.status).toBe("unknown");
+    const { verifications } = compareIdentityTarget(T6, observed, PIN, CTX6);
+    expect(verifications.every((v) => v.state !== "pass")).toBe(true);
+  });
+
+  test("P0: a read whose value does not hash to its rawResultHash is malformed, never agreed", async () => {
+    // An adapter that returns a value inconsistent with its committed raw hash. The honest
+    // provider alone cannot reach quorum, so identity is unknown (missing evidence).
+    const honest = recordedAdapter(
+      sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE }]),
+      PROVIDERS.alchemy,
+    );
+    const lying: IdentityReadAdapter = {
+      providerId: "quicknode",
+      administrativeDomain: "QuickNode, Inc.",
+      getCode: async () => ({
+        value: DIRECT_CODE,
+        rawResultHash: shaOf("0xdifferent"), // hash of a DIFFERENT value
+        capturedAt: "2026-07-20T23:59:59Z",
+        sourceMode: "recorded",
+      }),
+      getStorageWord: async () => ({ value: ZERO32, rawResultHash: shaOf(ZERO32), capturedAt: "x", sourceMode: "recorded" }),
+      call: async () => ({ value: "0x", rawResultHash: shaOf("0x"), capturedAt: "x", sourceMode: "recorded" }),
+    };
+    const observed = await observeIdentity("direct", DIRECT, [honest, lying], PIN, QUORUM);
+    expect(observed.identity.status).toBe("unknown");
+    const qn = observed.reads[0].observations.find((o) => o.providerId === "quicknode");
+    expect(qn?.status).toBe("malformed");
+  });
+
+  test("P1: comparing a branded observation against a different pin is rejected", async () => {
+    const observed = await observeIdentity(
+      "direct",
+      DIRECT,
+      adaptersFor(sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE }])),
+      PIN,
+      QUORUM,
+    );
+    const otherBlock = { ...PIN, hash: `0x${"22".repeat(32)}` };
+    expect(() => compareIdentityTarget(T6, observed, otherBlock, CTX6)).toThrow(/pin_mismatch/);
+  });
+
+  test("evidence boundary is derived from the observation's own bound pin", async () => {
+    const observed = await observeIdentity(
+      "direct",
+      DIRECT,
+      adaptersFor(sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE }])),
+      PIN,
+      QUORUM,
+    );
+    const { evidence } = compareIdentityTarget(T6, observed, PIN, CTX6);
+    for (const e of evidence) {
+      if (e.kind === "manifest") continue;
+      expect(e.boundary).toEqual({ kind: "execution_block", block: PIN });
+    }
   });
 });
 

@@ -99,6 +99,35 @@ input instead of refusing forgeable inputs. The lesson (captured as an insight) 
 review keeps finding new forgery shapes against a validator, the validator is at the
 wrong layer; make the input unforgeable (provenance) instead.
 
+## Convergence pass 6 (2026-07-23, Codex session 019f8dd9-585e-7ba2-a363-7a184d7c0853)
+
+WeakSet mechanics and the F7a/F7b/precedence closures CONFIRMED intact. Three integrity
+gaps in the provenance model itself — two real software defects fixed TDD (4 new tests,
+suite 313/313), one adapter-configuration boundary documented + deferred:
+
+| Finding | Sev | Disposition |
+|---------|-----|-------------|
+| P0 in-place mutation preserves the brand: WeakSet authenticates the reference, not contents — a caller could mutate a genuine branded observation into a resolved match | ACCEPTED — the observation graph is DEEP-FROZEN before branding; a branded observation's contents are exactly what the pipeline produced. Mutation-tested |
+| P0 value↔rawResultHash not bound: observeIdentity used the value for derivation and the hash for quorum without checking they agree | ACCEPTED — observeIdentity verifies sha256(jcs(value)) == rawResultHash per read; a mismatch is a malformed observation, never agreed. Mutation-tested |
+| P1 pin rebinding: evidence boundary came from the caller's pin arg, allowing observe-at-A/compare-at-B | ACCEPTED — the pin is bound INTO the observation (frozen); compareIdentityTarget requires the caller's declared pin to equal it (pin_mismatch) and derives all evidence from the observation's own pin. Negative-tested |
+| P0 (second half) adapter-config independence: two dishonest adapter configs / a forged recording over one backend could present as two independent providers | BOUNDARY + DEFERRED — see below |
+
+### Adapter-configuration independence (Codex P0 second half) — trust boundary + deferred
+
+In recorded mode (W4's scope; live probes are an explicit W4 non-goal), a "provider" is a
+reviewed recording bundle + a reviewed ProviderConfig. Administrative-domain distinctness
+IS enforced (evaluateQuorum) against the REVIEWED domain (W3 P0#1). The residual — a
+caller supplying two configs that both back one real endpoint, or a forged bundle whose
+second provider duplicates the first — cannot be detected by the identity evaluator: it
+is the same trust boundary the whole recorded-evidence model rests on (a reviewed fixture
+is assumed honestly reviewed; W2's approved-hash list is assumed honestly curated). The
+mechanical closures are known deferred work, NOT identity-evaluator scope:
+- recording bundle-digest anchoring binding all providers' responses to one reviewed
+  digest (deferred in the W3 handoff);
+- live endpoint/client-identity binding (the WR3 probe step — a W4 non-goal).
+Captured as [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] for owner visibility; W4's evidence claims only recorded-scenario
+identity over reviewed fixtures, which is accurate. Framed for Codex re-assessment.
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

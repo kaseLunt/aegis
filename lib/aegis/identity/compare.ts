@@ -267,12 +267,27 @@ export function compareIdentityTarget(
       "observation must be produced by observeIdentity",
     );
   }
+  // The observation is bound to the exact block it was taken at (Codex W4 pass-6 P1):
+  // the caller's declared boundary must match it, and all evidence is derived from the
+  // observation's own pin — never a caller-supplied replacement that could relabel the
+  // result onto a different (e.g. reorged or stale) block.
+  const observedPin = observed.pinned;
+  if (
+    pinned.chainId !== observedPin.chainId ||
+    pinned.number !== observedPin.number ||
+    pinned.hash !== observedPin.hash
+  ) {
+    throw new IdentityError(
+      "pin_mismatch",
+      `comparison pin ${pinned.chainId}/${pinned.number}/${pinned.hash} != observation pin ${observedPin.chainId}/${observedPin.number}/${observedPin.hash}`,
+    );
+  }
   validateTarget(target);
   validateContext(context);
-  if (target.chainId !== pinned.chainId) {
+  if (target.chainId !== observedPin.chainId) {
     throw new IdentityError(
       "target_chain_mismatch",
-      `target ${target.chainId} != pinned ${pinned.chainId}`,
+      `target ${target.chainId} != pinned ${observedPin.chainId}`,
     );
   }
   const { identity } = observed;
@@ -294,7 +309,7 @@ export function compareIdentityTarget(
   // (observeIdentity turns any non-agreement into an unknown, not a resolution), and read
   // values carry the adapters' loader-verified raw hashes. No transcript re-authentication
   // is therefore possible or needed once provenance holds.
-  const readEvidence = evidenceFromReads(observed.reads, pinned, context);
+  const readEvidence = evidenceFromReads(observed.reads, observedPin, context);
   const actualIds = [...new Set(readEvidence.map((e) => e.id))].sort();
   const evidence: Array<IdentityEvidenceRef | IdentityManifestEvidence> = [
     context.manifestEvidence,

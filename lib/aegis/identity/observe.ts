@@ -9,6 +9,7 @@
 // derivation returns a typed unknown that RETAINS the walked path (finding 9).
 // Quorum-agreed ABSENCE ("0x") is evidence and flows into the derivation's typed
 // outcomes (code_absent, ...).
+import { createHash } from "node:crypto";
 import type { IdentityReadAdapter } from "../chain/adapter";
 import {
   ChainError,
@@ -18,6 +19,7 @@ import {
   evaluateQuorum,
 } from "../chain/quorum";
 import type { PinnedBlock } from "../chain/selection";
+import { jcsSerialize } from "../report/canonical";
 import {
   type CodeObservation,
   type IdentityResult,
@@ -50,6 +52,9 @@ export interface IdentityReadEvidence {
 export interface ObservedIdentity {
   identity: IdentityResult;
   reads: IdentityReadEvidence[];
+  // The exact block this observation was taken at (Codex W4 pass-6 P1): the pin travels
+  // WITH the observation so a comparison cannot silently rebind it to a different block.
+  pinned: PinnedBlock;
 }
 
 // Provenance brand (Codex W4 convergence pass 5): the ONLY sound defense against a
@@ -65,6 +70,20 @@ const VERIFIED_OBSERVATIONS = new WeakSet<ObservedIdentity>();
 
 export const isVerifiedObservation = (observed: ObservedIdentity): boolean =>
   VERIFIED_OBSERVATIONS.has(observed);
+
+// WeakSet membership authenticates only the object REFERENCE, not its mutable contents
+// (Codex W4 pass-6 P0): a caller could mutate a genuine branded observation into a
+// resolved match after the fact. Deep-freezing the whole graph before branding makes the
+// branded contents exactly what the pipeline produced.
+function deepFreeze<T>(value: T): T {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    Object.freeze(value);
+    for (const key of Object.keys(value as object)) {
+      deepFreeze((value as Record<string, unknown>)[key]);
+    }
+  }
+  return value;
+}
 
 interface ReadRequest {
   kind: "code" | "storage" | "call";
@@ -115,6 +134,20 @@ async function performRead(
                   { to: request.address, data: request.data! },
                   pin,
                 );
+        // The value derivation consumes and the raw hash quorum compares MUST be the same
+        // datum (Codex W4 pass-6 P0): an adapter returning a value inconsistent with its
+        // committed raw hash is malformed evidence, never a usable read. In recorded mode
+        // the loader already guarantees this; verifying it here also covers live adapters.
+        const valueHash = `sha256:${createHash("sha256")
+          .update(Buffer.from(jcsSerialize(read.value), "utf-8"))
+          .digest("hex")}`;
+        if (valueHash !== read.rawResultHash) {
+          return {
+            providerId: adapter.providerId,
+            administrativeDomain: adapter.administrativeDomain,
+            status: "malformed",
+          };
+        }
         values.set(adapter.providerId, read.value);
         return {
           providerId: adapter.providerId,
@@ -197,7 +230,11 @@ export async function observeIdentity(
   for (;;) {
     try {
       const identity = deriveIdentity(strategy, address, shim(cache));
-      const observed = { identity, reads: [...cache.values()].map((o) => o.evidence) };
+      const observed = deepFreeze({
+        identity,
+        reads: [...cache.values()].map((o) => o.evidence),
+        pinned: { ...pinned },
+      });
       VERIFIED_OBSERVATIONS.add(observed);
       return observed;
     } catch (e) {
