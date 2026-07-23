@@ -3,7 +3,7 @@ id: W0F
 type: work
 title: Migrate to upgraded control-plane bundle (receipts, snapshot coherence, writer_mode)
 phase: P1
-status: active
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: []
@@ -20,11 +20,13 @@ allowed_paths:
 deliverables:
   - roadmap/tools/_control_plane.py
   - .control-plane/receipt.json
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W0F.md
 invalidated_by:
   - roadmap/tools/**
 review_when: phase:P1:exit
 updated: 2026-07-22
+evidence_fingerprint: sha256:88f9757454c6101750b6a175cae910abd18c794579a61ef08aa62c509d62f138
 ---
 
 # W0F — Migrate to the upgraded control-plane bundle

@@ -5,7 +5,7 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: W0F
+active_task: none
 updated: 2026-07-22
 ---
 
@@ -15,22 +15,26 @@ updated: 2026-07-22
 > Full rules: `SYSTEM.md` · `RULES.md`.
 
 **Active phase:** P1 — M1 canonical evidence spine (P0→P1 review: owner ratification 2026-07-21)
-**Health:** 🟢 on track — remote CI green on 9e4d0d8 (doctor + 30/30 selftests +
-scope-diff with owner marker + product 176/176); main protected (required checks strict,
-no force-push). Audit #2 fully dispositioned: roadmap/reviews/
-control-plane-codex-audit-2026-07-22.md; residuals bounded in [[R-005]] under [[D-007]].
+**Health:** 🟢 on track — upgraded control-plane bundle adopted (W0F); new doctor + selftest
+green locally, all achieved items re-attested with evidence receipts. Verify remote CI on
+the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W0F — control-plane bundle migration** — fable-main (serial writer). Owner-approved
-promotion of [[IDEA-003]]: adopt the upgraded bundle in full (receipts, snapshot
-coherence, claim_id fencing, server-side approval) as one atomic flip commit BEFORE W4,
-so W4 starts on the new grammar and D-007 machinery lands on its intended base.
-W4 (identity adapters + ABI registry) queues immediately after.
-Lanes: WR1/WR2/WR3/WR6 closed. WR4 + WR5 delivered, critiqued (Codex), dispositions
-applied; both open with round-2 scopes, deferred to M3/M4 planning (several EXTEND items
-need real archive/trace providers). W0C parked pending owner action (Blockers).
+**None — W0F achieved; W4 (identity adapters + ABI registry) is next up.** Open W4's
+active transition + a claim at kickoff (W4 candidate; depends on W2+W3, both achieved).
+The control plane now runs the upgraded bundle: evidence receipts under roadmap/evidence/,
+snapshot-coherent validation, claim_id/generation fencing, and the trusted
+pull_request_target audit for server-side owner approval (wire through a ruleset when PR
+flow starts). Lanes: WR1/WR2/WR3/WR6 closed. WR4/WR5 deferred to M3/M4 planning. W0C
+parked (Blockers).
 
 ## Recently completed
+- **W0F — control-plane bundle migration** ACHIEVED ([[IDEA-003]] promotion): seven tools
+  + shared runtime replaced with the upstream bundle; corpus on the new grammar;
+  D-001..D-004 re-issued as D-010..D-013 under the append-only decision law; 12
+  pre-migration achievements re-attested with honest evidence receipts. Landed as a
+  prepared commit chain (the outgoing validator could not authorize a pre-migration base),
+  each commit valid under its own plane. See EV-W0F + [[INS-006]], [[R-006]].
 - **W3 — finalized-block selection + quorum + RPC adapters** ACHIEVED (4 slices, all TDD;
   228-test suite): quorum with administrative-domain independence, hash-pinned selection
   with downgrade exposure, envelope-verified recorded adapters, engine pass composing
