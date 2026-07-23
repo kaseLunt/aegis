@@ -1,4 +1,9 @@
 ---
+writer_mode: serial
+parallel_readers: allowed
+enforcement: bootstrap
+enforcement_evidence: []
+project_state: active
 active_phase: P1
 active_task: W0F
 updated: 2026-07-22

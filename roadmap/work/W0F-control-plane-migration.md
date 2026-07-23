@@ -6,7 +6,7 @@ phase: P1
 status: active
 evidence_target: "Correct + Robust"
 priority: 1
-depends_on: [W0E]
+depends_on: []
 blocked_by: []
 informs: [H0]
 allowed_paths:
@@ -17,9 +17,12 @@ allowed_paths:
   - .gitattributes
   - .gitignore
   - .control-plane/**
+deliverables:
+  - roadmap/tools/_control_plane.py
+  - .control-plane/receipt.json
+evidence_receipts: []
 invalidated_by:
   - roadmap/tools/**
-  - roadmap/work/W0F-control-plane-migration.md
 review_when: phase:P1:exit
 updated: 2026-07-22
 ---
@@ -43,7 +46,7 @@ bundle does not know (pre-commit identity allowlist R-002, pre-push selftest gat
 workflow charter from 9e4d0d8). Historical AEGIS-OWNER-APPROVED markers remain valid
 history; the bundle's server-side approval protocol applies forward.
 
-## Acceptance (evidence target: Correct + Robust)
+## Acceptance
 - Correct: `manage.py plan` reports zero conflicts and a clean receipt exists; NEW
   doctor green on the real corpus (all 88 reconciliation errors resolved, no
   suppressions); NEW selftest suite green; product suite untouched and green; CI green
