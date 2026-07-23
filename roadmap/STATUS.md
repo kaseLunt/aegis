@@ -72,10 +72,12 @@ closed; WR4/WR5 deferred to M3/M4 planning. W0C parked (Blockers).
   `CONTROL_PLANE_POLICY_APPROVAL`. Until wired, enforcement stays `bootstrap` (advisory
   push jobs only). This is D-007 machinery-phase work (also [[R-005]]). Branch protection
   now requires the advisory doctor + selftest + Product tests.
-- NOTE (transient, self-clearing): the advisory "scope review" job was red once on the
-  migration push because it replays from `event.before` = the pre-migration commit
-  (9329bbc), whose STATUS the new tools cannot parse. Any push whose base is a
-  post-migration commit parses cleanly — expected to be green from the next push onward.
+- NOTE (advisory scope review): red on any push containing owner-gated transitions
+  (contract changes, protected tools, recorded-evidence supersessions) because the push
+  replay has no PR/approval token and fails closed — observed 2026-07-23 on the
+  receipt-lifecycle chain (required checks all green). Correct behavior for the current
+  bootstrap posture; clears when the trusted PR flow (ruleset + policy variables) is
+  wired per [[D-007]]/[[R-005]]. Routine non-owner pushes replay green.
 - W0C (parked): GitHub repo deletion needs owner auth — run
   `gh auth refresh -h github.com -s delete_repo` or delete kaseLunt/aegis via web; agent
   then recreates, pushes, verifies, and closes W0C.
