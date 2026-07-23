@@ -6,7 +6,7 @@ enforcement_evidence: []
 project_state: active
 active_phase: P1
 active_task: W4
-updated: 2026-07-22
+updated: 2026-07-23
 ---
 
 # STATUS — where we are right now
@@ -21,19 +21,21 @@ the migrated workflows after push. main protected; residuals in [[R-005]] under 
 
 ## Current task (WIP = 1 per agent, [[D-006]])
 **W4 — identity adapters + code-hash-scoped ABI registry** — fable-main (serial writer).
-All three slices IMPLEMENTED (HEAD d138818, 314 tests, lint clean): slice 1 pure
+All three slices IMPLEMENTED (HEAD 2fd0ba8, 319 tests, lint clean): slice 1 pure
 derivation (resolve.ts), slice 2 quorum-wired observation (observe.ts) + adapter reads,
 slice 3 manifest comparison (compare.ts) + ABI registry (abi.ts). W4's invalidated_by
 already narrowed pre-receipt to the consumed modules.
 
 **IN CODEX CONVERGENCE ([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]] — no achieved stamp
-until Codex returns clean).** Seven passes dispositioned so far, ALL in
-roadmap/reviews/W4-codex-review.md (full finding/fix table): 9 findings → down to single
-freshness-honesty issues; the big lesson was pass 5's root-cause pivot (provenance brand
-instead of authenticating a forgeable observation → [[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]).
-Pass 8 (freshness-boundary binding) dispatched at d138818, verdict pending.
+until Codex returns clean).** Eight passes dispositioned so far, ALL in
+roadmap/reviews/W4-codex-review.md (full finding/fix table): 10 findings → down to the
+caller-channel class; pass 5's root-cause pivot (provenance brand →
+[[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]) plus pass 8's completion of it (snapshot
+the context once — validate and emit the same plain copy; no caller-dispatched array
+methods). Pass 9 (scoped re-verify of the snapshot fix, d138818..2fd0ba8) dispatched
+at 2fd0ba8, verdict pending.
 
-**On the next resume:** check the pass-8 Codex result. If SHIP-READY → mint EV-W4 at the
+**On the next resume:** check the pass-9 Codex result. If SHIP-READY → mint EV-W4 at the
 landing commit (`python roadmap/tools/doctor.py --receipt-basis W4 --snapshot <HEAD>`,
 honest `npm test` run), stamp achieved (`--stamp W4`), flip the ladder row + this block,
 push. If findings remain → reproduce each as a failing test, fix, re-verify, loop.
