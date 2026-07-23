@@ -1,6 +1,6 @@
 ---
 active_phase: P1
-active_task: none
+active_task: W0F
 updated: 2026-07-22
 ---
 
@@ -16,8 +16,11 @@ no force-push). Audit #2 fully dispositioned: roadmap/reviews/
 control-plane-codex-audit-2026-07-22.md; residuals bounded in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**None — W3 achieved; W4 (identity adapters + ABI registry) is next up** (file the work
-item + open a claim at kickoff; W4 depends on W2+W3, both achieved).
+**W0F — control-plane bundle migration** — fable-main (serial writer). Owner-approved
+promotion of [[IDEA-003]]: adopt the upgraded bundle in full (receipts, snapshot
+coherence, claim_id fencing, server-side approval) as one atomic flip commit BEFORE W4,
+so W4 starts on the new grammar and D-007 machinery lands on its intended base.
+W4 (identity adapters + ABI registry) queues immediately after.
 Lanes: WR1/WR2/WR3/WR6 closed. WR4 + WR5 delivered, critiqued (Codex), dispositions
 applied; both open with round-2 scopes, deferred to M3/M4 planning (several EXTEND items
 need real archive/trace providers). W0C parked pending owner action (Blockers).
