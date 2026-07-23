@@ -2,7 +2,8 @@
 id: EV-W3
 type: evidence
 title: W3 canonical verification passed at the W0F correction commit
-status: recorded
+status: superseded
+superseded_by: EV-W3-R2
 work: W3
 result: pass
 commands:

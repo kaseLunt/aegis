@@ -22,14 +22,14 @@ deliverables:
   - lib/aegis/chain/engine.ts
   - data/recordings/reference-eth-op-heads.json
 evidence_receipts:
-  - roadmap/evidence/EV-W3.md
+  - roadmap/evidence/EV-W3-R2.md
 invalidated_by:
   - lib/aegis/chain/**
   - lib/aegis/report/**
   - data/recordings/**
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:373523f0824e230d72f28cf3d9c0fec592e5a8c3fb8f4402e3b6af9a86bbc721
+evidence_fingerprint: sha256:df7715c6269e28c13153d4ad05009ba57141ec90f5f9d79bec63f9d11a1c6e0b
 ---
 
 # W3 — Finalized-block selection + quorum/conflict semantics + RPC adapters
