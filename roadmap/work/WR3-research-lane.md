@@ -3,7 +3,7 @@ id: WR3
 type: work
 title: Provider and archive feasibility (independence, finality, EIP-1898, forks)
 phase: P1
-status: committed
+status: achieved
 evidence_target: "Correct"
 priority: 2
 depends_on: []
@@ -13,11 +13,13 @@ allowed_paths:
   - roadmap/research/WR3/**
 deliverables:
   - roadmap/research/WR3/provider-matrix.md
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-WR3.md
 invalidated_by:
   - roadmap/research/WR3/**
 review_when: phase:P1:exit
 updated: 2026-07-21
+evidence_fingerprint: sha256:3aca099d30f5cea97f220ca5c89cba6e50c8c56dcd0dcc87387fdaac11b82848
 ---
 
 # WR3 — Provider and archive feasibility (independence, finality, EIP-1898, forks)

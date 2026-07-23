@@ -3,7 +3,7 @@ id: W0E
 type: work
 title: Lane hardening per second review — close cooperative-gate holes before lane commits
 phase: P1
-status: committed
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0D]
@@ -18,11 +18,13 @@ allowed_paths:
 deliverables:
   - roadmap/tools/selftest.py
   - roadmap/tools/scope_diff.py
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W0E.md
 review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
 updated: 2026-07-22
+evidence_fingerprint: sha256:64e2b465d9660fa9ae584b7e4064619286928221ed7ac61244e438fb24e50398
 ---
 
 # W0E — Lane hardening (second external review)

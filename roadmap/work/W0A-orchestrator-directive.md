@@ -3,7 +3,7 @@ id: W0A
 type: work
 title: "Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis"
 phase: P0
-status: committed
+status: achieved
 evidence_target: "Correct"
 priority: 1
 depends_on: [W0]
@@ -19,12 +19,14 @@ allowed_paths:
 deliverables:
   - roadmap/tools/new.py
   - .githooks/pre-commit
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W0A.md
 invalidated_by:
   - roadmap/tools/**
   - .githooks/**
 review_when: phase:P2:entry
 updated: 2026-07-21
+evidence_fingerprint: sha256:2c60506bfce59c18b735560c66a684aa0909e61421044cfd1e7f7aaeeac241e6
 ---
 
 # W0A — Adopt the orchestrator directive (right-sized)

@@ -3,7 +3,7 @@ id: WR2
 type: work
 title: Authority research (owners, delegates, roles, Safes, timelocks, guardians)
 phase: P1
-status: committed
+status: achieved
 evidence_target: "Correct"
 priority: 2
 depends_on: []
@@ -13,11 +13,13 @@ allowed_paths:
   - roadmap/research/WR2/**
 deliverables:
   - roadmap/research/WR2/authority-map.md
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-WR2.md
 invalidated_by:
   - roadmap/research/WR2/**
 review_when: phase:P1:exit
 updated: 2026-07-21
+evidence_fingerprint: sha256:aaa52ffa2fb03b5619e56f4ef2f8dbce89d612ca2a303bbd4d1d3daec7cdf2a6
 ---
 
 # WR2 — Authority research (owners, delegates, roles, Safes, timelocks, guardians)

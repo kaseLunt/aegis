@@ -3,7 +3,7 @@ id: W2
 type: work
 title: Manifest model + trust root (approved-hash policy, content addressing, applicability)
 phase: P1
-status: committed
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W1]
@@ -17,12 +17,14 @@ allowed_paths:
 deliverables:
   - lib/aegis/manifest/trust.ts
   - data/manifests/reference-code-identity.json
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W2.md
 invalidated_by:
   - lib/aegis/report/**
   - lib/aegis/manifest/**
 review_when: phase:P1:exit
 updated: 2026-07-22
+evidence_fingerprint: sha256:d769f152b2e83dacf562b7c76ae1ea1c2e8f11db7ecfb750c30b731484e43641
 ---
 
 # W2 — Manifest model + trust root

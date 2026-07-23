@@ -3,7 +3,7 @@ id: WR1
 type: work
 title: ETH-OP expected-policy research (route manifest inputs)
 phase: P1
-status: committed
+status: achieved
 evidence_target: "Correct"
 priority: 2
 depends_on: []
@@ -13,11 +13,13 @@ allowed_paths:
   - roadmap/research/WR1/**
 deliverables:
   - roadmap/research/WR1/expected-route-policy.md
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-WR1.md
 invalidated_by:
   - roadmap/research/WR1/**
 review_when: phase:P1:exit
 updated: 2026-07-21
+evidence_fingerprint: sha256:fce0c91c9b158c1df8fb6b186d5f53186f224981f0140698e2593febc4e533ae
 ---
 
 # WR1 — ETH-OP expected-policy research (route manifest inputs)

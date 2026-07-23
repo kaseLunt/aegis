@@ -3,7 +3,7 @@ id: WR6
 type: work
 title: Adversarial vectors (designed blind to W1 implementation)
 phase: P1
-status: committed
+status: achieved
 evidence_target: "Correct"
 priority: 2
 depends_on: []
@@ -13,11 +13,13 @@ allowed_paths:
   - roadmap/research/WR6/**
 deliverables:
   - roadmap/research/WR6/adversarial-vectors.md
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-WR6.md
 invalidated_by:
   - roadmap/research/WR6/**
 review_when: phase:P1:exit
 updated: 2026-07-21
+evidence_fingerprint: sha256:fa733f1e58617c0b7f294ae74a68b9ab0881dd38938c2b9f26a1f1a99c796e2e
 ---
 
 # WR6 — Adversarial vectors (designed blind to W1 implementation)

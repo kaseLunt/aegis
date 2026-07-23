@@ -3,7 +3,7 @@ id: W1
 type: work
 title: Canonical report core — schemas, JCS canonicalization, SHA-256 report identity
 phase: P1
-status: committed
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0]
@@ -17,12 +17,14 @@ allowed_paths:
 deliverables:
   - lib/aegis/report/canonical.ts
   - tests/report-properties.test.ts
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W1.md
 invalidated_by:
   - lib/**
   - package-lock.json
 review_when: phase:P1:exit
 updated: 2026-07-22
+evidence_fingerprint: sha256:a3c46ef47f302429161ba06e025d2083912b5deb14bafcf7336b101c47102496
 ---
 
 # W1 — Canonical report core

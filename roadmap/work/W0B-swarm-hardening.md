@@ -3,7 +3,7 @@ id: W0B
 type: work
 title: Harden the control plane per external review (enforcement gaps, honest claims)
 phase: P0
-status: committed
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0A]
@@ -19,12 +19,14 @@ allowed_paths:
 deliverables:
   - roadmap/tools/scope_gate.py
   - .github/workflows/control-plane.yml
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W0B.md
 invalidated_by:
   - roadmap/tools/**
   - .githooks/**
 review_when: phase:P2:entry
 updated: 2026-07-21
+evidence_fingerprint: sha256:c0055f66dfd5f914bb97fc8f48b978b99b40126a888509bda294ef0b5522ae8d
 ---
 
 # W0B — Control-plane hardening (external review response)

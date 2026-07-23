@@ -3,7 +3,7 @@ id: W0D
 type: work
 title: Parallelism prep — claims model, lane charters, doctrine (D-006)
 phase: P0
-status: committed
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0B]
@@ -17,11 +17,13 @@ allowed_paths:
 deliverables:
   - roadmap/tools/claim.py
   - roadmap/decisions/D-006-asymmetric-parallelism-one-semantic-spine-owner-.md
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W0D.md
 review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
 updated: 2026-07-21
+evidence_fingerprint: sha256:d6ec8382e732656c5cddeba7ea6188bc54b265b1bd666d2d42f11fa331fd20de
 ---
 
 # W0D — Parallelism prep

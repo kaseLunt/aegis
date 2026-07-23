@@ -3,7 +3,7 @@ id: W3
 type: work
 title: Finalized-block selection + two independent RPC adapters + quorum/conflict semantics
 phase: P1
-status: committed
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W1]
@@ -21,13 +21,15 @@ deliverables:
   - lib/aegis/chain/adapter.ts
   - lib/aegis/chain/engine.ts
   - data/recordings/reference-eth-op-heads.json
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W3.md
 invalidated_by:
   - lib/aegis/chain/**
   - lib/aegis/report/**
   - data/recordings/**
 review_when: phase:P1:exit
 updated: 2026-07-22
+evidence_fingerprint: sha256:373523f0824e230d72f28cf3d9c0fec592e5a8c3fb8f4402e3b6af9a86bbc721
 ---
 
 # W3 — Finalized-block selection + quorum/conflict semantics + RPC adapters
