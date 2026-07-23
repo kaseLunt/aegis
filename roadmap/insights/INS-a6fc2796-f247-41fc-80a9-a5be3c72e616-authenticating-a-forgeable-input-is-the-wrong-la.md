@@ -65,3 +65,19 @@ snapshot; internal indexed loops, never caller-dispatched methods. A hostile obj
 still lie, but only consistently — the report carries exactly what was validated.
 Same W5 consequence: engine output handed across a trust boundary should be plain
 frozen data, so surfaces cannot be channel-split either.
+
+## Addendum 2 (pass 10, 2026-07-23): the terminal form — REFUSE active inputs, don't consume them
+Passes 8–9 kept trying to consume an active caller object safely (snapshot it, read it over
+one channel, snapshot all args before validating). Pass 10 showed the residuals were all
+symptoms of the same root: `JSON.parse(JSON.stringify(x))` RUNS the object's getters/toJSON
+(so a sibling argument can still be mutated mid-clone, either direction, incl. via a
+`pinned` getter) and is LOSSY (a function-valued expected field is silently dropped →
+comparison suppressed, fail-open). The terminal fix is not a better neutralizer but a
+REFUSAL: `snapshotInert` walks property DESCRIPTORS, copies only data properties, invokes
+no getter/toJSON, and fails closed on functions/symbols/BigInt/non-finite. A pure evaluator
+must accept only inert plain data; anything with behavior is rejected at the boundary.
+Full arc: forged construction (brand) → forged observation channel (single-read) → forged
+timing across siblings (snapshot-all-first) → REFUSE active inputs entirely. Each step
+treated a symptom; the last removes the cause (caller behavior entering the evaluator).
+Note the scoping line this draws: same-realm prototype pollution BEFORE the call stays out
+of the threat model — the guarantee is only that no caller code runs DURING the evaluation.

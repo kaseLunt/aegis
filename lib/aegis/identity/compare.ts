@@ -204,24 +204,82 @@ function allAssessmentsBindPin(
   return true;
 }
 
-// One snapshot, one truth (Codex pass-8/9): capture a caller-owned input ONCE into
-// plain data — the exact view any JSON serializer sees (indexed array elements, own
-// enumerable properties, toJSON applied) — then validate AND consume only that copy.
-// Reading live objects lets a lying getter or toJSON show the validator one value and
-// the report another. And because stringify RUNS caller code, every input must be
-// detached BEFORE any of them is validated (pass-9): a context toJSON could otherwise
-// synchronously rewrite the already-validated target that the comparator re-reads.
-function snapshotPlain<T>(value: T, errorCode: string): T {
-  let copy: unknown;
-  try {
-    copy = JSON.parse(JSON.stringify(value));
-  } catch {
-    throw new IdentityError(errorCode, "input must be plain serializable data");
+// Caller inputs are shallow (~5 levels); this cap stops a deeply-nested hostile input
+// from overflowing the clone recursion before the domain checks can reject it.
+const MAX_INPUT_DEPTH = 256;
+
+// Detach a caller-owned input into a fresh, inert plain-data clone, failing CLOSED on any
+// value outside the I-JSON data domain (Codex pass-8/9/10). This is the root fix for the
+// whole "consume an active caller object safely" class: instead of neutralizing an active
+// object (JSON.parse(JSON.stringify()) — which RUNS getters/toJSON and silently drops
+// functions/undefined or coerces non-finite numbers), the comparator now REFUSES active
+// objects. The walk reads property DESCRIPTORS and copies only data properties, so:
+//   * it invokes NO getter and NO toJSON — zero caller code runs during the clone, so one
+//     argument's accessors cannot mutate a sibling argument mid-clone (pass-9/10
+//     cross-argument re-entrancy), in EITHER direction and regardless of order; and
+//   * functions, symbols, BigInt and non-finite numbers are rejected, never dropped or
+//     coerced — a function-valued expected field can no longer vanish and suppress a
+//     comparison (pass-10 P1-C).
+// An own property whose value is `undefined` is treated as ABSENT (skipped), exactly as
+// JSON object serialization does, so an unset optional field stays valid. The returned
+// copy shares no reference with the caller, so nothing emitted from it can be rewritten
+// after the call. Legitimate inputs — the frozen, I-JSON manifest data W5 wires — are
+// unaffected; this only refuses inputs that were never plain data. (Same-realm prototype
+// pollution before the call is out of the threat model: a caller that can run arbitrary
+// realm code pre-call is already unbounded — but no such code runs DURING the comparison.)
+function snapshotInert<T>(value: T, errorCode: string, depth = 0): T {
+  if (depth === 0 && (value === null || typeof value !== "object")) {
+    throw new IdentityError(errorCode, "input must be an object");
   }
-  if (typeof copy !== "object" || copy === null) {
-    throw new IdentityError(errorCode, "input must be plain serializable data");
+  if (depth > MAX_INPUT_DEPTH) {
+    throw new IdentityError(errorCode, `input nested deeper than ${MAX_INPUT_DEPTH}`);
   }
-  return copy as T;
+  if (value === null) return value;
+  const t = typeof value;
+  if (t === "boolean" || t === "string") return value;
+  if (t === "number") {
+    if (!Number.isFinite(value as unknown as number)) {
+      throw new IdentityError(errorCode, "input must be plain I-JSON data (non-finite number)");
+    }
+    return value;
+  }
+  if (t !== "object") {
+    throw new IdentityError(errorCode, `input must be plain I-JSON data (${t})`);
+  }
+  const o = value as object;
+  if (Array.isArray(o)) {
+    const out: unknown[] = [];
+    for (let i = 0; i < o.length; i += 1) {
+      const d = Object.getOwnPropertyDescriptor(o, i);
+      if (d === undefined || !("value" in d)) {
+        throw new IdentityError(errorCode, "input array must be dense plain data (no holes or accessors)");
+      }
+      out.push(snapshotInert(d.value, errorCode, depth + 1));
+    }
+    return out as T;
+  }
+  const proto = Object.getPrototypeOf(o);
+  if (proto !== Object.prototype && proto !== null) {
+    throw new IdentityError(errorCode, "input must be a plain object");
+  }
+  if (Object.getOwnPropertySymbols(o).length > 0) {
+    throw new IdentityError(errorCode, "input must not carry symbol-keyed properties");
+  }
+  const out: Record<string, unknown> = {};
+  for (const k of Object.getOwnPropertyNames(o)) {
+    const d = Object.getOwnPropertyDescriptor(o, k) as PropertyDescriptor;
+    if (!("value" in d)) {
+      throw new IdentityError(errorCode, "input must not carry accessor properties");
+    }
+    if (d.value === undefined) continue; // unset optional field: absent, as in JSON
+    Object.defineProperty(out, k, {
+      value: snapshotInert(d.value, errorCode, depth + 1),
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+  }
+  return out as T;
 }
 
 function validateContext(context: IdentityComparisonContext, observedPin: PinnedBlock): void {
@@ -332,24 +390,27 @@ export function compareIdentityTarget(
   // observation's own pin — never a caller-supplied replacement that could relabel the
   // result onto a different (e.g. reorged or stale) block.
   const observedPin = observed.pinned;
+  // Detach each caller-owned input into inert plain data and consume ONLY the copies
+  // (Codex pass-8/9/10). snapshotInert runs no caller code, so no input's accessors can
+  // steer or mutate another, and non-I-JSON values fail closed. Snapshot-then-validate
+  // one input fully before touching the next: the pin binding first, then the target,
+  // then the context — which also preserves target-before-context error precedence
+  // (pass-10 P2). Everything emitted below is a copy, so the report carries exactly what
+  // was validated.
+  const pin = snapshotInert(pinned, "invalid_pin");
   if (
-    pinned.chainId !== observedPin.chainId ||
-    pinned.number !== observedPin.number ||
-    pinned.hash !== observedPin.hash
+    pin.chainId !== observedPin.chainId ||
+    pin.number !== observedPin.number ||
+    pin.hash !== observedPin.hash
   ) {
     throw new IdentityError(
       "pin_mismatch",
-      `comparison pin ${pinned.chainId}/${pinned.number}/${pinned.hash} != observation pin ${observedPin.chainId}/${observedPin.number}/${observedPin.hash}`,
+      `comparison pin ${pin.chainId}/${pin.number}/${pin.hash} != observation pin ${observedPin.chainId}/${observedPin.number}/${observedPin.hash}`,
     );
   }
-  // Detach EVERY caller-owned input, then validate, then consume ONLY the snapshots
-  // (pass-8/9) — never the live caller objects. Snapshotting runs caller code
-  // (toJSON/getters), so it must complete for all inputs before any validation runs;
-  // and everything emitted below (manifest ref, freshness, expected values) is a
-  // snapshot, so the report carries exactly what was validated.
-  const tgt = snapshotPlain(target, "invalid_target");
-  const ctx = snapshotPlain(context, "invalid_context");
+  const tgt = snapshotInert(target, "invalid_target");
   validateTarget(tgt);
+  const ctx = snapshotInert(context, "invalid_context");
   validateContext(ctx, observedPin);
   if (tgt.chainId !== observedPin.chainId) {
     throw new IdentityError(

@@ -173,6 +173,33 @@ Class note: pass-8's rule ("read untrusted input over exactly one channel") gain
 corollary — snapshotting IS caller-code execution, so all inputs detach before any
 validates. TOCTOU applies across sibling arguments, not just within one object.
 
+## Convergence pass 10 (2026-07-23, Codex sessions 019f8e26… [terminal] → 019f8e3a-3470-7d53-9bbf-79bd41fbffc6)
+
+First dispatch failed terminally (no verdict): Codex sandbox EPERM spawning Vitest, then
+a moderation false-positive on defensive vocabulary — 2nd [[INS-004]] recurrence, logged
+there. Re-dispatched under the INS-004 default (neutral correctness/determinism framing +
+static-only scope; the integrator owns test execution). Verdict needs-attention: 3 P1 + 1
+P2, all one root cause — the pass-8/9 snapshot NEUTRALIZED active caller objects
+(JSON.parse(JSON.stringify())) instead of REFUSING them, and stringify itself runs caller
+code and is lossy.
+
+| Finding | Disposition |
+|---------|-------------|
+| P1: snapshots are ordered, not isolated — stringify runs getters/toJSON, so one argument's accessor can still mutate a sibling mid-clone (target→context, and a `pinned` getter→target), in the direction pass-9 didn't cover | ACCEPTED at the root — replaced snapshotPlain with `snapshotInert`, a DESCRIPTOR-walk clone that copies only data properties and invokes NO getter or toJSON. Zero caller code runs during the comparison, so no input can steer or mutate another in any direction. Inputs snapshotted+validated one at a time (pin → target → context). Tests: target→context refusal + sibling-untouched, pinned-getter refusal + getter-never-ran, both mutation-tested |
+| P1: `snapshotPlain` is lossy — JSON silently drops function/symbol/undefined props and coerces NaN/Infinity→null, so a function-valued `expectedRuntimeCodeHash` vanished and SUPPRESSED a comparison (fail-open) instead of throwing | ACCEPTED — snapshotInert fails closed on functions/symbols/BigInt/non-finite; an unset optional (`undefined`) is treated as absent exactly as JSON objects do, so legitimate unset fields still validate. Tests: function-valued expected field → invalid_target; non-finite chainId → invalid_target; undefined optional → still passes with one verification |
+| P1: caller code can still dispatch inherited Array behavior after validation (`.map`/`.includes`/`for..of` on frozen observation arrays) if a snapshot callback poisoned `Array.prototype` | PARTIAL / PUSHED BACK — the IN-scope half (caller code running DURING the comparison) is eliminated: snapshotInert runs none, so nothing can poison a prototype mid-call. Poisoning `Array.prototype` BEFORE the call is same-realm arbitrary code — out of the threat model (a pre-call realm attacker is already unbounded), consistent with the pass-8 scoping note. Not hardening post-validation intrinsics against pre-existing global pollution; recorded as a conscious boundary |
+| P2: error precedence changed — a serializable-but-invalid target combined with a throwing context reported invalid_context before invalid_target | ACCEPTED — validate the target's inert copy fully BEFORE the context is snapshotted (the reviewer's suggested structure), restoring target-before-context precedence. Test: bad-address target + toJSON context → invalid_target |
+
+Deferred (Codex recommendation, not a defect): bind the target to a trusted LoadedManifest
+whose content hash equals context.manifestHash — the comparator has no manifest bytes in
+scope; this is W5 wiring, tracked in [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3.
+
+Class note (completes the INS-a6fc2796 arc): forged construction (brand) → forged
+observation channel (snapshot, pass 8) → forged timing across siblings (pass 9) → the root:
+don't consume an active object at all. REFUSE non-inert input. Every earlier "read it
+safely" step was treating a symptom of accepting caller behavior into a pure evaluator.
+328/328, lint clean.
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

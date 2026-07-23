@@ -902,7 +902,10 @@ describe("convergence pass 8 — the context is snapshotted before validation; c
     ).toThrow(/invalid_context/);
   });
 
-  test("a lying getter cannot show the validator one state and the report another — emitted freshness IS the validated snapshot", async () => {
+  test("a getter-valued assessment field is refused — inputs must be inert data, and the getter never runs (pass-10 contract)", async () => {
+    // Under the inert-input contract, a lying getter cannot even be read: descriptor
+    // inspection rejects the accessor before its body executes, so there is no channel
+    // to split validation from emission — the class is closed by refusal, not neutralizing.
     const observed = await observedAtPin();
     let reads = 0;
     const assessment = {
@@ -913,14 +916,13 @@ describe("convergence pass 8 — the context is snapshotted before validation; c
         return reads === 1 ? "current" : "unknown";
       },
     };
-    const { verifications } = compareIdentityTarget(T8, observed, PIN, {
-      ...CONTEXT,
-      freshness: { aggregate: "current", assessments: [assessment] },
-    });
-    // The single snapshot read saw "current" bound to the pin; the emitted freshness
-    // carries exactly that validated value, not a later read of the live getter.
-    expect(verifications[0].state).toBe("pass");
-    expect(verifications[0].freshness.assessments[0].state).toBe("current");
+    expect(() =>
+      compareIdentityTarget(T8, observed, PIN, {
+        ...CONTEXT,
+        freshness: { aggregate: "current", assessments: [assessment] },
+      }),
+    ).toThrow(/invalid_context/);
+    expect(reads).toBe(0);
   });
 
   test("emitted evidence and freshness are detached plain copies — post-call mutation of the caller's context cannot rewrite them", async () => {
@@ -956,12 +958,10 @@ describe("convergence pass 9 — every caller input is snapshotted before any va
       QUORUM,
     );
 
-  test("HIGH: context serialization cannot rewrite the already-validated target into a match", async () => {
-    // The Codex pass-9 repro: snapshotting the context runs caller code (toJSON), which
-    // synchronously mutates the sibling `target` argument AFTER validateTarget saw it.
-    // If the comparator re-reads the live target, the declared mismatch becomes a false
-    // pass citing a rewritten expectation. The verdict must stay `fail` and must cite
-    // the ORIGINALLY declared expected hash.
+  test("HIGH: a context carrying a toJSON is refused before it can rewrite the target's expected hash", async () => {
+    // The Codex pass-9 repro under the pass-10 contract: a context.toJSON that would
+    // mutate the sibling `target` is rejected when the context is snapshotted, so it
+    // never runs and the target is untouched — no cross-argument rewrite is possible.
     const observed = await observedAtPin9();
     const declaredWrong = shaOf("not-the-observed-code");
     const target = {
@@ -971,22 +971,21 @@ describe("convergence pass 9 — every caller input is snapshotted before any va
       identityStrategy: "direct",
       expectedRuntimeCodeHash: declaredWrong,
     };
+    let toJsonRan = false;
     const context = {
       ...CONTEXT,
       toJSON() {
+        toJsonRan = true;
         target.expectedRuntimeCodeHash = codeHash(DIRECT_CODE);
         return { ...CONTEXT };
       },
     };
-    const { verifications } = compareIdentityTarget(target, observed, PIN, context);
-    expect(verifications[0].state).toBe("fail");
-    expect(verifications[0].expected).toBe(declaredWrong);
+    expect(() => compareIdentityTarget(target, observed, PIN, context)).toThrow(/invalid_context/);
+    expect(toJsonRan).toBe(false);
+    expect(target.expectedRuntimeCodeHash).toBe(declaredWrong);
   });
 
-  test("HIGH: context serialization cannot rewrite the validated strategy into the observed one", async () => {
-    // Same channel, other field: the target declares eip1967 (mismatching the direct
-    // observation — normally strategy_mismatch); a hostile context rewrites it to
-    // "direct" mid-snapshot. The comparator must judge the strategy it VALIDATED.
+  test("HIGH: a context carrying a toJSON that would rewrite the validated strategy is refused, and does not run", async () => {
     const observed = await observedAtPin9();
     const target = {
       targetId: "t",
@@ -995,14 +994,116 @@ describe("convergence pass 9 — every caller input is snapshotted before any va
       identityStrategy: "eip1967",
       expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
     };
+    let toJsonRan = false;
     const context = {
       ...CONTEXT,
       toJSON() {
+        toJsonRan = true;
         target.identityStrategy = "direct";
         return { ...CONTEXT };
       },
     };
-    expect(() => compareIdentityTarget(target, observed, PIN, context)).toThrow(/strategy_mismatch/);
+    expect(() => compareIdentityTarget(target, observed, PIN, context)).toThrow(/invalid_context/);
+    expect(toJsonRan).toBe(false);
+    expect(target.identityStrategy).toBe("eip1967");
+  });
+});
+
+describe("convergence pass 10 — inert-input contract: no caller code runs during comparison", () => {
+  const observedAtPin10 = () =>
+    observeIdentity(
+      "direct",
+      DIRECT,
+      adaptersFor(sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE }])),
+      PIN,
+      QUORUM,
+    );
+  const goodTarget = () => ({
+    targetId: "t",
+    chainId: 1,
+    address: DIRECT,
+    identityStrategy: "direct",
+    expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+  });
+
+  test("HIGH target→context: a target toJSON that would mutate the context is refused (invalid_target), context untouched", async () => {
+    // The reverse direction of the pass-9 finding: target is snapshotted first, so its
+    // toJSON is rejected before the context is examined — the sibling stays clean.
+    const observed = await observedAtPin10();
+    let ran = false;
+    const context = { ...CONTEXT, freshness: { ...FRESH_CURRENT } };
+    const target = {
+      ...goodTarget(),
+      toJSON() {
+        ran = true;
+        (context.freshness as { aggregate: string }).aggregate = "stale";
+        return goodTarget();
+      },
+    };
+    expect(() => compareIdentityTarget(target, observed, PIN, context)).toThrow(/invalid_target/);
+    expect(ran).toBe(false);
+    expect(context.freshness.aggregate).toBe("current");
+  });
+
+  test("HIGH: a pinned getter cannot fire to steer the comparison — pinned must be inert (invalid_pin)", async () => {
+    const observed = await observedAtPin10();
+    let ran = false;
+    const pinned: Record<string, unknown> = { ...PIN };
+    Object.defineProperty(pinned, "hash", {
+      enumerable: true,
+      configurable: true,
+      get() {
+        ran = true;
+        return PIN.hash;
+      },
+    });
+    expect(() =>
+      compareIdentityTarget(goodTarget(), observed, pinned as unknown as typeof PIN, CONTEXT),
+    ).toThrow(/invalid_pin/);
+    expect(ran).toBe(false);
+  });
+
+  test("P1-C: a function-valued expected field is refused, never silently dropped into a suppressed comparison", async () => {
+    const observed = await observedAtPin10();
+    const target = {
+      ...goodTarget(),
+      expectedRuntimeCodeHash: (() => codeHash(DIRECT_CODE)) as unknown as string,
+    };
+    expect(() => compareIdentityTarget(target, observed, PIN, CONTEXT)).toThrow(/invalid_target/);
+  });
+
+  test("P1-C: a non-finite chainId is refused, never coerced to null", async () => {
+    const observed = await observedAtPin10();
+    const target = { ...goodTarget(), chainId: Number.POSITIVE_INFINITY };
+    expect(() => compareIdentityTarget(target, observed, PIN, CONTEXT)).toThrow(/invalid_target/);
+  });
+
+  test("P2: an invalid target is reported before a non-inert context (target-before-context precedence)", async () => {
+    const observed = await observedAtPin10();
+    const badTarget = { ...goodTarget(), address: "0xnot-an-address" };
+    const context = {
+      ...CONTEXT,
+      toJSON() {
+        return { ...CONTEXT };
+      },
+    };
+    expect(() => compareIdentityTarget(badTarget, observed, PIN, context)).toThrow(/invalid_target/);
+  });
+
+  test("an unset optional field (undefined) stays valid — only the runtime-hash verification is emitted", async () => {
+    // undefined own properties are treated as absent, exactly as JSON serialization does,
+    // so the inert-input contract does not reject a legitimately-unset optional.
+    const observed = await observedAtPin10();
+    const target = { ...goodTarget(), expectedImplementation: undefined };
+    const { verifications } = compareIdentityTarget(target, observed, PIN, CONTEXT);
+    expect(verifications).toHaveLength(1);
+    expect(verifications[0].state).toBe("pass");
+  });
+
+  test("legitimate plain-data inputs are unaffected — a matching comparison still passes", async () => {
+    const observed = await observedAtPin10();
+    const { verifications } = compareIdentityTarget(goodTarget(), observed, PIN, CONTEXT);
+    expect(verifications[0].state).toBe("pass");
   });
 });
 
