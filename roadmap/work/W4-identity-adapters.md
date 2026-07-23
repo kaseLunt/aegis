@@ -72,14 +72,17 @@ npm test
 
 ## Handoff
 
-- next: slice 1 — pure identity derivation (lib/aegis/identity/resolve.ts): the four
-  strategies over observed inputs (code bytes, slot values), typed failures, full-path
-  retention; TDD from the spec bullets. Then slice 2 — adapter extension (getCode /
-  getStorageAt at a pinned block over the recorded-envelope model) + engine wiring with
-  quorum on identity reads. Then slice 3 — manifest comparison producing W1-shaped
-  Verifications + the code-hash-scoped ABI registry, composed end-to-end over recorded
-  fixtures. Codex senior review BEFORE the achieved stamp (per the ratified
-  senior-reviewer decision).
+- next: slice 2 — adapter extension (getCode / getStorageAt at a pinned block over the
+  recorded-envelope model) + engine wiring with quorum on identity reads. Then slice 3 —
+  manifest comparison producing W1-shaped Verifications + the code-hash-scoped ABI
+  registry, composed end-to-end over recorded fixtures. Codex senior review BEFORE the
+  achieved stamp (per the ratified senior-reviewer decision). DONE: slice 1 — pure
+  identity derivation (lib/aegis/identity/resolve.ts, 21 tests): four strategies over a
+  CodeObservation seam, typed non-pass outcomes (code_absent, implementation_slot_empty,
+  beacon_slot_empty, beacon_implementation_unresolved, not_eip1167_clone,
+  clone_target_zero, unsupported_strategy), full indirection path retained, sha256 over
+  code BYTES (never hex strings), property tests for byte-mutation sensitivity and
+  observation-order invariance.
 - read_first: docs/ENGINEERING_SPEC.md §Target invariant and evidence registry +
   §Evidence acquisition; docs/THREAT_MODEL.md proxy/identity rows; W3 handoff notes
   (live adapters must thread captured raw-response hashes; recordingId bundle-digest
