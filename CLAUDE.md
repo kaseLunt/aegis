@@ -68,6 +68,10 @@ Full model: `roadmap/RULES.md` and `roadmap/SYSTEM.md`.
   hazards) current enough that a cold session resumes in minutes. Doctor-enforced.
 - **Teeth habit.** A confirmed finding lands TWO artifacts: the fix and a machine check that
   catches the class (test, fixture, doctor rule, hook), negative-tested at landing.
+- **Codex convergence gate (D-b4ab3c69).** Complex work is NEVER approved — no achieved
+  stamp, no receipt, no "done" — until the Codex review loop converges to a clean pass
+  (review → TDD dispositions → scoped re-verification → repeat). Green local tests are
+  necessary, never sufficient. Owner waivers must be explicit and recorded.
 - **Verify by re-running, not re-reading.** Commands you prescribe must have been executed;
   evidence cites real runs. Your unrequested additions carry the same verification burden.
 - **Capture with one command:** `python roadmap/tools/new.py <idea|insight|decision|risk> "title"`.
