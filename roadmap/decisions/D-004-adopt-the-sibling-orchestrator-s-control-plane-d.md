@@ -1,7 +1,7 @@
 ---
 id: D-004
 type: decision
-title: Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis
+title: "Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis"
 status: accepted
 date: 2026-07-21
 approved_by: klunt (2026-07-21, session ratification)

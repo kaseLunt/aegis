@@ -1,7 +1,7 @@
 ---
 id: W0A
 type: work
-title: Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis
+title: "Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis"
 phase: P0
 status: achieved
 evidence_target: "Correct"
