@@ -66,6 +66,16 @@ parked (Blockers).
    check once PR flow starts mattering.
 
 ## Blockers
+- OWNER (control-plane enforcement): the upgraded bundle's authoritative gate is the
+  trusted `pull_request_target` audit, which needs a hosting ruleset "required workflow"
+  plus repo variables `CONTROL_PLANE_TRUST_REF`, `CONTROL_PLANE_TARGET_BRANCH`, and
+  `CONTROL_PLANE_POLICY_APPROVAL`. Until wired, enforcement stays `bootstrap` (advisory
+  push jobs only). This is D-007 machinery-phase work (also [[R-005]]). Branch protection
+  now requires the advisory doctor + selftest + Product tests.
+- NOTE (transient, self-clearing): the advisory "scope review" job was red once on the
+  migration push because it replays from `event.before` = the pre-migration commit
+  (9329bbc), whose STATUS the new tools cannot parse. Any push whose base is a
+  post-migration commit parses cleanly — expected to be green from the next push onward.
 - W0C (parked): GitHub repo deletion needs owner auth — run
   `gh auth refresh -h github.com -s delete_repo` or delete kaseLunt/aegis via web; agent
   then recreates, pushes, verifies, and closes W0C.
