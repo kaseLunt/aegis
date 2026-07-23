@@ -200,6 +200,25 @@ don't consume an active object at all. REFUSE non-inert input. Every earlier "re
 safely" step was treating a symptom of accepting caller behavior into a pure evaluator.
 328/328, lint clean.
 
+## Convergence pass 11 (2026-07-23, Codex session 019f8e60-eed6-7203-aa8e-50e002cd02d6)
+
+Scoped re-verify of the inert-input contract (ec3b637..773b46c), neutral+static brief.
+Verdict needs-attention: no P0, 2 P1 + 3 P2 — the descriptor walk was necessary but not
+sufficient. All accepted; none warranted pushback.
+
+| Finding | Disposition |
+|---------|-------------|
+| P1: Proxy reflection dispatches traps — `getOwnPropertyDescriptor`/`ownKeys`/`getPrototypeOf`/`.length` on a Proxy run caller code, so a pin/target proxy could still mutate a sibling mid-clone (re-entrancy restored), and a trap could throw a non-typed error | ACCEPTED — snapshotInert now rejects proxies via `util.types.isProxy` (a native check that fires no trap) BEFORE any reflection, at every nesting level. The "descriptors are inert" assumption was wrong for proxies; this closes it. Tests: proxy target (trap never fires, sibling untouched) / proxy context / proxy pinned / nested proxy in a data property — all refused. Mutation-tested (removing the isProxy guard reds 4) |
+| P1: `undefined` can suppress the REQUIRED runtime-hash verification — a target declaring neither expected field emitted ZERO verifications (vacuous pass) instead of invalid_target; the manifest schema makes expectedRuntimeCodeHash mandatory (trust.ts TARGET_MANDATORY). Pre-existing (JSON.stringify dropped it too); surfaced by the deeper pass | ACCEPTED — validateTarget now REQUIRES expectedRuntimeCodeHash (string + SHA256), matching the manifest contract. A target without it → invalid_target; the evaluator can never emit an empty comparison. Test + mutation-tested (reverting to optional reds 1). Every existing target already declares it, so no legit regression |
+| P2: required manifest-evidence `sourceId` not revalidated — `sourceId: undefined` was dropped by the snapshot and incomplete evidence emitted | ACCEPTED — validateContext now requires `boundary.snapshot.sourceId` (non-empty string). Test: missing sourceId → invalid_context |
+| P2: lone-surrogate strings passed through — snapshotInert returned every string unchanged, so a non-I-JSON string validated here only to fail later canonicalization | ACCEPTED — snapshotInert rejects lone surrogates in string VALUES and KEYS, matching the canonical guard. Test: lone-surrogate targetId → invalid_target |
+| P2: nesting caps differ — snapshotInert rejected at 256 what the manifest loader accepts to 1024, so a deeply-nested-but-valid target could load yet fail comparison | ACCEPTED — MAX_INPUT_DEPTH raised to 1024 to match canonical MAX_NESTING_DEPTH. Test: 300-deep extension accepted, 2000-deep refused |
+
+Deferred (unchanged): manifest→target binding is W5 wiring ([[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3).
+Process note: `git checkout` on the uncommitted file during mutation testing reverted the
+whole pass-11 delta (recurrence of the observe.ts hazard) — re-applied from context, then
+finished mutation tests with in-place Python reverts only. 336/336, lint clean.
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

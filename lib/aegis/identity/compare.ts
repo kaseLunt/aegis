@@ -14,6 +14,7 @@
 // storage slot as calldata, and the quorum-agreed value (finding 8) — emitted for the
 // payload's top level and referenced by id through the W1 role lists.
 import { createHash } from "node:crypto";
+import { types } from "node:util";
 import type { PinnedBlock } from "../chain/selection";
 import { jcsSerialize } from "../report/canonical";
 import {
@@ -28,6 +29,10 @@ export const CODE_IDENTITY_INVARIANT = "deployment.code_identity";
 
 const ADDRESS_RE = /^0x[0-9a-f]{40}$/;
 const SHA256_STRICT = /^sha256:[0-9a-f]{64}$/;
+// Lone-surrogate rejection matches the canonical I-JSON guard (canonical.ts): a string
+// with an unpaired surrogate is outside I-JSON and would fail later canonicalization, so
+// the inert-input snapshot must reject it up front rather than pass it through (pass-11).
+const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 
 export interface IdentityTarget {
   targetId: string;
@@ -130,7 +135,12 @@ function validateTarget(target: IdentityTarget): void {
     typeof target.address !== "string" || !ADDRESS_RE.test(target.address) ||
     typeof target.identityStrategy !== "string" || target.identityStrategy.length === 0 ||
     (target.expectedImplementation !== undefined && !ADDRESS_RE.test(target.expectedImplementation)) ||
-    (target.expectedRuntimeCodeHash !== undefined && !SHA256_STRICT.test(target.expectedRuntimeCodeHash))
+    // expectedRuntimeCodeHash is MANDATORY, matching the manifest schema (trust.ts
+    // TARGET_MANDATORY): the terminal runtime-hash check is the primary identity
+    // assertion. Without it a target would declare no expectation and the evaluator
+    // would emit ZERO verifications — a vacuous "nothing to check" pass (Codex pass-11).
+    typeof target.expectedRuntimeCodeHash !== "string" ||
+    !SHA256_STRICT.test(target.expectedRuntimeCodeHash)
   ) {
     throw new IdentityError("invalid_target", target.targetId ?? "<missing targetId>");
   }
@@ -204,9 +214,11 @@ function allAssessmentsBindPin(
   return true;
 }
 
-// Caller inputs are shallow (~5 levels); this cap stops a deeply-nested hostile input
-// from overflowing the clone recursion before the domain checks can reject it.
-const MAX_INPUT_DEPTH = 256;
+// Nesting cap for a caller-supplied input. Aligned with the canonical I-JSON guard's
+// MAX_NESTING_DEPTH (canonical.ts) so the comparator never refuses a target the manifest
+// loader would accept (pass-11 P2); it still stops a deeply-nested input from overflowing
+// the clone recursion (~9k) before the domain checks can reject it.
+const MAX_INPUT_DEPTH = 1024;
 
 // Detach a caller-owned input into a fresh, inert plain-data clone, failing CLOSED on any
 // value outside the I-JSON data domain (Codex pass-8/9/10). This is the root fix for the
@@ -236,7 +248,13 @@ function snapshotInert<T>(value: T, errorCode: string, depth = 0): T {
   }
   if (value === null) return value;
   const t = typeof value;
-  if (t === "boolean" || t === "string") return value;
+  if (t === "boolean") return value;
+  if (t === "string") {
+    if (LONE_SURROGATE.test(value as unknown as string)) {
+      throw new IdentityError(errorCode, "input must be plain I-JSON data (lone surrogate)");
+    }
+    return value;
+  }
   if (t === "number") {
     if (!Number.isFinite(value as unknown as number)) {
       throw new IdentityError(errorCode, "input must be plain I-JSON data (non-finite number)");
@@ -247,6 +265,14 @@ function snapshotInert<T>(value: T, errorCode: string, depth = 0): T {
     throw new IdentityError(errorCode, `input must be plain I-JSON data (${t})`);
   }
   const o = value as object;
+  // Reject proxies BEFORE any reflection (Codex pass-11): Object.getOwnPropertyDescriptor
+  // / getOwnPropertyNames / getPrototypeOf / a `.length` read all dispatch proxy TRAPS —
+  // caller code that would restore the cross-argument re-entrancy the descriptor walk is
+  // meant to prevent (and could throw a non-typed error). isProxy is a native check that
+  // fires no trap, so this is safe to test first.
+  if (types.isProxy(o)) {
+    throw new IdentityError(errorCode, "input must not be a proxy");
+  }
   if (Array.isArray(o)) {
     const out: unknown[] = [];
     for (let i = 0; i < o.length; i += 1) {
@@ -267,6 +293,9 @@ function snapshotInert<T>(value: T, errorCode: string, depth = 0): T {
   }
   const out: Record<string, unknown> = {};
   for (const k of Object.getOwnPropertyNames(o)) {
+    if (LONE_SURROGATE.test(k)) {
+      throw new IdentityError(errorCode, "input must be plain I-JSON data (lone-surrogate key)");
+    }
     const d = Object.getOwnPropertyDescriptor(o, k) as PropertyDescriptor;
     if (!("value" in d)) {
       throw new IdentityError(errorCode, "input must not carry accessor properties");
@@ -297,6 +326,10 @@ function validateContext(context: IdentityComparisonContext, observedPin: Pinned
     me.rawResultHash !== context.manifestHash ||
     me.boundary?.kind !== "source_snapshot" ||
     me.boundary?.snapshot?.contentHash !== context.manifestHash ||
+    // sourceId is a required part of the emitted evidence boundary (pass-11 P2): without
+    // this check an `undefined` sourceId is dropped by the inert snapshot and incomplete
+    // manifest evidence is emitted.
+    typeof me.boundary?.snapshot?.sourceId !== "string" || me.boundary.snapshot.sourceId.length === 0 ||
     typeof me.provenanceClass !== "string" || me.provenanceClass.length === 0 ||
     typeof me.sourceMode !== "string" || me.sourceMode.length === 0 ||
     typeof me.capturedAt !== "string" || me.capturedAt.length === 0 ||

@@ -1107,6 +1107,112 @@ describe("convergence pass 10 — inert-input contract: no caller code runs duri
   });
 });
 
+describe("convergence pass 11 — proxies refused, required runtime hash enforced, I-JSON strings, depth aligned", () => {
+  const observedAtPin11 = () =>
+    observeIdentity(
+      "direct",
+      DIRECT,
+      adaptersFor(sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE }])),
+      PIN,
+      QUORUM,
+    );
+  const goodTarget = () => ({
+    targetId: "t",
+    chainId: 1,
+    address: DIRECT,
+    identityStrategy: "direct",
+    expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+  });
+
+  test("HIGH: a proxy target is refused before any trap fires — reflection cannot re-enter and mutate a sibling", async () => {
+    const observed = await observedAtPin11();
+    let trapped = false;
+    const context = { ...CONTEXT, freshness: { ...FRESH_CURRENT } };
+    const target = new Proxy(goodTarget(), {
+      ownKeys(t) {
+        trapped = true;
+        (context.freshness as { aggregate: string }).aggregate = "stale";
+        return Reflect.ownKeys(t);
+      },
+      getOwnPropertyDescriptor(t, k) {
+        trapped = true;
+        return Reflect.getOwnPropertyDescriptor(t, k);
+      },
+      get(t, k, r) {
+        trapped = true;
+        return Reflect.get(t, k, r);
+      },
+      getPrototypeOf(t) {
+        trapped = true;
+        return Reflect.getPrototypeOf(t);
+      },
+    });
+    expect(() => compareIdentityTarget(target as never, observed, PIN, context)).toThrow(/invalid_target/);
+    // Rejected by a native isProxy check that dispatches no trap; the sibling is untouched.
+    expect(trapped).toBe(false);
+    expect(context.freshness.aggregate).toBe("current");
+  });
+
+  test("HIGH: a proxy context is refused (invalid_context)", async () => {
+    const observed = await observedAtPin11();
+    const context = new Proxy({ ...CONTEXT }, {});
+    expect(() => compareIdentityTarget(goodTarget(), observed, PIN, context as never)).toThrow(/invalid_context/);
+  });
+
+  test("HIGH: a proxy pinned is refused (invalid_pin)", async () => {
+    const observed = await observedAtPin11();
+    const pinned = new Proxy({ ...PIN }, {});
+    expect(() => compareIdentityTarget(goodTarget(), observed, pinned as never, CONTEXT)).toThrow(/invalid_pin/);
+  });
+
+  test("HIGH: a nested proxy held in a data property is refused (invalid_context)", async () => {
+    const observed = await observedAtPin11();
+    const context = {
+      ...CONTEXT,
+      freshness: { ...FRESH_CURRENT, assessments: [new Proxy(FRESH_CURRENT.assessments[0], {})] },
+    };
+    expect(() => compareIdentityTarget(goodTarget(), observed, PIN, context as never)).toThrow(/invalid_context/);
+  });
+
+  test("HIGH: a target that declares no expectedRuntimeCodeHash is refused — never a vacuous empty comparison", async () => {
+    const observed = await observedAtPin11();
+    const noHash = { targetId: "t", chainId: 1, address: DIRECT, identityStrategy: "direct" };
+    expect(() => compareIdentityTarget(noHash as never, observed, PIN, CONTEXT)).toThrow(/invalid_target/);
+  });
+
+  test("P2: manifest evidence missing its snapshot sourceId is refused (invalid_context)", async () => {
+    const observed = await observedAtPin11();
+    const context = {
+      ...CONTEXT,
+      manifestEvidence: {
+        ...CONTEXT.manifestEvidence,
+        boundary: { kind: "source_snapshot" as const, snapshot: { contentHash: CONTEXT.manifestHash } },
+      },
+    };
+    expect(() => compareIdentityTarget(goodTarget(), observed, PIN, context as never)).toThrow(/invalid_context/);
+  });
+
+  test("P2: a lone-surrogate string is refused up front, not passed through to fail later canonicalization", async () => {
+    const observed = await observedAtPin11();
+    const target = { ...goodTarget(), targetId: "t\uD800" };
+    expect(() => compareIdentityTarget(target, observed, PIN, CONTEXT)).toThrow(/invalid_target/);
+  });
+
+  test("P2: nesting depth aligns with the manifest I-JSON contract — a 300-deep extension is accepted, 2000-deep refused", async () => {
+    const observed = await observedAtPin11();
+    const nest = (n: number) => {
+      let v: unknown = {};
+      for (let i = 0; i < n; i += 1) v = { deeper: v };
+      return v;
+    };
+    const okTarget = { ...goodTarget(), extension: nest(300) } as never;
+    const { verifications } = compareIdentityTarget(okTarget, observed, PIN, CONTEXT);
+    expect(verifications[0].state).toBe("pass");
+    const tooDeep = { ...goodTarget(), extension: nest(2000) } as never;
+    expect(() => compareIdentityTarget(tooDeep, observed, PIN, CONTEXT)).toThrow(/invalid_target/);
+  });
+});
+
 describe("review test-quality items", () => {
   test("T2: the exported slot constants equal the official ERC-1967 literals", () => {
     expect(EIP1967_IMPLEMENTATION_SLOT).toBe(
