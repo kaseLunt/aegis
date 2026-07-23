@@ -72,11 +72,14 @@ npm test
 
 ## Handoff
 
-- next: slice 2 — adapter extension (getCode / getStorageAt at a pinned block over the
-  recorded-envelope model) + engine wiring with quorum on identity reads. Then slice 3 —
-  manifest comparison producing W1-shaped Verifications + the code-hash-scoped ABI
-  registry, composed end-to-end over recorded fixtures. Codex senior review BEFORE the
-  achieved stamp (per the ratified senior-reviewer decision). DONE: slice 1 — pure
+- next: slice 3 — manifest comparison producing W1-shaped Verifications + the
+  code-hash-scoped ABI registry, composed end-to-end over recorded fixtures. Codex senior
+  review BEFORE the achieved stamp (per the ratified senior-reviewer decision). DONE:
+  slice 2 — IdentityReadAdapter (getCode / getStorageWord / call at the pinned block,
+  values travel with loader-verified raw hashes) + observeIdentity trampoline (pure
+  derivation over quorum-agreed reads; non-agreed read -> observation_unresolved with the
+  full read trail; agreed "0x" IS evidence -> derivation-typed outcomes); 16 tests incl.
+  quorum-gate mutation check and heads+identity fixture e2e. DONE: slice 1 — pure
   identity derivation (lib/aegis/identity/resolve.ts, 21 tests): four strategies over a
   CodeObservation seam, typed non-pass outcomes (code_absent, implementation_slot_empty,
   beacon_slot_empty, beacon_implementation_unresolved, not_eip1167_clone,

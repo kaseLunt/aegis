@@ -40,6 +40,34 @@ export interface ChainAdapter {
   getBlockByNumber(chainId: number, number: string): Promise<PinnedBlock>;
 }
 
+// W4 identity reads. Every read is AT a pinned block number (established by the W3
+// boundary pass) so provider observations are comparable; the value travels with the
+// integrity-verified raw-result hash the quorum layer compares. Recorded mode returns the
+// loader-verified rawResponseSha256; a live adapter must thread its captured raw-response
+// hash the same way (probe-step work, see W3 handoff). Block numbers use the recording
+// canon (decimal strings, as in PinnedBlock) — live transports translate to JSON-RPC hex.
+export interface IdentityReadResult {
+  value: string;
+  rawResultHash: string;
+}
+
+export interface IdentityReadAdapter {
+  readonly providerId: string;
+  readonly administrativeDomain: string;
+  getCode(chainId: number, address: string, blockNumber: string): Promise<IdentityReadResult>;
+  getStorageWord(
+    chainId: number,
+    address: string,
+    slot: string,
+    blockNumber: string,
+  ): Promise<IdentityReadResult>;
+  call(
+    chainId: number,
+    request: { to: string; data: string },
+    blockNumber: string,
+  ): Promise<IdentityReadResult>;
+}
+
 // Only bundles that passed the verifying loader may back an adapter (P1#3): a
 // structurally similar object constructed elsewhere has proven nothing.
 const VERIFIED_BUNDLES = new WeakSet<RecordingBundle>();
@@ -126,7 +154,10 @@ export function loadRecordingBytes(bytes: Uint8Array): RecordingBundle {
 const keyOf = (chainId: number, method: string, params: unknown[]): string =>
   jcsSerialize({ chainId, method, params });
 
-export function recordedAdapter(bundle: RecordingBundle, provider: ProviderConfig): ChainAdapter {
+export function recordedAdapter(
+  bundle: RecordingBundle,
+  provider: ProviderConfig,
+): ChainAdapter & IdentityReadAdapter {
   if (!VERIFIED_BUNDLES.has(bundle)) {
     bad("bundle_not_verified", "/", "bundle must come from loadRecordingBytes");
   }
@@ -134,18 +165,30 @@ export function recordedAdapter(bundle: RecordingBundle, provider: ProviderConfi
   for (const r of bundle.responses) {
     if (r.providerId === provider.providerId) index.set(keyOf(r.chainId, r.method, r.params), r);
   }
-  const lookup = (chainId: number, method: string, params: unknown[], path: string): PinnedBlock => {
+  const lookupRaw = (chainId: number, method: string, params: unknown[], path: string): RecordedResponse => {
     const r = index.get(keyOf(chainId, method, params));
     if (!r) {
       bad("recording_missing", path,
         `${provider.providerId} chain ${chainId} ${method} ${JSON.stringify(params)}`);
     }
-    return { ...(r!.result as PinnedBlock) };
+    return r!;
   };
+  const lookup = (chainId: number, method: string, params: unknown[], path: string): PinnedBlock =>
+    ({ ...(lookupRaw(chainId, method, params, path).result as PinnedBlock) });
   const capabilities = (chainId: number) => {
     const cap = provider.chains[chainId];
     if (!cap) bad("unknown_chain", "/chainId", `${provider.providerId} declares nothing for chain ${chainId}`);
     return cap!;
+  };
+  // The recorded raw hash was integrity-verified at load; it IS sha256(jcs(result)), so
+  // returning it binds the quorum comparison to the verified recording.
+  const readOf = (chainId: number, method: string, params: unknown[], path: string): IdentityReadResult => {
+    capabilities(chainId);
+    const r = lookupRaw(chainId, method, params, path);
+    if (typeof r.result !== "string") {
+      bad("malformed_recorded_result", path, `${method} result must be a hex string, got ${typeof r.result}`);
+    }
+    return { value: r.result as string, rawResultHash: r.rawResponseSha256 };
   };
   return {
     providerId: provider.providerId,
@@ -163,6 +206,26 @@ export function recordedAdapter(bundle: RecordingBundle, provider: ProviderConfi
     async getBlockByNumber(chainId: number, number: string): Promise<PinnedBlock> {
       capabilities(chainId);
       return lookup(chainId, "eth_getBlockByNumber", [number, false], "/blockByNumber");
+    },
+    async getCode(chainId: number, address: string, blockNumber: string): Promise<IdentityReadResult> {
+      return readOf(chainId, "eth_getCode", [address, blockNumber], "/getCode");
+    },
+    async getStorageWord(
+      chainId: number,
+      address: string,
+      slot: string,
+      blockNumber: string,
+    ): Promise<IdentityReadResult> {
+      return readOf(chainId, "eth_getStorageAt", [address, slot, blockNumber], "/getStorageAt");
+    },
+    async call(
+      chainId: number,
+      request: { to: string; data: string },
+      blockNumber: string,
+    ): Promise<IdentityReadResult> {
+      // The recorded key canonicalizes the request object (JCS), so property order in the
+      // caller's literal never matters.
+      return readOf(chainId, "eth_call", [{ data: request.data, to: request.to }, blockNumber], "/call");
     },
   };
 }
