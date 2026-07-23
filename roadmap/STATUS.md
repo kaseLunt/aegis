@@ -5,7 +5,7 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: none
+active_task: W4
 updated: 2026-07-22
 ---
 
@@ -20,13 +20,13 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**None — W0F achieved; W4 (identity adapters + ABI registry) is next up.** Open W4's
-active transition + a claim at kickoff (W4 candidate; depends on W2+W3, both achieved).
-The control plane now runs the upgraded bundle: evidence receipts under roadmap/evidence/,
-snapshot-coherent validation, claim_id/generation fencing, and the trusted
-pull_request_target audit for server-side owner approval (wire through a ruleset when PR
-flow starts). Lanes: WR1/WR2/WR3/WR6 closed. WR4/WR5 deferred to M3/M4 planning. W0C
-parked (Blockers).
+**W4 — identity adapters + code-hash-scoped ABI registry** — fable-main (serial writer).
+Kickoff 2026-07-23 (owner go): charter refined from the spec's identity rules (verify
+code exists, retain the full indirection path, compare each expectation, ABI only after
+terminal hash match, never guess a proxy type). Slices: pure derivation → adapter/engine
+wiring with quorum → manifest comparison + ABI registry. Codex senior review before the
+achieved stamp. W5 (one engine, four surfaces) closes M1 after. Lanes: WR1/WR2/WR3/WR6
+closed; WR4/WR5 deferred to M3/M4 planning. W0C parked (Blockers).
 
 ## Recently completed
 - **W0F — control-plane bundle migration** ACHIEVED ([[IDEA-003]] promotion): seven tools

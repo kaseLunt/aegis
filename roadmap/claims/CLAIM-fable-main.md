@@ -1,27 +1,23 @@
 ---
-claim_id: eb224881-5eb3-4356-87ed-c3fc12bd3216
-generation: 2
+claim_id: 345de4df-98b9-4173-83d2-527ef649ae72
+generation: 3
 agent: fable-main
-task: W0F
-status: released
+task: W4
+status: active
 integrator: true
-branch: w0f-bundle-migration
+branch: main
 worktree_id: de0e68c2-2c3a-50b0-8989-ea790058ae41
-base_commit: fa5c95c2c0de856717dfaf2fb0f92545122076ed
+base_commit: 616078792c4fa1f808c28bf20a3c145adc16d7c0
 allowed_paths:
-  - roadmap/**
-  - AGENTS.md
-  - CLAUDE.md
-  - .githooks/**
-  - .gitattributes
-  - .gitignore
-  - .control-plane/**
-scope_hash: sha256:809fe314a34413fec805e2c1aa1a6e06dcfbe20f1e95681aa3d3260aab1d7256
-issued_at: 2026-07-23T02:08:21Z
-lease_expires: 2026-07-23T10:08:21Z
-updated_at: 2026-07-23T02:09:25Z
+  - lib/**
+  - tests/**
+  - data/recordings/**
+scope_hash: sha256:8760462d2e157ef42a926f73b8be7d067044419486357009513da531924ade20
+issued_at: 2026-07-23T02:48:44Z
+lease_expires: 2026-07-23T10:48:44Z
+updated_at: 2026-07-23T02:48:44Z
 ---
 
-# Claim: fable-main -> W0F
+# Claim: fable-main -> W4
 
 This is a serial task/scope binding, not a distributed lock.
