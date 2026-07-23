@@ -16,7 +16,7 @@ allowed_paths:
   - AGENTS.md
 deliverables:
   - roadmap/tools/claim.py
-  - roadmap/decisions/D-006-asymmetric-parallelism-one-spine-owner-research-.md
+  - roadmap/decisions/D-006-asymmetric-parallelism-one-semantic-spine-owner-.md
 evidence_receipts: []
 review_when: phase:P2:entry
 invalidated_by:

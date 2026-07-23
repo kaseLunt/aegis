@@ -54,7 +54,7 @@ python roadmap/tools/doctor.py
 ## Handoff
 - next: COMPLETE — the control plane this file describes is installed and superseded in mechanics by the W0F bundle migration; read roadmap/SYSTEM.md.
 - read_first: roadmap/SYSTEM.md
-- hazards: none
+- hazards: superseded in mechanics by the W0F bundle migration — do not reintroduce the pre-bundle tool grammar; the cockpit files remain the authored authority.
 
 ## Evidence
 - 2026-07-21: installer ran clean; doctor OK (0 errors, 0 warnings).
