@@ -21,12 +21,27 @@ the migrated workflows after push. main protected; residuals in [[R-005]] under 
 
 ## Current task (WIP = 1 per agent, [[D-006]])
 **W4 — identity adapters + code-hash-scoped ABI registry** — fable-main (serial writer).
-Kickoff 2026-07-23 (owner go): charter refined from the spec's identity rules (verify
-code exists, retain the full indirection path, compare each expectation, ABI only after
-terminal hash match, never guess a proxy type). Slices: pure derivation → adapter/engine
-wiring with quorum → manifest comparison + ABI registry. Codex senior review before the
-achieved stamp. W5 (one engine, four surfaces) closes M1 after. Lanes: WR1/WR2/WR3/WR6
-closed; WR4/WR5 deferred to M3/M4 planning. W0C parked (Blockers).
+All three slices IMPLEMENTED (HEAD d138818, 314 tests, lint clean): slice 1 pure
+derivation (resolve.ts), slice 2 quorum-wired observation (observe.ts) + adapter reads,
+slice 3 manifest comparison (compare.ts) + ABI registry (abi.ts). W4's invalidated_by
+already narrowed pre-receipt to the consumed modules.
+
+**IN CODEX CONVERGENCE ([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]] — no achieved stamp
+until Codex returns clean).** Seven passes dispositioned so far, ALL in
+roadmap/reviews/W4-codex-review.md (full finding/fix table): 9 findings → down to single
+freshness-honesty issues; the big lesson was pass 5's root-cause pivot (provenance brand
+instead of authenticating a forgeable observation → [[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]).
+Pass 8 (freshness-boundary binding) dispatched at d138818, verdict pending.
+
+**On the next resume:** check the pass-8 Codex result. If SHIP-READY → mint EV-W4 at the
+landing commit (`python roadmap/tools/doctor.py --receipt-basis W4 --snapshot <HEAD>`,
+honest `npm test` run), stamp achieved (`--stamp W4`), flip the ladder row + this block,
+push. If findings remain → reproduce each as a failing test, fix, re-verify, loop.
+Known non-blocking boundary tracked in [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]]
+(recorded-fixture independence; bundle-digest anchoring deferred). W5 (one engine, four
+surfaces) closes M1 after. Lanes WR1/WR2/WR3/WR6 closed; WR4/WR5 deferred. W0C parked.
+NOTE: R-006 selftest flake hit 4× today — retry the push if it reds; fix batched with the
+next roadmap/tools change.
 
 ## Recently completed
 - **W0F — control-plane bundle migration** ACHIEVED ([[IDEA-003]] promotion): seven tools
