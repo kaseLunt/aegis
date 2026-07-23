@@ -17,7 +17,10 @@ deliverables:
   - lib/aegis/identity/**
 evidence_receipts: []
 invalidated_by:
-  - lib/aegis/**
+  - lib/aegis/identity/**
+  - lib/aegis/chain/**
+  - lib/aegis/report/**
+  - lib/aegis/manifest/**
   - data/recordings/**
 review_when: phase:P1:exit
 updated: 2026-07-23

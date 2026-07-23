@@ -2,7 +2,8 @@
 id: EV-W3-R2
 type: evidence
 title: W3 verification re-attested after the W4 slice-2 adapter-seam extension
-status: recorded
+status: superseded
+superseded_by: EV-W3-R3
 work: W3
 result: pass
 commands:
