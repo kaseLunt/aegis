@@ -33,11 +33,13 @@ the caller-channel class and its corollary — pass 8 (snapshot the context; val
 emit the same plain copy) and pass 9 (snapshot ALL inputs BEFORE validating any:
 stringify runs caller code that could rewrite a validated sibling argument). Lesson
 thread: [[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]. Manifest→target binding deferred
-to W5 (tracked in [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Pass 10 (scoped
-re-verify of 2fd0ba8..ec3b637, with deps installed so Codex can execute the suite)
-dispatched at ec3b637, verdict pending.
+to W5 (tracked in [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Pass 10 FAILED
+terminally (no verdict): Codex sandbox EPERM on spawning Vitest, then a moderation block
+on defensive vocab — 2nd confirmed [[INS-004]] recurrence. Re-dispatched at ec3b637 under
+the INS-004 default: neutral correctness/determinism framing + static-only scope (Codex
+does NOT run the suite; local is 321/321 mutation-tested). Verdict pending.
 
-**On the next resume:** check the pass-10 Codex result. If SHIP-READY → mint EV-W4 at the
+**On the next resume:** check the pass-10 (retry) Codex result. If SHIP-READY → mint EV-W4 at the
 landing commit (`python roadmap/tools/doctor.py --receipt-basis W4 --snapshot <HEAD>`,
 honest `npm test` run), stamp achieved (`--stamp W4`), flip the ladder row + this block,
 push. If findings remain → reproduce each as a failing test, fix, re-verify, loop.
