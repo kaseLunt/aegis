@@ -5,7 +5,7 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: W4
+active_task: none
 updated: 2026-07-23
 ---
 
@@ -20,34 +20,24 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W4 — identity adapters + code-hash-scoped ABI registry** — fable-main (serial writer).
-All three slices IMPLEMENTED (HEAD e971bef, 339 tests, lint clean): slice 1 pure
-derivation (resolve.ts), slice 2 quorum-wired observation (observe.ts) + adapter reads,
-slice 3 manifest comparison (compare.ts) + ABI registry (abi.ts). W4's invalidated_by
-already narrowed pre-receipt to the consumed modules.
+**No active task (between W4 and W5).** W4's code and tests are committed (HEAD e971bef,
+339/339, lint clean) and its Codex convergence is COMPLETE — pass 13 returned SHIP-READY,
+no material findings (session 019f8e98), satisfying [[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]].
 
-**IN CODEX CONVERGENCE ([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]] — no achieved stamp
-until Codex returns clean).** Twelve passes dispositioned, ALL in
-roadmap/reviews/W4-codex-review.md (full finding/fix table): 24 findings down the
-input-domain hardening arc on compareIdentityTarget — provenance brand (5) → single-channel
-snapshot (8) → snapshot-all-before-validate (9) → REFUSE active inputs (10) → reject
-proxies + require runtime hash (11) → type-guard against RegExp.test coercion (12). Three
-input-domain layers now closed: no active objects, no programmable reflection, no coerced
-scalars. Q1 isolation + Q3 regression confirmed PASS at pass 12. Lesson thread:
-[[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]. Manifest→target binding deferred to W5
-([[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Codex-dispatch guardrails (no worktree,
-neutral+static, .serena/ clarification) in [[INS-004]] + [[INS-fa971e14-587c-4565-907e-839ec51a3101]].
-Pass 13 (scoped re-verify of 11a4b0a..e971bef) dispatched at e971bef, verdict pending.
+This commit is the pre-receipt contract correction: W4's deliverables were narrowed from
+the `lib/aegis/identity/**` glob to the four explicit files (an achieved work item may not
+declare a glob deliverable — doctor line 756). Owner-acknowledged (semantically null). W4
+sits at `committed` and the fable-main claim is released while the EV-W4 receipt is minted
+at THIS commit and the achieved stamp lands next. No active claim is required at `committed`.
 
-**On the next resume:** check the pass-13 Codex result. If SHIP-READY → mint EV-W4 at the
-landing commit (`python roadmap/tools/doctor.py --receipt-basis W4 --snapshot <HEAD>`,
-honest `npm test` run), stamp achieved (`--stamp W4`), flip the ladder row + this block,
-push. If findings remain → reproduce each as a failing test, fix, re-verify, loop.
-Known non-blocking boundary tracked in [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]]
-(recorded-fixture independence; bundle-digest anchoring deferred). W5 (one engine, four
-surfaces) closes M1 after. Lanes WR1/WR2/WR3/WR6 closed; WR4/WR5 deferred. W0C parked.
-NOTE: R-006 selftest flake hit 4× today — retry the push if it reds; fix batched with the
-next roadmap/tools change.
+**Next commit:** mint EV-W4 (tested_commit = this commit, honest `npm test`), stamp W4
+achieved (`--stamp W4`), flip W4 → achieved on the ladder + here. Then W5 (one engine, four
+surfaces) opens — it must TRUST provenance-branded engine output, not re-validate copies
+([[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]). Carry-ins for W5: manifest→target binding +
+recorded-fixture independence ([[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Codex-dispatch
+guardrails in [[INS-004]] + [[INS-fa971e14-587c-4565-907e-839ec51a3101]]. Lanes
+WR1/WR2/WR3/WR6 closed; WR4/WR5 deferred. W0C parked. NOTE: R-006 selftest flake
+([[R-f4c78054-c6fa-4a34-80ea-16b94b323664]]) — retry a red push once, halt on a second red.
 
 ## Recently completed
 - **W0F — control-plane bundle migration** ACHIEVED ([[IDEA-003]] promotion): seven tools

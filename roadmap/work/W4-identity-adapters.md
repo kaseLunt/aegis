@@ -3,7 +3,7 @@ id: W4
 type: work
 title: Identity adapters (direct / EIP-1967 / beacon / clone) + code-hash-scoped ABI registry
 phase: P1
-status: active
+status: committed
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W2, W3]
@@ -14,7 +14,10 @@ allowed_paths:
   - tests/**
   - data/recordings/**
 deliverables:
-  - lib/aegis/identity/**
+  - lib/aegis/identity/resolve.ts
+  - lib/aegis/identity/observe.ts
+  - lib/aegis/identity/compare.ts
+  - lib/aegis/identity/abi.ts
 evidence_receipts: []
 invalidated_by:
   - lib/aegis/identity/**
