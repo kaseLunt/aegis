@@ -19,5 +19,7 @@ Where "appropriate" means (D-006 review roles + independence rule):
   cannot share the implementer's blind spots);
 - threat-model attack passes.
 
+Standing status (owner directive, ratified in the Codex-senior-reviewer decision): this cross-vendor routing is now the DEFAULT senior review for load-bearing work, not an optional role — see that decision for scope and how-to.
+
 NOT for: single-owner spine implementation (W1, canonical semantics) — one owner, one
 implementation; Codex reviews it, never co-writes it.
