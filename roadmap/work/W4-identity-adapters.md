@@ -72,9 +72,14 @@ npm test
 
 ## Handoff
 
-- next: slice 3 — manifest comparison producing W1-shaped Verifications + the
-  code-hash-scoped ABI registry, composed end-to-end over recorded fixtures. Codex senior
-  review BEFORE the achieved stamp (per the ratified senior-reviewer decision). DONE:
+- next: Codex senior review of all three slices (per the ratified senior-reviewer
+  decision), disposition findings TDD, then narrow invalidated_by (see hazards) and stamp
+  achieved. DONE: slice 3 — compareIdentityTarget (one W1-shaped Verification per
+  declared manifest expectation, invariantId deployment.code_identity/<targetId>/<kind>;
+  drift-requiring-review language; unknown identity can never pass, reasons travel as
+  typed limitations; evidence refs from ok-observations at the pinned boundary) +
+  createAbiRegistry/selectAbi (keyed by runtime code hash, refuses until terminal hash
+  match); 12 tests incl. two mutation checks and a strict validateReport e2e. DONE:
   slice 2 — IdentityReadAdapter (getCode / getStorageWord / call at the pinned block,
   values travel with loader-verified raw hashes) + observeIdentity trampoline (pure
   derivation over quorum-agreed reads; non-agreed read -> observation_unresolved with the
