@@ -2,7 +2,8 @@
 id: EV-W0E
 type: evidence
 title: W0E canonical verification passed at the W0F correction commit
-status: recorded
+status: superseded
+superseded_by: EV-W0E-R2
 work: W0E
 result: pass
 commands:

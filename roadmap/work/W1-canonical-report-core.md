@@ -23,7 +23,7 @@ invalidated_by:
   - lib/aegis/report/**
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:2626785a52a0632d819b64df907e64b7c09b69db56dc3e6dfb5d18a3ab62958c
+evidence_fingerprint: sha256:adf9304a01cb808abd9acff3d2de21a77e8b061233221c27843c310da18141f7
 ---
 
 # W1 — Canonical report core
@@ -69,7 +69,9 @@ npm run test:property
   new lib/aegis/identity/), forcing a re-attestation chain per unrelated change. W1's
   verification truly depends on its own module + its named deliverables (both still
   hashed). Owner-reviewed transition; receipt superseded EV-W1 -> EV-W1-R2 per the
-  append-only law, prior receipt archived.
+  append-only law; the superseded receipt rests in place as a historical record
+  (doctor fix at the same landing: superseded receipts are no longer revalidated
+  against the current contract, which had made every basis change incompletable).
 - 2026-07-22: W2 adversarial review added a deterministic nesting cap (1024, typed
   nesting_depth_exceeded) to assertJsonDomain — a raw RangeError escaped the typed-error
   contract at depth ~10k (empirically probed). Canonical bytes for valid payloads are

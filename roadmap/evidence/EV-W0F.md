@@ -2,7 +2,8 @@
 id: EV-W0F
 type: evidence
 title: W0F bundle migration verified at fa5c95c
-status: recorded
+status: superseded
+superseded_by: EV-W0F-R2
 work: W0F
 result: pass
 commands:
