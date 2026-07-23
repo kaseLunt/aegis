@@ -820,6 +820,55 @@ def test_evidence_round_trip(root: Path) -> None:
         output(invalidated),
     )
 
+    # A basis change must be completable: the outgoing receipt transitions to
+    # superseded (historical record, basis no longer revalidated) while a fresh
+    # receipt attests the new basis. Recorded receipts stay fully validated.
+    write(
+        work_path,
+        read(work_path).replace(
+            "The disposable source file remains readable",
+            "The disposable source file remains parseable",
+        ),
+    )
+    mutated = commit_all(repo, "land mutated contract")
+    replacement_rel = "roadmap/evidence/E-SYNTHETIC-R2.md"
+    replacement = (
+        evidence_text(mutated, *receipt_basis(repo, mutated))
+        .replace("id: E-SYNTHETIC", "id: E-SYNTHETIC-R2")
+        .replace("updated: 2000-01-01", "supersedes: [E-SYNTHETIC]\nupdated: 2000-01-01")
+    )
+    write(repo / replacement_rel, replacement)
+    old_receipt_path = repo / receipt
+    superseded_text = read(old_receipt_path).replace(
+        "status: recorded", "status: superseded\nsuperseded_by: E-SYNTHETIC-R2"
+    )
+    write(old_receipt_path, superseded_text)
+    write(work_path, read(work_path).replace(receipt, replacement_rel))
+    must(git(repo, "add", "roadmap"), "stage receipt supersession")
+    restamped = tool(repo, "doctor.py", "--stamp", "W0", "--now", "2030-01-02T00:00:00Z")
+    must(git(repo, "add", "roadmap/work/W0.md"), "stage superseded restamp")
+    historical = tool(
+        repo, "doctor.py", "--snapshot", "index", "--now", "2030-01-02T00:00:00Z"
+    )
+    write(
+        old_receipt_path,
+        read(old_receipt_path).replace(
+            "status: superseded\nsuperseded_by: E-SYNTHETIC-R2", "status: recorded"
+        ),
+    )
+    must(git(repo, "add", receipt), "stage recorded-status regression probe")
+    revalidated = tool(
+        repo, "doctor.py", "--snapshot", "index", "--now", "2030-01-02T00:00:00Z"
+    )
+    check(
+        "evidence:superseded-receipt-is-historical-recorded-stays-validated",
+        restamped.returncode == 0
+        and historical.returncode == 0
+        and revalidated.returncode == 1
+        and "differs from the tested commit" in output(revalidated),
+        "\n".join(map(output, (restamped, historical, revalidated))),
+    )
+
 
 def test_enforcement_posture(root: Path) -> None:
     print("Evidence-backed enforcement posture")

@@ -793,9 +793,16 @@ def main() -> int:
                 referenced_work = scalar(data, "work", path, required=True)
                 if referenced_work not in objects:
                     errors.append(f"{path}: evidence work -> missing id '{referenced_work}'")
-                validate_evidence_receipt(
-                    snapshot, path, referenced_work, now, require_pass=False
-                )
+                # Only recorded receipts attest anything; superseded/rejected records are
+                # historical (like superseded decisions) and keep only grammar + the
+                # append-only transition law. Revalidating their basis against the CURRENT
+                # work contract deadlocks every honest basis change: the old receipt can
+                # never coexist with the new contract, and archiving it dangles the
+                # supersedes pointer the transition law itself requires.
+                if object_status == "recorded":
+                    validate_evidence_receipt(
+                        snapshot, path, referenced_work, now, require_pass=False
+                    )
             elif object_type in TYPE_STATUSES and object_status not in TYPE_STATUSES[object_type]:
                 errors.append(f"{path}: invalid {object_type} status '{object_status}'")
 
