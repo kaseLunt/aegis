@@ -825,6 +825,127 @@ describe("convergence pass 6 — branded observations are immutable, hash-bound,
   });
 });
 
+describe("convergence pass 8 — the context is snapshotted before validation; caller-owned behavior cannot split validation from emission", () => {
+  const T8 = {
+    targetId: "t",
+    chainId: 1,
+    address: DIRECT,
+    identityStrategy: "direct",
+    expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+  };
+  const FOREIGN_BLOCK = { ...PIN, number: "24000000", hash: `0x${"44".repeat(32)}` };
+  const observedAtPin = () =>
+    observeIdentity(
+      "direct",
+      DIRECT,
+      adaptersFor(sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE }])),
+      PIN,
+      QUORUM,
+    );
+  const foreignAssessment = () => ({
+    policyId: "fp",
+    boundary: { kind: "execution_block", block: FOREIGN_BLOCK },
+    state: "current" as const,
+  });
+  const boundAssessment = () => ({
+    policyId: "fp",
+    boundary: { kind: "execution_block", block: PIN },
+    state: "current" as const,
+  });
+
+  test("HIGH: a non-enumerable own `every` on the assessments array cannot bypass the boundary binding", async () => {
+    // The Codex pass-8 repro: the indexed element (what serialization emits) is a
+    // current assessment for a FOREIGN block; a forged own `every` answers true for
+    // the pin-binding check. Validation must read the same indexed data the report
+    // would, so this is invalid_context — never a pass at the observed block.
+    const observed = await observedAtPin();
+    const assessments = [foreignAssessment()];
+    Object.defineProperty(assessments, "every", { value: () => true, enumerable: false });
+    expect(() =>
+      compareIdentityTarget(T8, observed, PIN, {
+        ...CONTEXT,
+        freshness: { aggregate: "current", assessments },
+      }),
+    ).toThrow(/invalid_context/);
+  });
+
+  test("HIGH: a forged Symbol.iterator cannot feed the aggregate a different element set than the indexed data", async () => {
+    // for..of channels are caller-controlled too: the iterator yields a bound-current
+    // assessment while the indexed element is foreign. Both dispatch channels forged.
+    const observed = await observedAtPin();
+    const assessments = [foreignAssessment()];
+    Object.defineProperty(assessments, Symbol.iterator, {
+      value: function* () {
+        yield boundAssessment();
+      },
+      enumerable: false,
+    });
+    Object.defineProperty(assessments, "every", { value: () => true, enumerable: false });
+    expect(() =>
+      compareIdentityTarget(T8, observed, PIN, {
+        ...CONTEXT,
+        freshness: { aggregate: "current", assessments },
+      }),
+    ).toThrow(/invalid_context/);
+  });
+
+  test("HIGH: a toJSON that would serialize a different boundary than validation saw is caught, not emitted", async () => {
+    // The live object is bound-current (what naive validation reads); its toJSON emits
+    // a foreign-block assessment (what any JSON serializer downstream would persist).
+    const observed = await observedAtPin();
+    const assessment = { ...boundAssessment(), toJSON: () => foreignAssessment() };
+    expect(() =>
+      compareIdentityTarget(T8, observed, PIN, {
+        ...CONTEXT,
+        freshness: { aggregate: "current", assessments: [assessment] },
+      }),
+    ).toThrow(/invalid_context/);
+  });
+
+  test("a lying getter cannot show the validator one state and the report another — emitted freshness IS the validated snapshot", async () => {
+    const observed = await observedAtPin();
+    let reads = 0;
+    const assessment = {
+      policyId: "fp",
+      boundary: { kind: "execution_block", block: PIN },
+      get state(): "current" | "unknown" {
+        reads += 1;
+        return reads === 1 ? "current" : "unknown";
+      },
+    };
+    const { verifications } = compareIdentityTarget(T8, observed, PIN, {
+      ...CONTEXT,
+      freshness: { aggregate: "current", assessments: [assessment] },
+    });
+    // The single snapshot read saw "current" bound to the pin; the emitted freshness
+    // carries exactly that validated value, not a later read of the live getter.
+    expect(verifications[0].state).toBe("pass");
+    expect(verifications[0].freshness.assessments[0].state).toBe("current");
+  });
+
+  test("emitted evidence and freshness are detached plain copies — post-call mutation of the caller's context cannot rewrite them", async () => {
+    const observed = await observedAtPin();
+    const assessment: { policyId: string; boundary: unknown; state: "current" | "stale" } = {
+      policyId: "fp",
+      boundary: { kind: "execution_block", block: PIN },
+      state: "current",
+    };
+    const ctx = {
+      ...CONTEXT,
+      manifestEvidence: { ...CONTEXT.manifestEvidence },
+      freshness: { aggregate: "current" as const, assessments: [assessment] },
+    };
+    const { verifications, evidence } = compareIdentityTarget(T8, observed, PIN, ctx);
+    const manifestRef = evidence.find((e) => e.kind === "manifest");
+    expect(manifestRef).not.toBe(ctx.manifestEvidence);
+    expect(verifications[0].freshness).not.toBe(ctx.freshness);
+    ctx.manifestEvidence.rawResultHash = shaOf("post-hoc");
+    assessment.state = "stale";
+    expect(manifestRef?.rawResultHash).toBe(CONTEXT.manifestHash);
+    expect(verifications[0].freshness.assessments[0].state).toBe("current");
+  });
+});
+
 describe("review test-quality items", () => {
   test("T2: the exported slot constants equal the official ERC-1967 literals", () => {
     expect(EIP1967_IMPLEMENTATION_SLOT).toBe(

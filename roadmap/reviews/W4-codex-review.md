@@ -139,6 +139,23 @@ the last thread of the freshness-honesty class — fixed TDD (1 test, 314/314):
 |---------|-------------|
 | high: freshness assessments were not bound to the observed block — a `current` assessment for block B could certify evidence observed at block A (pin_mismatch only guarded the identity read, not the freshness boundary) | ACCEPTED — validateContext now requires every freshness assessment's execution-block boundary to equal observed.pinned (chainId/number/hash). A foreign-block assessment is invalid_context; an empty set still derives to unknown (never pass), so absence stays honest. Mutation-tested |
 
+## Convergence pass 8 (2026-07-23, Codex session 019f8dfb-ce84-71c3-8e02-d226aaf04bef)
+
+Scope: the pass-7 freshness-boundary fix (diff dfb9074..d138818). Q2 CONFIRMED — the
+(chainId, number, hash) tuple is the correct canonical execution-block boundary identity
+(parentHash/timestamp/finality are metadata); Q3 CONFIRMED — no regression to freeze,
+value↔hash, pin binding, F7a, precedence, or the provenance brand. Verdict
+needs-attention: one new high, the boundary check itself was bypassable.
+
+| Finding | Disposition |
+|---------|-------------|
+| high: caller-controlled `Array.every` could bypass the freshness-boundary binding — `validateContext` dispatched `fresh.assessments.every(...)`, so a real array holding a foreign-block `current` assessment plus a forged non-enumerable own `every` returning true passed validation, while array serialization (indices, not methods) carried the foreign assessment into report data — recreating observe-at-A/current-for-B | ACCEPTED, fixed at the class root — the comparator now snapshots the ENTIRE context once into plain data (JSON round-trip: the exact view any serializer sees, toJSON applied, own methods/iterators dropped) and both validates and emits ONLY the snapshot; the binding and aggregate checks run as internal indexed loops, never caller-dispatched methods or for..of. Closes the whole validate-one-channel/emit-another class: shadowed methods, forged Symbol.iterator, lying getters, toJSON splits, and post-call mutation of the caller's context (the emitted manifest ref + freshness are detached copies). 5 tests written RED (tests/w4-codex-fixes.test.ts, pass-8 block); 319/319; both guards mutation-tested (snapshot bypass reds toJSON/getter/detachment; neutered binding loop reds the forgery repros) |
+
+Class note: this is the same lesson as pass 5 (INS-a6fc2796) one level down — after
+"make the input unforgeable" comes "read the input over exactly one channel." The
+snapshot also retires the residual noted there: `evidence[0]` was previously the
+caller's live manifestEvidence object.
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

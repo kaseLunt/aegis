@@ -152,18 +152,24 @@ const isFreshnessState = (state: unknown): state is FreshnessState =>
   typeof state === "string" && Object.hasOwn(FRESHNESS_RANK, state);
 
 function derivedAggregate(assessments: readonly FreshnessAssessment[]): FreshnessState | null {
+  // Indexed loop reading each field once (Codex pass-8): for..of dispatches the array's
+  // own Symbol.iterator and repeated property reads re-invoke live getters — both
+  // caller-controlled channels. The comparator additionally snapshots the whole context
+  // before this runs; the loop shape keeps the function safe for any future caller too.
   if (assessments.length === 0) return "unknown";
   let worst: FreshnessState = "current";
-  for (const a of assessments) {
+  for (let i = 0; i < assessments.length; i += 1) {
+    const a = assessments[i];
+    if (typeof a !== "object" || a === null) return null;
+    const state: unknown = a.state;
     if (
-      typeof a !== "object" || a === null ||
       typeof a.policyId !== "string" || a.policyId.length === 0 ||
       typeof a.boundary !== "object" || a.boundary === null ||
-      !isFreshnessState(a.state)
+      !isFreshnessState(state)
     ) {
       return null;
     }
-    if (FRESHNESS_RANK[a.state] > FRESHNESS_RANK[worst]) worst = a.state;
+    if (FRESHNESS_RANK[state] > FRESHNESS_RANK[worst]) worst = state;
   }
   return worst;
 }
@@ -181,6 +187,39 @@ function assessmentBindsPin(assessment: FreshnessAssessment, pin: PinnedBlock): 
     b.block?.number === pin.number &&
     b.block?.hash === pin.hash
   );
+}
+
+// Every assessment must be for THIS observation's boundary (pass-7). Internal indexed
+// loop, never a method dispatched from the caller-owned array (Codex pass-8): a forged
+// non-enumerable own `every` returning true would otherwise defeat the binding while
+// array serialization — which reads indices, not methods — carries the foreign-block
+// assessment into report data.
+function allAssessmentsBindPin(
+  assessments: readonly FreshnessAssessment[],
+  pin: PinnedBlock,
+): boolean {
+  for (let i = 0; i < assessments.length; i += 1) {
+    if (!assessmentBindsPin(assessments[i], pin)) return false;
+  }
+  return true;
+}
+
+// One snapshot, one truth (Codex pass-8): capture the caller's context ONCE into plain
+// data — the exact view any JSON serializer sees (indexed array elements, own enumerable
+// properties, toJSON applied) — then validate AND emit only that snapshot. Reading the
+// live object lets a lying getter or toJSON show the validator one context and the
+// report another; the snapshot makes validation and emission read the same values.
+function snapshotContext(context: IdentityComparisonContext): IdentityComparisonContext {
+  let copy: unknown;
+  try {
+    copy = JSON.parse(JSON.stringify(context));
+  } catch {
+    throw new IdentityError("invalid_context", "context must be plain serializable data");
+  }
+  if (typeof copy !== "object" || copy === null) {
+    throw new IdentityError("invalid_context", "context must be plain serializable data");
+  }
+  return copy as IdentityComparisonContext;
 }
 
 function validateContext(context: IdentityComparisonContext, observedPin: PinnedBlock): void {
@@ -207,10 +246,10 @@ function validateContext(context: IdentityComparisonContext, observedPin: Pinned
     // The claimed aggregate must be DERIVABLE from its own assessments (F7a survivor):
     // an optimistic label over stale/absent assessments is rejected, not trusted.
     derivedAggregate(fresh.assessments) !== fresh.aggregate ||
-    // Every assessment must be for THIS observation's boundary (pass-7): a non-empty
-    // assessment set carrying a foreign block cannot certify this evidence. (An empty set
-    // derives to "unknown", which can never pass, so absence stays honest.)
-    !fresh.assessments.every((a) => assessmentBindsPin(a, observedPin))
+    // A non-empty assessment set carrying a foreign block cannot certify this evidence
+    // (pass-7); an empty set derives to "unknown", which can never pass, so absence
+    // stays honest. Checked by an internal indexed loop (pass-8), never `.every`.
+    !allAssessmentsBindPin(fresh.assessments, observedPin)
   ) {
     throw new IdentityError(
       "invalid_context",
@@ -302,7 +341,11 @@ export function compareIdentityTarget(
     );
   }
   validateTarget(target);
-  validateContext(context, observedPin);
+  // Validate and consume ONLY the plain snapshot (pass-8) — never the live caller
+  // object. Everything emitted below (manifest ref, freshness) is this snapshot, so
+  // the report carries exactly what was validated.
+  const ctx = snapshotContext(context);
+  validateContext(ctx, observedPin);
   if (target.chainId !== observedPin.chainId) {
     throw new IdentityError(
       "target_chain_mismatch",
@@ -328,13 +371,13 @@ export function compareIdentityTarget(
   // (observeIdentity turns any non-agreement into an unknown, not a resolution), and read
   // values carry the adapters' loader-verified raw hashes. No transcript re-authentication
   // is therefore possible or needed once provenance holds.
-  const readEvidence = evidenceFromReads(observed.reads, observedPin, context);
+  const readEvidence = evidenceFromReads(observed.reads, observedPin, ctx);
   const actualIds = [...new Set(readEvidence.map((e) => e.id))].sort();
   const evidence: Array<IdentityEvidenceRef | IdentityManifestEvidence> = [
-    context.manifestEvidence,
+    ctx.manifestEvidence,
     ...readEvidence,
   ];
-  const expectedIds = [context.manifestEvidence.id];
+  const expectedIds = [ctx.manifestEvidence.id];
   const conflicted = identity.reasonCodes.includes("observation_conflict");
   const unknownLimitations: Array<{ code: string; text: string }> =
     identity.status === "unknown"
@@ -365,14 +408,14 @@ export function compareIdentityTarget(
       // Freshness gates the verdict (F7 residual): a comparison may never claim more
       // than its evaluated freshness supports — stale evidence yields a stale result
       // and an unassessed policy yields unknown, whether or not the values matched.
-      if (context.freshness.aggregate === "stale") {
+      if (ctx.freshness.aggregate === "stale") {
         state = "stale";
         statement = `${subject} was compared on evidence assessed STALE under the freshness policy; the result is stale, not a current verdict.`;
         limitations = [{
           code: "freshness_stale",
           text: "The freshness assessment for the observation boundary is stale.",
         }];
-      } else if (context.freshness.aggregate === "unknown") {
+      } else if (ctx.freshness.aggregate === "unknown") {
         state = "unknown";
         statement = `${subject} was compared without an evaluated freshness result; the outcome is unknown, not a current verdict.`;
         limitations = [{
@@ -400,7 +443,7 @@ export function compareIdentityTarget(
       expectedEvidenceIds: expectedIds,
       actualEvidenceIds: actualIds,
       derivationInputIds: actualIds,
-      freshness: context.freshness,
+      freshness: ctx.freshness,
       limitations,
     };
   };
