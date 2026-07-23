@@ -21,21 +21,23 @@ the migrated workflows after push. main protected; residuals in [[R-005]] under 
 
 ## Current task (WIP = 1 per agent, [[D-006]])
 **W4 — identity adapters + code-hash-scoped ABI registry** — fable-main (serial writer).
-All three slices IMPLEMENTED (HEAD 2fd0ba8, 319 tests, lint clean): slice 1 pure
+All three slices IMPLEMENTED (HEAD ec3b637, 321 tests, lint clean): slice 1 pure
 derivation (resolve.ts), slice 2 quorum-wired observation (observe.ts) + adapter reads,
 slice 3 manifest comparison (compare.ts) + ABI registry (abi.ts). W4's invalidated_by
 already narrowed pre-receipt to the consumed modules.
 
 **IN CODEX CONVERGENCE ([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]] — no achieved stamp
-until Codex returns clean).** Eight passes dispositioned so far, ALL in
-roadmap/reviews/W4-codex-review.md (full finding/fix table): 10 findings → down to the
-caller-channel class; pass 5's root-cause pivot (provenance brand →
-[[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]) plus pass 8's completion of it (snapshot
-the context once — validate and emit the same plain copy; no caller-dispatched array
-methods). Pass 9 (scoped re-verify of the snapshot fix, d138818..2fd0ba8) dispatched
-at 2fd0ba8, verdict pending.
+until Codex returns clean).** Nine passes dispositioned so far, ALL in
+roadmap/reviews/W4-codex-review.md (full finding/fix table): 11 findings, now down to
+the caller-channel class and its corollary — pass 8 (snapshot the context; validate and
+emit the same plain copy) and pass 9 (snapshot ALL inputs BEFORE validating any:
+stringify runs caller code that could rewrite a validated sibling argument). Lesson
+thread: [[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]. Manifest→target binding deferred
+to W5 (tracked in [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Pass 10 (scoped
+re-verify of 2fd0ba8..ec3b637, with deps installed so Codex can execute the suite)
+dispatched at ec3b637, verdict pending.
 
-**On the next resume:** check the pass-9 Codex result. If SHIP-READY → mint EV-W4 at the
+**On the next resume:** check the pass-10 Codex result. If SHIP-READY → mint EV-W4 at the
 landing commit (`python roadmap/tools/doctor.py --receipt-basis W4 --snapshot <HEAD>`,
 honest `npm test` run), stamp achieved (`--stamp W4`), flip the ladder row + this block,
 push. If findings remain → reproduce each as a failing test, fix, re-verify, loop.
