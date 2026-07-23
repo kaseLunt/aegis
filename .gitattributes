@@ -19,3 +19,10 @@ examples/** -text
 *.woff binary
 *.woff2 binary
 *.pdf binary
+
+# BEGIN control-plane managed text rules
+.githooks/** text eol=lf
+roadmap/tools/*.py text eol=lf
+.github/workflows/control-plane.yml text eol=lf
+.control-plane/*.json text eol=lf
+# END control-plane managed text rules

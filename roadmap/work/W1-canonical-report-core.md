@@ -3,7 +3,7 @@ id: W1
 type: work
 title: Canonical report core — schemas, JCS canonicalization, SHA-256 report identity
 phase: P1
-status: achieved
+status: committed
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0]
@@ -14,13 +14,15 @@ allowed_paths:
   - tests/**
   - docs/ENGINEERING_SPEC.md
   - roadmap/work/W1-canonical-report-core.md
+deliverables:
+  - lib/aegis/report/canonical.ts
+  - tests/report-properties.test.ts
+evidence_receipts: []
 invalidated_by:
   - lib/**
   - package-lock.json
-  - roadmap/work/W1-canonical-report-core.md
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:a1e139b63887a062
 ---
 
 # W1 — Canonical report core
@@ -35,7 +37,7 @@ ObservationBoundary, EvidenceRef, Verification, EvidenceFact, AssurancePayload),
 normalization, RFC 8785 JSON canonicalization, and `reportHash = sha256(JCS(payload))` — as pure,
 I/O-free modules with JSON Schema + TypeScript types in lockstep.
 
-## Acceptance (evidence target: Correct + Robust)
+## Acceptance
 - Correct: identical inputs produce byte-identical canonical reports and hashes, offline, no
   network dependency; schema validation rejects missing evidence-role IDs, duplicate set members,
   and noncanonical numeric/hex encodings.

@@ -2,7 +2,7 @@
 id: INS-001
 type: insight
 title: Platform text handling must never touch hashed bytes (CRLF class)
-status: active
+status: accepted
 informs: [W1, H0]
 review_when: phase:P2:entry
 updated: 2026-07-21

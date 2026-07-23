@@ -2,7 +2,7 @@
 id: INS-005
 type: insight
 title: Right-size verification panels to plan budget - 43-agent swarm burned session cap mid-verify
-status: active
+status: accepted
 informs: [D-006]
 review_when: date:2026-08-05
 updated: 2026-07-22

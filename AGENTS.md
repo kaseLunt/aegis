@@ -15,41 +15,40 @@ exposure surfaces. Currently **milestone 0** (deterministic prototype); target d
 
 ## Project Context (control plane)
 
-This project uses a repo-native control plane. **Read `roadmap/VISION.md` first**, then
-`roadmap/SYSTEM.md` (how the project tracks itself). **Intent is stored; status is derived from evidence.**
+This project uses a repository-native control plane. Read `roadmap/VISION.md` first, then
+`roadmap/SYSTEM.md`. Durable project authority lives in the repository, not in chat or agent
+memory.
 
 ## Session Protocol
 
 ### On Session Start
-Read, in order: `roadmap/STATUS.md` (current task, blockers) → `roadmap/ROADMAP.md` (active phase)
-→ `roadmap/SYSTEM.md` (the rules) → the active work item under `roadmap/work/`.
 
-### During Work — capture is MANDATORY, continuously (not at exit)
-The instant something outlives the current task, write it to its home **before continuing** — never
-leave a first-class idea living only in chat. The user often just closes the terminal; nothing runs
-after that, so capture as you go.
-- future feature / tangent → `roadmap/ideas/IDEA-*.md` (`status: inbox` for a raw dump to triage later)
-- reusable knowledge / finding → `roadmap/insights/INS-*.md` (with `informs:`)
-- chosen direction + rationale → `roadmap/decisions/D-*.md`
-- blocker → `roadmap/STATUS.md`; plan-threatening risk → `roadmap/risks/`
+Read, in order: `roadmap/STATUS.md` (current task and blockers), `roadmap/ROADMAP.md` (active
+phase), `roadmap/SYSTEM.md` (governance model), and the active work item under `roadmap/work/`.
 
-Agents may **create** ideas/insights freely; only a phase review may **promote** them (HITL barrier).
+### During Work
 
-### On Session End — harvest safety net
-Scan the session for ideas/insights/decisions/blockers/**future-progress** not yet filed; create the
-missing objects in `roadmap/{ideas,insights,decisions,risks}/`; update `roadmap/STATUS.md` on
-transitions; give a one-line sync summary. No narrative session-dumps.
+Capture material that outlives the current task before continuing:
 
-## Git Rules
-- **NEVER add Co-Authored-By lines to commits.** No AI/agent attribution in git history — trailer,
-  author field, or body. Ever. (See `roadmap/decisions/D-002-no-ai-attribution.md`.)
-- Conventional commits (feat/fix/refactor/docs); status updates ride with the work, on transitions.
+- future feature or tangent -> `roadmap/ideas/`
+- reusable knowledge or finding -> `roadmap/insights/`
+- proposed or accepted direction -> `roadmap/decisions/`
+- blocker or plan-threatening risk -> `roadmap/STATUS.md` or `roadmap/risks/`
 
-## Autonomy Rules
-- **Proceed without asking:** the active work item, queued work, bug fixes, tests, docs, and capturing ideas/insights.
-- **Ask first:** new architectural decisions, reprioritizing phases, editing `VISION.md`, new dependencies, promoting an idea into committed work.
+Capture does not imply promotion. Project-owned rules determine who may accept decisions,
+change priorities, or edit protected governance files.
 
-Full model: `roadmap/RULES.md` and `roadmap/SYSTEM.md`.
+### On Session End
+
+Check for uncaptured ideas, insights, decisions, risks, blockers, and resumability details.
+Update status only for real transitions. Do not create narrative session dumps.
+
+## Repository Rules
+
+Preserve existing project policy. Work only inside the active task's declared scope, run its
+real verification commands, and report local hooks, CI checks, and protected merge gates
+accurately. Default to one repository writer unless the project has explicitly activated and
+verified a concurrent-writer contract.
 
 <!-- END control-plane session protocol -->
 

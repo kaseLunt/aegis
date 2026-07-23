@@ -3,7 +3,7 @@ id: WR6
 type: work
 title: Adversarial vectors (designed blind to W1 implementation)
 phase: P1
-status: achieved
+status: committed
 evidence_target: "Correct"
 priority: 2
 depends_on: []
@@ -17,7 +17,6 @@ invalidated_by:
   - roadmap/research/WR6/**
 review_when: phase:P1:exit
 updated: 2026-07-21
-evidence_fingerprint: sha256:10b40172e6a5130e
 ---
 
 # WR6 — Adversarial vectors (designed blind to W1 implementation)
@@ -31,7 +30,7 @@ implementation: golden hash vectors (hand-computed canonical JSON + SHA-256 from
 ENGINEERING_SPEC schema alone), malformed evidence, provider disagreement, stale evidence,
 reorg sequences, and identity-mismatch scenarios.
 
-## Acceptance (evidence target: Correct)
+## Acceptance
 - Deliverable: roadmap/research/WR6/adversarial-vectors.md + vector files under
   roadmap/research/WR6/vectors/ — each vector: inputs, expected canonical bytes or expected
   typed failure, and the spec clause it tests.
@@ -44,6 +43,12 @@ reorg sequences, and identity-mismatch scenarios.
 ## Non-goals
 - No manifest promotion (requires the SOURCE_REGISTER checklist + owner review).
 - No production code, no live-RPC-derived "expected" values.
+
+## Canonical commands
+
+```text
+review the committed deliverables under roadmap/research/WR6/
+```
 
 ## Handoff
 - next: DELIVERED and committed under lane wr6; reviewed by orchestrator; closed.

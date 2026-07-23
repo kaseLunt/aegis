@@ -3,7 +3,7 @@ id: W0E
 type: work
 title: Lane hardening per second review — close cooperative-gate holes before lane commits
 phase: P1
-status: achieved
+status: committed
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0D]
@@ -15,12 +15,14 @@ allowed_paths:
   - .github/**
   - CLAUDE.md
   - AGENTS.md
+deliverables:
+  - roadmap/tools/selftest.py
+  - roadmap/tools/scope_diff.py
+evidence_receipts: []
 review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
-  - roadmap/work/W0E-lane-hardening.md
 updated: 2026-07-22
-evidence_fingerprint: sha256:b95f9f4176add3ed
 ---
 
 # W0E — Lane hardening (second external review)
@@ -35,7 +37,7 @@ weak claim validation; missing deliverable checks; CI without product tests or d
 scope review. Document what stays cooperative (env identity, optimistic claims, integrator
 self-expansion locally).
 
-## Acceptance (evidence target: Correct + Robust)
+## Acceptance
 - Correct: doctor rejects none-with-active-work, malformed claims (agent/filename, lease
   format), duplicate effective paths, achieved-without-deliverables; gate blocks
   none-with-claims, requires AEGIS_AGENT with >1 active staged claim, confines lanes to

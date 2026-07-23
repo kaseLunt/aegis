@@ -2,7 +2,7 @@
 id: INS-002
 type: insight
 title: Cross-vendor independence: route adversarial and clean-room verification roles to Codex agents
-status: active
+status: accepted
 informs: [H0]
 review_when: date:2026-08-04
 updated: 2026-07-21

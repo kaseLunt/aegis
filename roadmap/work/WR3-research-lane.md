@@ -3,7 +3,7 @@ id: WR3
 type: work
 title: Provider and archive feasibility (independence, finality, EIP-1898, forks)
 phase: P1
-status: achieved
+status: committed
 evidence_target: "Correct"
 priority: 2
 depends_on: []
@@ -17,7 +17,6 @@ invalidated_by:
   - roadmap/research/WR3/**
 review_when: phase:P1:exit
 updated: 2026-07-21
-evidence_fingerprint: sha256:ca3f226a14f13606
 ---
 
 # WR3 — Provider and archive feasibility (independence, finality, EIP-1898, forks)
@@ -30,7 +29,7 @@ Prove which RPC providers are administratively independent (infrastructure, not 
 and verify finalized-tag behavior, EIP-1898 block-hash reads, archive depth, and
 historical-fork capability on Ethereum mainnet and OP mainnet.
 
-## Acceptance (evidence target: Correct)
+## Acceptance
 - Deliverable: roadmap/research/WR3/provider-matrix.md — capability matrix with test
   method per cell and independence rationale (shared-upstream analysis).
 - Free/keyed tiers documented with limits; no credentials in the repo, ever.
@@ -41,6 +40,12 @@ historical-fork capability on Ethereum mainnet and OP mainnet.
 ## Non-goals
 - No manifest promotion (requires the SOURCE_REGISTER checklist + owner review).
 - No production code, no live-RPC-derived "expected" values.
+
+## Canonical commands
+
+```text
+review the committed deliverables under roadmap/research/WR3/
+```
 
 ## Handoff
 - next: DELIVERED and committed under lane wr3; reviewed by orchestrator; closed.

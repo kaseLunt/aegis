@@ -2,7 +2,7 @@
 id: IDEA-003
 type: idea
 title: Adopt upgraded control-plane bundle (receipts, snapshot coherence, server-side approval) - full migration inventory
-status: inbox
+status: promoted
 informs: [R-005, D-007]
 review_when: date:2026-08-05
 updated: 2026-07-22

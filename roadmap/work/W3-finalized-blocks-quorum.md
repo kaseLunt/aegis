@@ -3,7 +3,7 @@ id: W3
 type: work
 title: Finalized-block selection + two independent RPC adapters + quorum/conflict semantics
 phase: P1
-status: achieved
+status: committed
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W1]
@@ -15,14 +15,19 @@ allowed_paths:
   - data/recordings/**
   - .github/workflows/control-plane.yml
   - roadmap/work/W3-finalized-blocks-quorum.md
+deliverables:
+  - lib/aegis/chain/quorum.ts
+  - lib/aegis/chain/selection.ts
+  - lib/aegis/chain/adapter.ts
+  - lib/aegis/chain/engine.ts
+  - data/recordings/reference-eth-op-heads.json
+evidence_receipts: []
 invalidated_by:
   - lib/aegis/chain/**
   - lib/aegis/report/**
   - data/recordings/**
-  - roadmap/work/W3-finalized-blocks-quorum.md
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:eff43f44f3b5c978
 ---
 
 # W3 — Finalized-block selection + quorum/conflict semantics + RPC adapters
@@ -47,7 +52,7 @@ where adapters perform I/O and evaluators never do; a recorded-fixture adapter (
 reads, INS-001) plus provider adapter configs for the WR3 pair-1 recommendation
 (Alchemy + QuickNode), no credentials in the repo.
 
-## Acceptance (evidence target: Correct + Robust)
+## Acceptance
 - Correct: each spec quorum rule maps to a typed outcome + reason code (agreement /
   conflict / unknown; block_hash_mismatch, raw_result_mismatch, missing-evidence,
   insufficient-responses, required-provider rules); block selection returns hash-pinned

@@ -3,7 +3,7 @@ id: W0A
 type: work
 title: "Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis"
 phase: P0
-status: achieved
+status: committed
 evidence_target: "Correct"
 priority: 1
 depends_on: [W0]
@@ -16,13 +16,15 @@ allowed_paths:
   - CLAUDE.md
   - AGENTS.md
   - .gitattributes
+deliverables:
+  - roadmap/tools/new.py
+  - .githooks/pre-commit
+evidence_receipts: []
 invalidated_by:
   - roadmap/tools/**
   - .githooks/**
-  - roadmap/work/W0A-orchestrator-directive.md
 review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:a8d4c08babd642d7
 ---
 
 # W0A — Adopt the orchestrator directive (right-sized)
@@ -37,7 +39,7 @@ Adopt directive rules 1–9 as standing rules with mechanical enforcement where 
 would outweigh value (plan census, independent re-derivation cadence). Record adaptations
 and explicit non-adoptions in D-004.
 
-## Acceptance (evidence target: Correct)
+## Acceptance
 - Correct: doctor enforces ladder-copy consistency + active-item handoff, each negative-tested;
   pre-commit scope gate blocks out-of-scope staged files, negative-tested; capture command
   creates valid typed objects; RULES.md + CLAUDE.md/AGENTS.md carry the standing rules;

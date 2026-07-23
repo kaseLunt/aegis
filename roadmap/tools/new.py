@@ -1,72 +1,90 @@
 #!/usr/bin/env python3
-"""One-command typed-object capture (D-004 rule 3: capture must be cheap or it won't happen).
+"""Create a collision-resistant typed capture object.
 
-Usage: python roadmap/tools/new.py <idea|insight|decision|risk> "title text"
-
-Creates the file with valid frontmatter and the next free id, prints the path. Fill the body
-afterwards. Ideas land as status:inbox with a 14-day review date so triage is signal, not noise.
+Usage: python roadmap/tools/new.py <idea|insight|decision|risk> "title"
 """
-import datetime
-import glob
+
+from __future__ import annotations
+
+import datetime as dt
+import json
 import os
 import re
 import sys
+import uuid
 
-for _stream in (sys.stdout, sys.stderr):
-    try:
-        _stream.reconfigure(encoding='utf-8', errors='replace')
-    except Exception:
-        pass
+from _control_plane import ControlPlaneError, repo_root, safe_worktree_path
 
-ROADMAP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# Decisions are born 'proposed': acceptance is a human-owner act recorded via approved_by
-# (doctor blocks accepted-without-approved_by). D-004 rule on HITL.
+
+TOOLS = os.path.dirname(os.path.abspath(__file__))
+REPO = repo_root(TOOLS)
 TYPES = {
-    'idea': ('ideas', 'IDEA', 'inbox'),
-    'insight': ('insights', 'INS', 'active'),
-    'decision': ('decisions', 'D', 'proposed'),
-    'risk': ('risks', 'R', 'open'),
+    "idea": ("ideas", "IDEA", "inbox"),
+    "insight": ("insights", "INS", "candidate"),
+    "decision": ("decisions", "D", "proposed"),
+    "risk": ("risks", "R", "open"),
 }
 
 
-def next_id(prefix):
-    n = 0
-    for path in glob.glob(os.path.join(ROADMAP, '**', '*.md'), recursive=True):
-        for m in re.finditer(r'^id:\s*' + prefix + r'-(\d+)', open(path, encoding='utf-8').read(), re.M):
-            n = max(n, int(m.group(1)))
-    return f"{prefix}-{n + 1:03d}"
+def slugify(title: str) -> str:
+    slug = re.sub(r"-+", "-", re.sub(r"[^a-z0-9]+", "-", title.casefold())).strip("-")
+    return slug[:48] or "capture"
 
 
-def main(argv):
+def render(kind: str, object_id: str, title: str, today: dt.date) -> str:
+    _, _, status = TYPES[kind]
+    lines = [
+        "---",
+        f"id: {object_id}",
+        f"type: {kind}",
+        f"title: {json.dumps(title, ensure_ascii=False)}",
+        f"status: {status}",
+    ]
+    if kind == "decision":
+        lines.extend([f"date: {today.isoformat()}", "supersedes: []"])
+    else:
+        review = today + dt.timedelta(days=14)
+        lines.extend(["informs: []", f"review_when: date:{review.isoformat()}"])
+    lines.extend(
+        [
+            f"updated: {today.isoformat()}",
+            "---",
+            "",
+            f"# {object_id} — {title}",
+            "",
+            "[context / evidence / consequence — fill in now]",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
+def main(argv: list[str]) -> int:
     if len(argv) < 2 or argv[0] not in TYPES:
         print(__doc__.strip())
         return 2
-    kind, title = argv[0], ' '.join(argv[1:]).strip()
-    subdir, prefix, status = TYPES[kind]
-    oid = next_id(prefix)
-    slug = re.sub(r'-+', '-', re.sub(r'[^a-z0-9]+', '-', title.lower())).strip('-')[:48]
-    today = datetime.date.today()
-    review = (today + datetime.timedelta(days=14)).isoformat()
-    path = os.path.join(ROADMAP, subdir, f"{oid}-{slug}.md")
-    lines = ['---', f'id: {oid}', f'type: {kind}', f'title: {title}', f'status: {status}']
-    if kind == 'decision':
-        lines += [f'date: {today.isoformat()}', 'supersedes: []']
-    else:
-        lines += ['informs: []', f'review_when: date:{review}']
-    lines += [f'updated: {today.isoformat()}', '---', '', f'# {oid} — {title}', '',
-              '[context / body — fill in now, not later]', '']
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    try:
-        # O_EXCL closes the check-then-write race between concurrent captures.
-        fd = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
-    except FileExistsError:
-        print(f"refusing to overwrite {path}")
-        return 1
-    with os.fdopen(fd, 'w', encoding='utf-8', newline='\n') as f:
-        f.write('\n'.join(lines))
-    print(path.replace('\\', '/'))
+    kind = argv[0]
+    title = " ".join(argv[1:]).strip()
+    if not title or any(ord(char) < 32 or ord(char) == 127 for char in title):
+        raise ControlPlaneError("title must be one non-empty line without control characters")
+    subdirectory, prefix, _ = TYPES[kind]
+    unique = uuid.uuid4()
+    object_id = f"{prefix}-{unique}"
+    relative = f"roadmap/{subdirectory}/{object_id}-{slugify(title)}.md"
+    target = safe_worktree_path(REPO, relative, "capture target")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    descriptor = os.open(target, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as stream:
+        stream.write(render(kind, object_id, title, dt.datetime.now(dt.timezone.utc).date()))
+        stream.flush()
+        os.fsync(stream.fileno())
+    print(target.relative_to(REPO).as_posix())
     return 0
 
 
-if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+if __name__ == "__main__":
+    try:
+        sys.exit(main(sys.argv[1:]))
+    except (ControlPlaneError, OSError) as exc:
+        print(f"capture: FAIL -- {exc}")
+        sys.exit(1)

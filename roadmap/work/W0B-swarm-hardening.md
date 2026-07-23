@@ -3,7 +3,7 @@ id: W0B
 type: work
 title: Harden the control plane per external review (enforcement gaps, honest claims)
 phase: P0
-status: achieved
+status: committed
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0A]
@@ -16,13 +16,15 @@ allowed_paths:
   - .claude/**
   - CLAUDE.md
   - AGENTS.md
+deliverables:
+  - roadmap/tools/scope_gate.py
+  - .github/workflows/control-plane.yml
+evidence_receipts: []
 invalidated_by:
   - roadmap/tools/**
   - .githooks/**
-  - roadmap/work/W0B-swarm-hardening.md
 review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:a8d4c08babd642d7
 ---
 
 # W0B — Control-plane hardening (external review response)
@@ -37,7 +39,7 @@ files, minimal evidence fingerprints, HITL decision records, lifecycle checks, c
 selftests); narrow every remaining claim to what is enforced; explicitly defer swarm
 orchestration primitives with a documented trigger.
 
-## Acceptance (evidence target: Correct + Robust)
+## Acceptance
 - Correct: doctor + scope gate enforce the new checks; `selftest.py` passes locally.
 - Robust: selftest mutation suite (ladder drift, missing STATUS, dual in-progress phases,
   unapproved acceptance, handoff absence, unachieved deps, staged-vs-worktree bypass,

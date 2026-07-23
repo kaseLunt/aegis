@@ -12,10 +12,12 @@ informs: [H0]
 allowed_paths:
   - roadmap/**
   - .githooks/**
+deliverables:
+  - .githooks/pre-commit
+evidence_receipts: []
 review_when: event:repo-deletion-auth
 invalidated_by:
   - .githooks/**
-  - roadmap/work/W0C-identity-scrub.md
 updated: 2026-07-21
 ---
 
@@ -30,7 +32,7 @@ Remove the work email from all git history, replace the public repo so no cached
 survive, and make wrong-identity commits mechanically impossible in this repo (pre-commit
 allowlist tooth) and unlikely machine-wide (global useConfigOnly).
 
-## Acceptance (evidence target: Correct)
+## Acceptance
 - Correct: zero work-domain occurrences across all refs/history locally and on the recreated
   public repo (verified via GitHub API); identity tooth blocks a non-allowlisted
   user.email, negative-tested; global git config has useConfigOnly=true and no default email.

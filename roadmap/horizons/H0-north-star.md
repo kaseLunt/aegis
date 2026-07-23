@@ -2,7 +2,7 @@
 id: H0
 type: goal
 title: Earn ether.fi engineering respect with an honest, reproducible protocol flight recorder
-status: active
+status: committed
 review_by: 2026-10-01
 informs: []
 updated: 2026-07-21

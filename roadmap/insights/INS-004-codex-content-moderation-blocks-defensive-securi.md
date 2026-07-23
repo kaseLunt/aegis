@@ -2,7 +2,7 @@
 id: INS-004
 type: insight
 title: Codex content-moderation blocks defensive security-review vocabulary (false positive)
-status: active
+status: accepted
 informs: [H0]
 review_when: date:2026-08-05
 updated: 2026-07-22

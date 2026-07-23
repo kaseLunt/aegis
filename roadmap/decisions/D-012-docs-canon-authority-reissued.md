@@ -1,16 +1,15 @@
 ---
-id: D-003
+id: D-012
 type: decision
 title: docs/ is product canon; roadmap/ is the execution cockpit derived from it
-status: superseded
-superseded_by: D-012
+status: accepted
 date: 2026-07-21
 updated: 2026-07-22
 approved_by: klunt (2026-07-21, session ratification)
-supersedes: []
+supersedes: [D-003]
 ---
 
-# D-003 — Authority split between `docs/` and `roadmap/`
+# D-012 — Authority split between `docs/` and `roadmap/`
 
 ## Context
 Aegis already had a canonical design record (`docs/`) with its own authority hierarchy
@@ -35,3 +34,6 @@ surface and a potential dual-authority hazard.
   `docs/` for "what is true / allowed to be claimed".
 - Milestone honesty is preserved: control-plane status levels describe project execution, never
   product claims (no UI label may exceed what the canonical result schema allows).
+
+---
+*Re-issued verbatim as part of the W0F bundle migration: the upgraded control plane treats accepted decisions as byte-immutable, and the new object grammar (required `updated` field, strict frontmatter quoting) could not be applied to D-003 in place. D-003 is superseded by this record; its original ratification stands and is preserved above.*

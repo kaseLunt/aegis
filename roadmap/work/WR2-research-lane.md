@@ -3,7 +3,7 @@ id: WR2
 type: work
 title: Authority research (owners, delegates, roles, Safes, timelocks, guardians)
 phase: P1
-status: achieved
+status: committed
 evidence_target: "Correct"
 priority: 2
 depends_on: []
@@ -17,7 +17,6 @@ invalidated_by:
   - roadmap/research/WR2/**
 review_when: phase:P1:exit
 updated: 2026-07-21
-evidence_fingerprint: sha256:839e827e7468e2be
 ---
 
 # WR2 — Authority research (owners, delegates, roles, Safes, timelocks, guardians)
@@ -31,7 +30,7 @@ holders, Safes and their signers/thresholds, timelocks and delays, guardians, an
 revocation authorities — from independent public sources (repos, docs, explorers as
 discovery only).
 
-## Acceptance (evidence target: Correct)
+## Acceptance
 - Deliverable: roadmap/research/WR2/authority-map.md with per-claim provenance and an
   explicit unknown/unverified section.
 - Explorer labels are discovery leads, never evidence (threat model: outside trust
@@ -43,6 +42,12 @@ discovery only).
 ## Non-goals
 - No manifest promotion (requires the SOURCE_REGISTER checklist + owner review).
 - No production code, no live-RPC-derived "expected" values.
+
+## Canonical commands
+
+```text
+review the committed deliverables under roadmap/research/WR2/
+```
 
 ## Handoff
 - next: DELIVERED and committed under lane wr2; reviewed by orchestrator; closed.

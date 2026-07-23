@@ -1,0 +1,155 @@
+{
+  "adapters": [
+    "github"
+  ],
+  "bundle_digest": "sha256:f36c89be1336656b7e8dacb59da8a9612973596daa90aec30a86eea76129f682",
+  "bundle_version": "1.0.0",
+  "disabled_adapters": [],
+  "files": {
+    ".gitattributes": {
+      "begin": "# BEGIN control-plane managed text rules",
+      "block_sha256": "sha256:9297a9a2ed7658bc21b8033cd78f2d201a3a9529fd8e7e37aeafc1d2e8e795c0",
+      "end": "# END control-plane managed text rules",
+      "ownership": "marker"
+    },
+    ".github/workflows/control-plane.yml": {
+      "executable": false,
+      "ownership": "managed",
+      "sha256": "sha256:1f9a9fb78d94e4944c8cfd91a7025ffd0df6e2cc52b65048e71b9c4acb1a31a2"
+    },
+    ".gitignore": {
+      "begin": "# BEGIN control-plane managed ignore rules",
+      "block_sha256": "sha256:efb00c5ad9dd4e3f154ddff122a05966a249db9d3308c2e68043e3eee49fd166",
+      "end": "# END control-plane managed ignore rules",
+      "ownership": "marker"
+    },
+    "AGENTS.md": {
+      "begin": "<!-- BEGIN control-plane session protocol (injected by the control-plane skill) -->",
+      "block_sha256": "sha256:7d1d37b3a4e69b245f11933c58ddcb80ac14899f366fe0a2bcc47e8f5bb62105",
+      "end": "<!-- END control-plane session protocol -->",
+      "ownership": "marker"
+    },
+    "roadmap/IDEAS.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:985be3f351dbcd97247d7782f2e152f03625d83765513db8b0db357fb39da4fb",
+      "state": "adopted"
+    },
+    "roadmap/README.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:564d485720d155864c2d72159382e3f6cd5f881e01d5e62feea6ad5893fbb008",
+      "state": "adopted"
+    },
+    "roadmap/ROADMAP.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:0c2285e97c477bfbbf694957d9c15c7d7851845566c374f9db544a6efc14a2bb",
+      "state": "adopted"
+    },
+    "roadmap/RULES.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:a3651d79133eac7922a0a295812673d2a1906a51dac94ac80ea83a173a5a3928",
+      "state": "adopted"
+    },
+    "roadmap/STATUS.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:148d0cc9cfb54e54b8bf5299f6495d710107e139a67a71750e76881fe3a081e0",
+      "state": "adopted"
+    },
+    "roadmap/SYSTEM.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:2097832421c6bf940ead9dea9b29e24eee0899de194695ceb9f3dd0fd77b27af",
+      "state": "adopted"
+    },
+    "roadmap/VISION.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:bc7bd21a8beaa36be070975ccdb4ed19401c5056fb6f01747687faae7bec112a",
+      "state": "adopted"
+    },
+    "roadmap/archive/README.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:88618afa0701a6bc57d99f204254abe8ff7a865bb1eb5057d6aefdb1fcb06bcb",
+      "state": "adopted"
+    },
+    "roadmap/decisions/D-001-control-plane-proposal.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:7de8e9e1bb7ff4918a5a19769cc5be41809a620aa3910c8f82066942ab141588",
+      "state": "adopted"
+    },
+    "roadmap/decisions/D-002-commit-policy-proposal.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:6d2640e21607cef53d3b01eae81b00396cf408477d01148b692cfa33fa2be5f8",
+      "state": "adopted"
+    },
+    "roadmap/evidence/.gitkeep": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "state": "adopted"
+    },
+    "roadmap/horizons/H0-north-star.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:4982eb940ba36e6ce64c0fa9f49245ea52f96c782f74f5a23b10a8e4a31e11cb",
+      "state": "adopted"
+    },
+    "roadmap/ideas/.gitkeep": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "state": "adopted"
+    },
+    "roadmap/insights/.gitkeep": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "state": "adopted"
+    },
+    "roadmap/risks/.gitkeep": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "state": "adopted"
+    },
+    "roadmap/tools/_control_plane.py": {
+      "executable": false,
+      "ownership": "managed",
+      "sha256": "sha256:a4abe09f39aaf6c4e2083e4b5f0c4a384000da7c0fe7147808a0f3258360ad3e"
+    },
+    "roadmap/tools/claim.py": {
+      "executable": false,
+      "ownership": "managed",
+      "sha256": "sha256:de064d0d50aad9c2cb11ed06a7e074a2dc1ccfc2517c97571962142538b659b5"
+    },
+    "roadmap/tools/doctor.py": {
+      "executable": false,
+      "ownership": "managed",
+      "sha256": "sha256:73ef6bdd176c0af74127067d7503e4a225a8923f34100905579d14b65f80c17b"
+    },
+    "roadmap/tools/new.py": {
+      "executable": false,
+      "ownership": "managed",
+      "sha256": "sha256:4e6e9f801cac281ce431b8cae139fe08df420831e2f3d6314da029a324d209f3"
+    },
+    "roadmap/tools/scope_diff.py": {
+      "executable": false,
+      "ownership": "managed",
+      "sha256": "sha256:578271e786c670ae23b41c20d112189f3bc2000b538baa4ca424ef7a7ae1090f"
+    },
+    "roadmap/tools/scope_gate.py": {
+      "executable": false,
+      "ownership": "managed",
+      "sha256": "sha256:f93229bfab1df64534532ef04a7053b130d29429af6ea6003fafd04c021aac49"
+    },
+    "roadmap/tools/selftest.py": {
+      "executable": false,
+      "ownership": "managed",
+      "sha256": "sha256:2d2643834a9cd936d8e61fc8eb6ca8f1579468d7b446fed1ffc11ce1288b6789"
+    },
+    "roadmap/views/.gitkeep": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "state": "adopted"
+    },
+    "roadmap/work/EXP-EXAMPLE.md": {
+      "ownership": "seed",
+      "sha256_at_install": "sha256:fb66ea5233c6927e891017cb1fa38539444b14c5e1a1f01de005ff71b3deca27",
+      "state": "adopted"
+    }
+  },
+  "hooks_path_configured": false,
+  "schema_version": 1
+}

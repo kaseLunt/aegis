@@ -27,7 +27,7 @@ Find at least two candidate real route/implementation configuration changes (M3 
 one) with reconstructable logs, state, ABI epochs, and affected assertions — e.g. from the
 bridge-hardening rollout window.
 
-## Acceptance (evidence target: Correct)
+## Acceptance
 - Deliverable: roadmap/research/WR4/rewind-candidates.md — per candidate: tx hashes,
   blocks, emitting contracts, event signatures, before/after values, why it is
   reconstructable, and what could block reconstruction (log gaps, provider depth).
@@ -39,6 +39,12 @@ bridge-hardening rollout window.
 ## Non-goals
 - No manifest promotion (requires the SOURCE_REGISTER checklist + owner review).
 - No production code, no live-RPC-derived "expected" values.
+
+## Canonical commands
+
+```text
+review the committed deliverables under roadmap/research/WR4/
+```
 
 ## Handoff
 - next: ROUND 2 per completeness critique (roadmap/research/WR4/completeness-critique.md): EXTEND items A1-A7 (implementation upgrades, setPeer, send/receive libs, full ULN+executor matrix, owner/delegate, pause/roles, timelock pairs), B1-B6 search angles, C2-C5 hazards, D3/D4/D6/D7 corrections. Recommendation stands downgraded to promising-lead meanwhile.

@@ -28,7 +28,7 @@ Find candidates satisfying the strict retrospective_rehearsal contract
 batch allowed), parent state and same-block canonical prefix reconstructable, sender
 semantics reproducible, actual effects isolable from later writes.
 
-## Acceptance (evidence target: Correct)
+## Acceptance
 - Deliverable: roadmap/research/WR5/rehearse-candidates.md — per candidate: tx hash,
   target block + index, parent block, batch structure, archive requirements, and an
   explicit feasibility verdict per contract clause.
@@ -40,6 +40,12 @@ semantics reproducible, actual effects isolable from later writes.
 ## Non-goals
 - No manifest promotion (requires the SOURCE_REGISTER checklist + owner review).
 - No production code, no live-RPC-derived "expected" values.
+
+## Canonical commands
+
+```text
+review the committed deliverables under roadmap/research/WR5/
+```
 
 ## Handoff
 - next: critic returned 17 findings; disposition applied in deliverable (delay corrected to 259200s -- the truncation error recurred here, catch #2 for the class). ROUND 2 scope: critic items 2-15 (see roadmap/research/WR5/completeness-critique.md). Lane stays open; round 2 deferred until M4 planning unless owner pulls it earlier -- several EXTEND items are cheaper with real archive/trace providers in hand.

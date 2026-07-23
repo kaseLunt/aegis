@@ -3,7 +3,7 @@ id: W0
 type: work
 title: Stand up the repo-native control plane for agent-swarm coordination
 phase: P0
-status: achieved
+status: committed
 evidence_target: "Correct"
 priority: 1
 depends_on: []
@@ -16,13 +16,15 @@ allowed_paths:
   - .github/workflows/control-plane.yml
   - CLAUDE.md
   - AGENTS.md
+deliverables:
+  - roadmap/tools/doctor.py
+  - roadmap/SYSTEM.md
+evidence_receipts: []
 invalidated_by:
   - roadmap/tools/doctor.py
   - .githooks/**
-  - roadmap/work/W0-control-plane.md
 review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:be81828a2e066425
 ---
 
 # W0 — Stand up the control plane
@@ -35,7 +37,7 @@ surface loses ideas, drifts scope, and inflates status — the exact failure mod
 A repo-native cockpit (`roadmap/`), typed capture objects, git/CI enforcement, and a session
 protocol let multiple agents work in parallel without losing intent or overstating progress.
 
-## Acceptance (evidence target: Correct)
+## Acceptance
 - Correct: `python roadmap/tools/doctor.py` passes with 0 errors/warnings; pre-commit and CI run
   it; SessionStart hook surfaces `roadmap/STATUS.md`; CLAUDE.md/AGENTS.md carry the session
   protocol; all control-plane files are committed (durable).
@@ -48,6 +50,11 @@ protocol let multiple agents work in parallel without losing intent or overstati
 ```bash
 python roadmap/tools/doctor.py
 ```
+
+## Handoff
+- next: COMPLETE — the control plane this file describes is installed and superseded in mechanics by the W0F bundle migration; read roadmap/SYSTEM.md.
+- read_first: roadmap/SYSTEM.md
+- hazards: none
 
 ## Evidence
 - 2026-07-21: installer ran clean; doctor OK (0 errors, 0 warnings).

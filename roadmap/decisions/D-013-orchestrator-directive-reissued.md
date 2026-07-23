@@ -1,16 +1,15 @@
 ---
-id: D-004
+id: D-013
 type: decision
 title: "Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis"
-status: superseded
-superseded_by: D-013
+status: accepted
 date: 2026-07-21
 approved_by: klunt (2026-07-21, session ratification)
-supersedes: []
-updated: 2026-07-21
+supersedes: [D-004]
+updated: 2026-07-22
 ---
 
-# D-004 — Adopt the orchestrator directive, right-sized
+# D-013 — Adopt the orchestrator directive, right-sized
 
 ## Context
 A sibling project (byte-reproducible simulation substrate) proved a control-plane discipline
@@ -45,3 +44,6 @@ verdicts ever depend on control-plane artifacts themselves, revisit.
 - Executors gain a hard boundary: capture is always possible, scope violations are loud stops.
 - Process cost stays proportional: two doctor checks, one hook, one 70-line helper; no new
   ceremony on the write path for ideas/insights.
+
+---
+*Re-issued verbatim as part of the W0F bundle migration: the upgraded control plane treats accepted decisions as byte-immutable, and the new object grammar (required `updated` field, strict frontmatter quoting) could not be applied to D-004 in place. D-004 is superseded by this record; its original ratification stands and is preserved above.*

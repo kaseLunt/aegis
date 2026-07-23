@@ -3,7 +3,7 @@ id: W2
 type: work
 title: Manifest model + trust root (approved-hash policy, content addressing, applicability)
 phase: P1
-status: achieved
+status: committed
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W1]
@@ -14,13 +14,15 @@ allowed_paths:
   - tests/**
   - data/manifests/**
   - roadmap/work/W2-manifest-trust.md
+deliverables:
+  - lib/aegis/manifest/trust.ts
+  - data/manifests/reference-code-identity.json
+evidence_receipts: []
 invalidated_by:
   - lib/aegis/report/**
   - lib/aegis/manifest/**
-  - roadmap/work/W2-manifest-trust.md
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:5193ff42e0bd2d97
 ---
 
 # W2 — Manifest model + trust root
@@ -39,7 +41,7 @@ embedded hash excluded), ManifestTrustPolicy evaluation (approved-hash set →
 trusted/untrusted/invalid with reason codes and validation evidence), and applicability
 checks (validity window, chain/environment) against an observation boundary.
 
-## Acceptance (evidence target: Correct + Robust)
+## Acceptance
 - Correct: valid manifest loads with computed content hash; hash in approved set + valid
   structure → trusted; structurally valid but unapproved (incl. fabricated reviewer
   metadata) → untrusted with manifest_hash_not_approved — NEVER trusted (adversarial test

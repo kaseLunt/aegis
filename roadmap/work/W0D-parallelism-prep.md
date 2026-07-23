@@ -3,7 +3,7 @@ id: W0D
 type: work
 title: Parallelism prep — claims model, lane charters, doctrine (D-006)
 phase: P0
-status: achieved
+status: committed
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W0B]
@@ -14,12 +14,14 @@ allowed_paths:
   - .githooks/**
   - CLAUDE.md
   - AGENTS.md
+deliverables:
+  - roadmap/tools/claim.py
+  - roadmap/decisions/D-006-asymmetric-parallelism-one-spine-owner-research-.md
+evidence_receipts: []
 review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
-  - roadmap/work/W0D-parallelism-prep.md
 updated: 2026-07-21
-evidence_fingerprint: sha256:b95f9f4176add3ed
 ---
 
 # W0D — Parallelism prep
@@ -34,7 +36,7 @@ active item claimed, one claim per agent, expiry flagged) + claim-aware scope ga
 (AEGIS_AGENT, staged index, fail closed) + six chartered research lanes (WR1–WR6) let
 independent lanes run now and committing writers later, without weakening any W0B guarantee.
 
-## Acceptance (evidence target: Correct + Robust)
+## Acceptance
 - Correct: claim.py open/renew/release/list works; doctor enforces claim accountability;
   scope gate resolves AEGIS_AGENT claims from the staged index.
 - Robust: selftest extended with claims mutations (unclaimed active item, double claim,
