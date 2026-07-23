@@ -13,6 +13,7 @@ allowed_paths:
   - roadmap/research/WR6/**
 deliverables:
   - roadmap/research/WR6/adversarial-vectors.md
+evidence_receipts: []
 invalidated_by:
   - roadmap/research/WR6/**
 review_when: phase:P1:exit

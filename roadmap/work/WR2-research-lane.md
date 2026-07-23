@@ -13,6 +13,7 @@ allowed_paths:
   - roadmap/research/WR2/**
 deliverables:
   - roadmap/research/WR2/authority-map.md
+evidence_receipts: []
 invalidated_by:
   - roadmap/research/WR2/**
 review_when: phase:P1:exit

@@ -13,6 +13,7 @@ allowed_paths:
   - roadmap/research/WR3/**
 deliverables:
   - roadmap/research/WR3/provider-matrix.md
+evidence_receipts: []
 invalidated_by:
   - roadmap/research/WR3/**
 review_when: phase:P1:exit

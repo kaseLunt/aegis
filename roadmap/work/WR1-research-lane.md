@@ -13,6 +13,7 @@ allowed_paths:
   - roadmap/research/WR1/**
 deliverables:
   - roadmap/research/WR1/expected-route-policy.md
+evidence_receipts: []
 invalidated_by:
   - roadmap/research/WR1/**
 review_when: phase:P1:exit
