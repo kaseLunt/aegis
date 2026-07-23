@@ -156,6 +156,23 @@ Class note: this is the same lesson as pass 5 (INS-a6fc2796) one level down — 
 snapshot also retires the residual noted there: `evidence[0]` was previously the
 caller's live manifestEvidence object.
 
+## Convergence pass 9 (2026-07-23, Codex session 019f8e10-4560-72f0-9e43-44dfef576b1c)
+
+Scope: the pass-8 snapshot fix (diff d138818..2fd0ba8, reviewed pinned at 2fd0ba8).
+Verdict needs-attention: the snapshot closed the array bypass but introduced a
+re-entrancy path. Caveat: the review's own `npm test` could not run (no node_modules in
+the pinned worktree), so its finding is static reasoning; execution evidence for the fix
+below is the local 321/321 run + mutation tests.
+
+| Finding | Disposition |
+|---------|-------------|
+| high: context serialization could rewrite the already-validated target — validateTarget(target) ran BEFORE snapshotContext(context), and JSON.stringify invokes caller-controlled toJSON/getters that can synchronously mutate the still-live target, whose chainId/strategy/address/expected values the comparator re-read afterwards; a context toJSON could flip a declared mismatch into `pass` citing a rewritten expectation | ACCEPTED — every caller-owned input is now detached BEFORE any validation runs: snapshotPlain (generalized from pass-8's snapshotContext) copies target and context first, then validateTarget/validateContext run on the copies, and only the copies are consumed/emitted. 2 tests written RED (toJSON rewriting expectedRuntimeCodeHash → must stay `fail` citing the declared hash; toJSON rewriting identityStrategy → must stay strategy_mismatch); target-snapshot bypass mutation reds both; 321/321 |
+| recommendation: additionally bind the target to a trusted LoadedManifest whose content hash equals context.manifestHash | DEFERRED to W5 wiring, tracked in [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §Mechanical closures — the comparator has no manifest bytes in scope; target extraction from the trusted manifest happens where the manifest is loaded (W5), and W4's evidence claims recorded-scenario identity over reviewed fixtures, which does not overstate this |
+
+Class note: pass-8's rule ("read untrusted input over exactly one channel") gains its
+corollary — snapshotting IS caller-code execution, so all inputs detach before any
+validates. TOCTOU applies across sibling arguments, not just within one object.
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

@@ -36,6 +36,12 @@ also binds each read's value to its raw hash and refuses hand-built observations
 2. Live endpoint/client-identity binding: when live adapters land (WR3 probe step — a W4
    non-goal), independence must bind to the backing endpoint identity, not just the
    config label. Owner-reviewed provider matrix (WR3 §5 pairs) is the current control.
+3. Manifest→target binding (Codex pass-9 recommendation): the comparator accepts a
+   caller-supplied IdentityTarget and cannot verify it honestly derives from the trusted
+   manifest — the TOCTOU rewrite path is closed (all inputs snapshotted pre-validation),
+   but a caller who simply CONSTRUCTS a matching target is upstream of the evaluator.
+   Close at W5 wiring: extract targets from the LoadedManifest whose content hash equals
+   context.manifestHash, in the same module that establishes policy trust.
 
 ## Consequence / owner decision
 - No M1 claim overstates this: recorded identity over reviewed fixtures is what is

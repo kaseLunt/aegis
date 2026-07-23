@@ -946,6 +946,66 @@ describe("convergence pass 8 — the context is snapshotted before validation; c
   });
 });
 
+describe("convergence pass 9 — every caller input is snapshotted before any validation (cross-argument re-entrancy)", () => {
+  const observedAtPin9 = () =>
+    observeIdentity(
+      "direct",
+      DIRECT,
+      adaptersFor(sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE }])),
+      PIN,
+      QUORUM,
+    );
+
+  test("HIGH: context serialization cannot rewrite the already-validated target into a match", async () => {
+    // The Codex pass-9 repro: snapshotting the context runs caller code (toJSON), which
+    // synchronously mutates the sibling `target` argument AFTER validateTarget saw it.
+    // If the comparator re-reads the live target, the declared mismatch becomes a false
+    // pass citing a rewritten expectation. The verdict must stay `fail` and must cite
+    // the ORIGINALLY declared expected hash.
+    const observed = await observedAtPin9();
+    const declaredWrong = shaOf("not-the-observed-code");
+    const target = {
+      targetId: "t",
+      chainId: 1,
+      address: DIRECT,
+      identityStrategy: "direct",
+      expectedRuntimeCodeHash: declaredWrong,
+    };
+    const context = {
+      ...CONTEXT,
+      toJSON() {
+        target.expectedRuntimeCodeHash = codeHash(DIRECT_CODE);
+        return { ...CONTEXT };
+      },
+    };
+    const { verifications } = compareIdentityTarget(target, observed, PIN, context);
+    expect(verifications[0].state).toBe("fail");
+    expect(verifications[0].expected).toBe(declaredWrong);
+  });
+
+  test("HIGH: context serialization cannot rewrite the validated strategy into the observed one", async () => {
+    // Same channel, other field: the target declares eip1967 (mismatching the direct
+    // observation — normally strategy_mismatch); a hostile context rewrites it to
+    // "direct" mid-snapshot. The comparator must judge the strategy it VALIDATED.
+    const observed = await observedAtPin9();
+    const target = {
+      targetId: "t",
+      chainId: 1,
+      address: DIRECT,
+      identityStrategy: "eip1967",
+      expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+    };
+    const context = {
+      ...CONTEXT,
+      toJSON() {
+        target.identityStrategy = "direct";
+        return { ...CONTEXT };
+      },
+    };
+    expect(() => compareIdentityTarget(target, observed, PIN, context)).toThrow(/strategy_mismatch/);
+  });
+});
+
 describe("review test-quality items", () => {
   test("T2: the exported slot constants equal the official ERC-1967 literals", () => {
     expect(EIP1967_IMPLEMENTATION_SLOT).toBe(

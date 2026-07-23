@@ -204,22 +204,24 @@ function allAssessmentsBindPin(
   return true;
 }
 
-// One snapshot, one truth (Codex pass-8): capture the caller's context ONCE into plain
-// data — the exact view any JSON serializer sees (indexed array elements, own enumerable
-// properties, toJSON applied) — then validate AND emit only that snapshot. Reading the
-// live object lets a lying getter or toJSON show the validator one context and the
-// report another; the snapshot makes validation and emission read the same values.
-function snapshotContext(context: IdentityComparisonContext): IdentityComparisonContext {
+// One snapshot, one truth (Codex pass-8/9): capture a caller-owned input ONCE into
+// plain data — the exact view any JSON serializer sees (indexed array elements, own
+// enumerable properties, toJSON applied) — then validate AND consume only that copy.
+// Reading live objects lets a lying getter or toJSON show the validator one value and
+// the report another. And because stringify RUNS caller code, every input must be
+// detached BEFORE any of them is validated (pass-9): a context toJSON could otherwise
+// synchronously rewrite the already-validated target that the comparator re-reads.
+function snapshotPlain<T>(value: T, errorCode: string): T {
   let copy: unknown;
   try {
-    copy = JSON.parse(JSON.stringify(context));
+    copy = JSON.parse(JSON.stringify(value));
   } catch {
-    throw new IdentityError("invalid_context", "context must be plain serializable data");
+    throw new IdentityError(errorCode, "input must be plain serializable data");
   }
   if (typeof copy !== "object" || copy === null) {
-    throw new IdentityError("invalid_context", "context must be plain serializable data");
+    throw new IdentityError(errorCode, "input must be plain serializable data");
   }
-  return copy as IdentityComparisonContext;
+  return copy as T;
 }
 
 function validateContext(context: IdentityComparisonContext, observedPin: PinnedBlock): void {
@@ -340,30 +342,33 @@ export function compareIdentityTarget(
       `comparison pin ${pinned.chainId}/${pinned.number}/${pinned.hash} != observation pin ${observedPin.chainId}/${observedPin.number}/${observedPin.hash}`,
     );
   }
-  validateTarget(target);
-  // Validate and consume ONLY the plain snapshot (pass-8) — never the live caller
-  // object. Everything emitted below (manifest ref, freshness) is this snapshot, so
-  // the report carries exactly what was validated.
-  const ctx = snapshotContext(context);
+  // Detach EVERY caller-owned input, then validate, then consume ONLY the snapshots
+  // (pass-8/9) — never the live caller objects. Snapshotting runs caller code
+  // (toJSON/getters), so it must complete for all inputs before any validation runs;
+  // and everything emitted below (manifest ref, freshness, expected values) is a
+  // snapshot, so the report carries exactly what was validated.
+  const tgt = snapshotPlain(target, "invalid_target");
+  const ctx = snapshotPlain(context, "invalid_context");
+  validateTarget(tgt);
   validateContext(ctx, observedPin);
-  if (target.chainId !== observedPin.chainId) {
+  if (tgt.chainId !== observedPin.chainId) {
     throw new IdentityError(
       "target_chain_mismatch",
-      `target ${target.chainId} != pinned ${observedPin.chainId}`,
+      `target ${tgt.chainId} != pinned ${observedPin.chainId}`,
     );
   }
   const { identity } = observed;
   // The comparison is only meaningful for the strategy the manifest declared: a result
   // derived under a different strategy proves nothing about this target (finding 2).
-  if (identity.strategy !== target.identityStrategy) {
+  if (identity.strategy !== tgt.identityStrategy) {
     throw new IdentityError(
       "strategy_mismatch",
-      `target declares ${target.identityStrategy}, observation derived ${identity.strategy}`,
+      `target declares ${tgt.identityStrategy}, observation derived ${identity.strategy}`,
     );
   }
   const root = identity.path[0]?.address;
-  if (root !== undefined && root !== target.address) {
-    throw new IdentityError("target_address_mismatch", `${target.address} != observed ${root}`);
+  if (root !== undefined && root !== tgt.address) {
+    throw new IdentityError("target_address_mismatch", `${tgt.address} != observed ${root}`);
   }
 
   // A branded resolved observation is internally consistent by construction: its identity
@@ -431,7 +436,7 @@ export function compareIdentityTarget(
       }
     }
     return {
-      invariantId: `${CODE_IDENTITY_INVARIANT}/${target.targetId}/${expectation}`,
+      invariantId: `${CODE_IDENTITY_INVARIANT}/${tgt.targetId}/${expectation}`,
       evaluatorVersion: CODE_IDENTITY_EVALUATOR_VERSION,
       state,
       severity: "high",
@@ -449,21 +454,21 @@ export function compareIdentityTarget(
   };
 
   const verifications: IdentityVerification[] = [];
-  if (target.expectedRuntimeCodeHash !== undefined) {
+  if (tgt.expectedRuntimeCodeHash !== undefined) {
     verifications.push(
       verification(
         "runtime_code_hash",
-        target.expectedRuntimeCodeHash,
+        tgt.expectedRuntimeCodeHash,
         identity.runtimeCodeHash,
         "Terminal runtime code hash",
       ),
     );
   }
-  if (target.expectedImplementation !== undefined) {
+  if (tgt.expectedImplementation !== undefined) {
     verifications.push(
       verification(
         "implementation",
-        target.expectedImplementation,
+        tgt.expectedImplementation,
         identity.terminalAddress,
         "Terminal identity address",
       ),
