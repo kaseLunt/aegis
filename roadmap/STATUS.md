@@ -20,24 +20,30 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**No active task (between W4 and W5).** W4's code and tests are committed (HEAD e971bef,
-339/339, lint clean) and its Codex convergence is COMPLETE — pass 13 returned SHIP-READY,
-no material findings (session 019f8e98), satisfying [[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]].
+**No active task — W4 ACHIEVED; W5 is next (candidate, not yet started).**
 
-This commit is the pre-receipt contract correction: W4's deliverables were narrowed from
-the `lib/aegis/identity/**` glob to the four explicit files (an achieved work item may not
-declare a glob deliverable — doctor line 756). Owner-acknowledged (semantically null). W4
-sits at `committed` and the fable-main claim is released while the EV-W4 receipt is minted
-at THIS commit and the achieved stamp lands next. No active claim is required at `committed`.
+**W4 — identity adapters + code-hash-scoped ABI registry — ACHIEVED** (EV-W4,
+tested_commit 4fcfa17, npm test 339/339; stamped). Landed under the Codex convergence gate
+([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]]): the review loop ran to a clean SHIP-READY
+pass (session 019f8e98, no material findings) after THIRTEEN passes down the input-domain
+hardening arc on compareIdentityTarget — provenance brand (5) → single-channel snapshot
+(8) → snapshot-all-before-validate (9) → REFUSE active inputs (10) → reject proxies +
+require runtime hash (11) → type-guard against RegExp.test coercion (12) → clean (13).
+Three input-domain layers closed: no active objects, no programmable reflection, no coerced
+scalars. Full disposition table in roadmap/reviews/W4-codex-review.md. Lesson thread:
+[[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] (3 addenda).
 
-**Next commit:** mint EV-W4 (tested_commit = this commit, honest `npm test`), stamp W4
-achieved (`--stamp W4`), flip W4 → achieved on the ladder + here. Then W5 (one engine, four
-surfaces) opens — it must TRUST provenance-branded engine output, not re-validate copies
-([[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]). Carry-ins for W5: manifest→target binding +
-recorded-fixture independence ([[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Codex-dispatch
-guardrails in [[INS-004]] + [[INS-fa971e14-587c-4565-907e-839ec51a3101]]. Lanes
-WR1/WR2/WR3/WR6 closed; WR4/WR5 deferred. W0C parked. NOTE: R-006 selftest flake
-([[R-f4c78054-c6fa-4a34-80ea-16b94b323664]]) — retry a red push once, halt on a second red.
+**Next: W5 — one engine, four surfaces (aegis verify CLI + report API + CI adapter + web
+evidence drawer)**, closes M1. To start W5: open a fresh fable-main claim on W5, set W5
+status active + STATUS active_task W5. Hard constraint: W5 must TRUST provenance-branded
+engine output, not re-validate structural copies ([[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]).
+Carry-ins for W5: manifest→target binding + recorded-fixture independence
+([[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Codex-dispatch guardrails (no worktree,
+neutral+static brief, .serena/ clarification, never rm -rf shared temp) in [[INS-004]] +
+[[INS-fa971e14-587c-4565-907e-839ec51a3101]]. Lanes WR1/WR2/WR3/WR6 closed; WR4/WR5
+deferred. W0C parked. NOTE: R-006 selftest flake ([[R-f4c78054-c6fa-4a34-80ea-16b94b323664]])
+— retry a red push once, halt on a second consecutive red; fix batched with the next
+roadmap/tools change.
 
 ## Recently completed
 - **W0F — control-plane bundle migration** ACHIEVED ([[IDEA-003]] promotion): seven tools

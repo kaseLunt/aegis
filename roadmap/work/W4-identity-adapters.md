@@ -3,7 +3,7 @@ id: W4
 type: work
 title: Identity adapters (direct / EIP-1967 / beacon / clone) + code-hash-scoped ABI registry
 phase: P1
-status: committed
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: [W2, W3]
@@ -18,7 +18,8 @@ deliverables:
   - lib/aegis/identity/observe.ts
   - lib/aegis/identity/compare.ts
   - lib/aegis/identity/abi.ts
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W4.md
 invalidated_by:
   - lib/aegis/identity/**
   - lib/aegis/chain/**
@@ -27,6 +28,7 @@ invalidated_by:
   - data/recordings/**
 review_when: phase:P1:exit
 updated: 2026-07-23
+evidence_fingerprint: sha256:1483528113e92b272549db0bbf77d0706352a0cba44f065f4c1d3276cd1f6b23
 ---
 
 # W4 — Identity adapters + code-hash-scoped ABI registry
@@ -78,8 +80,10 @@ npm test
 
 ## Handoff
 
-- next: narrow invalidated_by (see hazards), verify at the landing commit, mint the
-  receipt and stamp achieved. DONE: Codex senior review dispositioned — 4 P0 + 5 P1 +
+- next: W4 ACHIEVED — invalidated_by narrowed, deliverables made explicit, verified at
+  4fcfa17 (EV-W4, 339/339), Codex convergence clean (13 passes, session 019f8e98). Next is
+  W5 (one engine, four surfaces): it must TRUST provenance-branded engine output, not
+  re-validate structural copies ([[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]). DONE: Codex senior review dispositioned — 4 P0 + 5 P1 +
   test gaps, all accepted rows fixed TDD same-day (roadmap/reviews/W4-codex-review.md;
   20 new tests, 297/297): reads hash-keyed via EIP-1898 form, strategy binding +
   evidence-required comparison, ABI selection gated on observed==expected==registered,
@@ -121,4 +125,10 @@ npm test
 
 ## Evidence
 
-No attained evidence yet.
+ACHIEVED (EV-W4, tested_commit 4fcfa17, npm test 339/339). Landed under the Codex
+convergence gate ([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]]): the review loop ran to a
+clean SHIP-READY pass (session 019f8e98, no material findings) after thirteen passes down
+the input-domain hardening arc on compareIdentityTarget — full disposition table in
+roadmap/reviews/W4-codex-review.md. Non-blocking boundary (recorded-fixture independence;
+manifest→target binding) deferred to W5, tracked in
+[[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]].
