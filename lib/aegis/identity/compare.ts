@@ -13,8 +13,19 @@
 import { createHash } from "node:crypto";
 import type { PinnedBlock } from "../chain/selection";
 import { jcsSerialize } from "../report/canonical";
-import type { IdentityReadEvidence, ObservedIdentity } from "./observe";
-import { IdentityError } from "./resolve";
+import {
+  IMPLEMENTATION_SELECTOR,
+  decodeImplementationWord,
+  type IdentityReadEvidence,
+  type ObservedIdentity,
+} from "./observe";
+import {
+  IdentityError,
+  ObservationUnavailable,
+  type CodeObservation,
+  type IdentityResult,
+  deriveIdentity,
+} from "./resolve";
 
 export const CODE_IDENTITY_EVALUATOR_VERSION = "1";
 export const CODE_IDENTITY_INVARIANT = "deployment.code_identity";
@@ -45,11 +56,21 @@ export interface IdentityManifestEvidence {
 }
 
 // Freshness is an EVALUATED INPUT to the verification state (F7 residual): the caller
-// (W5 wires the freshness policies) supplies the assessed aggregate for the boundary,
-// and no comparison may claim pass beyond what that assessment supports.
+// (W5 wires the freshness policies) supplies per-boundary assessments, and the
+// aggregate MUST be derivable from them (confirmation pass, F7a survivor): a claimed
+// aggregate is never trusted over its own assessments, and an empty assessment list
+// can only ever be "unknown".
+export type FreshnessState = "current" | "aging" | "stale" | "unknown";
+
+export interface FreshnessAssessment {
+  policyId: string;
+  boundary: unknown;
+  state: FreshnessState;
+}
+
 export interface EvaluatedFreshness {
-  aggregate: "current" | "aging" | "stale" | "unknown";
-  assessments: unknown[];
+  aggregate: FreshnessState;
+  assessments: FreshnessAssessment[];
 }
 
 export interface IdentityComparisonContext {
@@ -119,8 +140,31 @@ function validateTarget(target: IdentityTarget): void {
   }
 }
 
-const FRESHNESS_AGGREGATES = new Set(["current", "aging", "stale", "unknown"]);
-const HEX_RE = /^0x([0-9a-f]{2})*$/;
+// Worst-of ranking for deriving the aggregate: an affirmative staleness outranks the
+// mere absence of an assessment.
+const FRESHNESS_RANK: Record<FreshnessState, number> = {
+  current: 0,
+  aging: 1,
+  unknown: 2,
+  stale: 3,
+};
+
+function derivedAggregate(assessments: readonly FreshnessAssessment[]): FreshnessState | null {
+  if (assessments.length === 0) return "unknown";
+  let worst: FreshnessState = "current";
+  for (const a of assessments) {
+    if (
+      typeof a !== "object" || a === null ||
+      typeof a.policyId !== "string" || a.policyId.length === 0 ||
+      typeof a.boundary !== "object" || a.boundary === null ||
+      !(a.state in FRESHNESS_RANK)
+    ) {
+      return null;
+    }
+    if (FRESHNESS_RANK[a.state] > FRESHNESS_RANK[worst]) worst = a.state;
+  }
+  return worst;
+}
 
 function validateContext(context: IdentityComparisonContext): void {
   const me = context?.manifestEvidence;
@@ -141,57 +185,90 @@ function validateContext(context: IdentityComparisonContext): void {
     typeof me.sourceMode !== "string" || me.sourceMode.length === 0 ||
     typeof me.capturedAt !== "string" || me.capturedAt.length === 0 ||
     typeof fresh !== "object" || fresh === null ||
-    !FRESHNESS_AGGREGATES.has(fresh.aggregate) ||
-    !Array.isArray(fresh.assessments)
+    !(fresh.aggregate in FRESHNESS_RANK) ||
+    !Array.isArray(fresh.assessments) ||
+    // The claimed aggregate must be DERIVABLE from its own assessments (F7a survivor):
+    // an optimistic label over stale/absent assessments is rejected, not trusted.
+    derivedAggregate(fresh.assessments) !== fresh.aggregate
   ) {
     throw new IdentityError(
       "invalid_context",
-      "requires provenanceClass, the trusted manifestHash, a manifest EvidenceRef bound to it, and an evaluated freshness block",
+      "requires provenanceClass, the trusted manifestHash, a manifest EvidenceRef bound to it, and a freshness block whose aggregate matches its assessments",
     );
   }
 }
 
-// A resolved identity must be backed by a coherent derivation transcript (F2 residual):
-// every read agreed under quorum, the read addresses are exactly the resolved path's
-// addresses, and the claimed terminal hash is REPRODUCIBLE from the transcript's
-// terminal code read. Anything else is a forged or corrupted observation.
+// A resolved identity must be backed by a coherent derivation transcript. Confirmation
+// pass (F2 survivor): the transcript's values are AUTHENTICATED against the
+// quorum-committed raw hashes — a value the agreeing providers did not commit to is a
+// forgery — and the identity claim must be REPRODUCED by re-running the pure derivation
+// over the authenticated transcript. Anything else is a forged or corrupted observation.
+const inconsistent = (detail: string): never => {
+  throw new IdentityError("inconsistent_observation", detail);
+};
+
+const transcriptKey = (kind: string, address: string, slot?: string, data?: string): string =>
+  `${kind}\0${address}\0${slot ?? ""}\0${data ?? ""}`;
+
 function validateTranscript(
-  identity: { path: Array<{ address: string }>; terminalAddress: string | null; runtimeCodeHash: string | null },
+  target: IdentityTarget,
+  identity: IdentityResult,
   reads: readonly IdentityReadEvidence[],
 ): void {
+  const values = new Map<string, string>();
   for (const read of reads) {
     if (read.quorum.outcome !== "agreement" || read.agreedValue === null) {
-      throw new IdentityError(
-        "inconsistent_observation",
-        "a resolved identity cannot cite a non-agreed read",
-      );
+      inconsistent("a resolved identity cannot cite a non-agreed read");
+    }
+    const agreeing = new Set(read.quorum.agreeingProviders);
+    if (agreeing.size === 0) inconsistent("an agreed read must name its agreeing providers");
+    // The recorded raw hash convention is sha256 over the JCS form of the result; every
+    // agreeing observation must have committed to exactly this value.
+    const valueHash = `sha256:${createHash("sha256")
+      .update(Buffer.from(jcsSerialize(read.agreedValue), "utf-8"))
+      .digest("hex")}`;
+    const seen = new Set<string>();
+    for (const o of read.observations) {
+      if (!agreeing.has(o.providerId)) continue;
+      seen.add(o.providerId);
+      if (o.status !== "ok" || o.rawResultHash !== valueHash) {
+        inconsistent("transcript value differs from the quorum-committed raw result");
+      }
+    }
+    for (const p of agreeing) {
+      if (!seen.has(p)) inconsistent("an agreeing provider has no observation in the transcript");
+    }
+    values.set(transcriptKey(read.kind, read.address, read.slot, read.data), read.agreedValue!);
+  }
+  // No reads outside the resolved indirection path: unrelated evidence is incoherent.
+  const pathAddresses = new Set(identity.path.map((s) => s.address));
+  for (const read of reads) {
+    if (!pathAddresses.has(read.address)) {
+      inconsistent("transcript read addresses differ from the resolved indirection path");
     }
   }
-  const readAddresses = new Set(reads.map((r) => r.address));
-  const pathAddresses = new Set(identity.path.map((s) => s.address));
-  if (
-    readAddresses.size !== pathAddresses.size ||
-    [...readAddresses].some((a) => !pathAddresses.has(a))
-  ) {
-    throw new IdentityError(
-      "inconsistent_observation",
-      "transcript read addresses differ from the resolved indirection path",
-    );
-  }
-  const terminalRead = reads.find(
-    (r) => r.kind === "code" && r.address === identity.terminalAddress,
-  );
-  if (
-    terminalRead === undefined ||
-    terminalRead.agreedValue === null ||
-    !HEX_RE.test(terminalRead.agreedValue) ||
-    identity.runtimeCodeHash !==
-      `sha256:${createHash("sha256").update(Buffer.from(terminalRead.agreedValue.slice(2), "hex")).digest("hex")}`
-  ) {
-    throw new IdentityError(
-      "inconsistent_observation",
-      "the claimed terminal hash is not reproducible from the transcript's terminal code read",
-    );
+  // Replay the pure derivation over the authenticated transcript; the claim must be
+  // reproduced EXACTLY — path, terminal, hash, status, everything.
+  const reader: CodeObservation = {
+    getCode: (address) => {
+      const v = values.get(transcriptKey("code", address));
+      if (v === undefined) throw new ObservationUnavailable("observation_unresolved");
+      return v;
+    },
+    getStorageWord: (address, slot) => {
+      const v = values.get(transcriptKey("storage", address, slot));
+      if (v === undefined) throw new ObservationUnavailable("observation_unresolved");
+      return v;
+    },
+    getBeaconImplementation: (address) => {
+      const v = values.get(transcriptKey("call", address, undefined, IMPLEMENTATION_SELECTOR));
+      if (v === undefined) throw new ObservationUnavailable("observation_unresolved");
+      return decodeImplementationWord(v);
+    },
+  };
+  const rederived = deriveIdentity(target.identityStrategy, target.address, reader);
+  if (jcsSerialize(rederived as unknown as Record<string, unknown>) !== jcsSerialize(identity as unknown as Record<string, unknown>)) {
+    inconsistent("the transcript does not re-derive to the claimed identity");
   }
 }
 
@@ -282,7 +359,7 @@ export function compareIdentityTarget(
       throw new IdentityError("missing_observation_evidence", target.targetId);
     }
     // ...and the transcript it cites must actually support it (F2 residual).
-    validateTranscript(identity, observed.reads);
+    validateTranscript(target, identity, observed.reads);
   }
   const evidence: Array<IdentityEvidenceRef | IdentityManifestEvidence> = [
     context.manifestEvidence,

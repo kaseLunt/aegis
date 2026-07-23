@@ -27,10 +27,14 @@ import {
 
 // implementation() — the only ABI knowledge this module carries; selection of richer
 // ABIs is the registry's job and happens only after a terminal hash match (slice 3).
-const IMPLEMENTATION_SELECTOR = "0x5c60da1b";
+export const IMPLEMENTATION_SELECTOR = "0x5c60da1b";
 // ABI-encoded `address` return: one 32-byte word, ZERO-padded high 12 bytes (Codex W4
 // finding 4: nonzero padding is malformed data, never sliced into an address).
 const PADDED_ADDRESS_RE = /^0x0{24}[0-9a-f]{40}$/;
+
+// Shared with the comparison layer's transcript replay: one decode, one truth.
+export const decodeImplementationWord = (word: string): string | null =>
+  PADDED_ADDRESS_RE.test(word) ? `0x${word.slice(26)}` : null;
 
 export interface IdentityReadEvidence {
   kind: "code" | "storage" | "call";
@@ -158,12 +162,12 @@ function shim(cache: Map<string, ReadOutcome>): CodeObservation {
     getCode: (address) => agreedValue({ kind: "code", address }),
     getStorageWord: (address, slot) => agreedValue({ kind: "storage", address, slot }),
     getBeaconImplementation: (address) => {
-      const word = agreedValue({ kind: "call", address, data: IMPLEMENTATION_SELECTOR });
       // implementation() returns one zero-padded ABI-encoded address word; anything else
       // (revert data, "0x", nonzero padding) is an unresolved beacon answer —
       // resolve.ts types it, never guesses.
-      if (!PADDED_ADDRESS_RE.test(word)) return null;
-      return `0x${word.slice(26)}`;
+      return decodeImplementationWord(
+        agreedValue({ kind: "call", address, data: IMPLEMENTATION_SELECTOR }),
+      );
     },
   };
 }

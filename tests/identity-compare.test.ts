@@ -68,11 +68,21 @@ const manifestEvidenceFor = (hash: string) => ({
   capturedAt: "2026-07-22T00:00:00Z",
 });
 const UNIT_MANIFEST_HASH = shaOf("manifest:identity-compare-unit");
+const FRESH_CURRENT = {
+  aggregate: "current" as const,
+  assessments: [
+    {
+      policyId: "fp-reference",
+      boundary: { kind: "execution_block", block: PIN },
+      state: "current" as const,
+    },
+  ],
+};
 const CONTEXT = {
   provenanceClass: "reference_scenario",
   manifestHash: UNIT_MANIFEST_HASH,
   manifestEvidence: manifestEvidenceFor(UNIT_MANIFEST_HASH),
-  freshness: { aggregate: "current" as const, assessments: [] },
+  freshness: FRESH_CURRENT,
 };
 
 const TARGET = {
@@ -301,7 +311,16 @@ describe("end-to-end: W1-valid payload from boundary + identity + manifest", () 
         provenanceClass: "reference_scenario",
         manifestHash,
         manifestEvidence: manifestEvidenceFor(manifestHash),
-        freshness: { aggregate: "current", assessments: [] },
+        freshness: {
+          aggregate: "current",
+          assessments: [
+            {
+              policyId: "fp-reference",
+              boundary: boundary.boundary,
+              state: "current",
+            },
+          ],
+        },
       },
     );
     expect(verifications.every((v) => v.state === "pass")).toBe(true);

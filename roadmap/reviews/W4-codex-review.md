@@ -44,6 +44,20 @@ suite 305/305):
 | F7a: pass emitted alongside freshness unknown | ACCEPTED — freshness is an evaluated INPUT: stale caps the state at `stale`, unassessed at `unknown`, only current/aging can pass or fail; typed limitations |
 | F7b: manifestEvidenceId was format-checked only | ACCEPTED — the comparison takes the full manifest EvidenceRef bound to the trusted manifest hash (raw hash + snapshot hash both must equal it), emits it itself, and cites it in expectedEvidenceIds |
 
+## Confirmation pass (2026-07-23, Codex session 019f8d9a-4468-76a2-8a9b-6c811b59f114)
+
+Scoped to the four residual closures (885ce8e..5930a4f): F1 and F7b CONFIRMED; F2 and
+F7a NOT CONFIRMED — each survived in a narrower shape. Both accepted and closed TDD
+(5 more tests, suite 310/310):
+
+| Survivor | Disposition |
+|----------|-------------|
+| F2: transcript values were hashed but never AUTHENTICATED against the quorum-committed raw hashes — forging agreedValue + the claimed hash together passed while the providers' raw hashes attested different code | ACCEPTED — every agreeing observation's rawResultHash must equal sha256(jcs(agreedValue)); the identity claim must then be REPRODUCED by re-running the pure derivation over the authenticated transcript with exact (canonical) equality |
+| F7a: the claimed aggregate was trusted over its own assessments — "current" over stale or empty assessments passed | ACCEPTED — assessments are typed (policyId, boundary, state); the aggregate must equal the worst-of derivation; empty assessments can only ever be "unknown" |
+
+Under [[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]] (convergence gate) the achieved stamp
+remains blocked until a Codex pass returns clean at HEAD.
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

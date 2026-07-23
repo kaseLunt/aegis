@@ -52,6 +52,16 @@ const QUORUM: QuorumPolicy = {
   minAgreeing: 2,
 };
 
+const FRESH_CURRENT = {
+  aggregate: "current" as const,
+  assessments: [
+    {
+      policyId: "fp-reference",
+      boundary: { kind: "execution_block", block: PIN },
+      state: "current" as const,
+    },
+  ],
+};
 const CONTEXT_MANIFEST_HASH = shaOf("w4-fixes-manifest");
 const CONTEXT = {
   provenanceClass: "reference_scenario",
@@ -68,7 +78,7 @@ const CONTEXT = {
     rawResultHash: CONTEXT_MANIFEST_HASH,
     capturedAt: "2026-07-22T00:00:00Z",
   },
-  freshness: { aggregate: "current" as const, assessments: [] },
+  freshness: FRESH_CURRENT,
 };
 
 interface ReadSpec {
@@ -351,7 +361,7 @@ describe("finding 7 — provenance honesty in composed verifications", () => {
       expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
     };
     const { verifications } = compareIdentityTarget(target, observed, PIN, CONTEXT);
-    expect(verifications[0].freshness).toEqual({ aggregate: "current", assessments: [] });
+    expect(verifications[0].freshness).toEqual(FRESH_CURRENT);
     expect(verifications[0].expectedEvidenceIds).toEqual([CONTEXT.manifestEvidence.id]);
   });
 });
@@ -422,7 +432,7 @@ describe("verification-pass residuals (F1/F2/F7)", () => {
     provenanceClass: "reference_scenario",
     manifestHash: MANIFEST_HASH,
     manifestEvidence: MANIFEST_EVIDENCE,
-    freshness: { aggregate: "current" as const, assessments: [] },
+    freshness: FRESH_CURRENT,
   };
   const DIRECT_TARGET = {
     targetId: "t",
@@ -487,7 +497,16 @@ describe("verification-pass residuals (F1/F2/F7)", () => {
     const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
     const { verifications } = compareIdentityTarget(DIRECT_TARGET, observed, PIN, {
       ...CTX,
-      freshness: { aggregate: "stale", assessments: [] },
+      freshness: {
+        aggregate: "stale",
+        assessments: [
+          {
+            policyId: "fp-reference",
+            boundary: { kind: "execution_block", block: PIN },
+            state: "stale",
+          },
+        ],
+      },
     });
     expect(verifications[0].state).toBe("stale");
     expect(verifications[0].limitations.map((l) => l.code)).toContain("freshness_stale");
@@ -525,6 +544,110 @@ describe("verification-pass residuals (F1/F2/F7)", () => {
     const { verifications, evidence } = compareIdentityTarget(DIRECT_TARGET, observed, PIN, CTX);
     expect(evidence.some((e) => e.id === MANIFEST_EVIDENCE.id && e.kind === "manifest")).toBe(true);
     expect(verifications[0].expectedEvidenceIds).toEqual([MANIFEST_EVIDENCE.id]);
+  });
+});
+
+describe("confirmation-pass closures (F2/F7a survivors)", () => {
+  const HASH2 = shaOf("confirmation-manifest");
+  const FRESH_OK = {
+    aggregate: "current" as const,
+    assessments: [
+      {
+        policyId: "fp-reference",
+        boundary: { kind: "execution_block", block: PIN },
+        state: "current" as const,
+      },
+    ],
+  };
+  const CTX2 = {
+    provenanceClass: "reference_scenario",
+    manifestHash: HASH2,
+    manifestEvidence: {
+      id: shaOf(["manifest-ev", HASH2]),
+      kind: "manifest" as const,
+      provenanceClass: "reference_scenario",
+      sourceMode: "recorded",
+      boundary: { kind: "source_snapshot" as const, snapshot: { sourceId: "manifest", contentHash: HASH2 } },
+      rawResultHash: HASH2,
+      capturedAt: "2026-07-22T00:00:00Z",
+    },
+    freshness: FRESH_OK,
+  };
+  const DIRECT_TARGET2 = {
+    targetId: "t",
+    chainId: 1,
+    address: DIRECT,
+    identityStrategy: "direct",
+    expectedRuntimeCodeHash: codeHash(DIRECT_CODE),
+  };
+
+  test("F2: a forged agreed value is unmasked by the quorum-committed raw hashes", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const FORGED_CODE = "0x6080604099";
+    const forged = {
+      identity: { ...observed.identity, runtimeCodeHash: codeHash(FORGED_CODE) },
+      reads: observed.reads.map((r) => ({ ...r, agreedValue: FORGED_CODE })),
+    };
+    const target = { ...DIRECT_TARGET2, expectedRuntimeCodeHash: codeHash(FORGED_CODE) };
+    // agreedValue and the claimed hash are internally consistent — but the providers'
+    // raw hashes committed to DIFFERENT code. The forgery must not pass.
+    expect(() => compareIdentityTarget(target, forged, PIN, CTX2)).toThrow(/inconsistent_observation/);
+  });
+
+  test("F2: a claim the authenticated transcript does not re-derive to is inconsistent", async () => {
+    const observed = await observeIdentity("eip1967", PROXY, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const forged = {
+      identity: {
+        ...observed.identity,
+        // Consistent transcript, but the claim swaps the terminal to the proxy itself.
+        terminalAddress: PROXY,
+        runtimeCodeHash: codeHash("0x60806040aa"),
+      },
+      reads: observed.reads,
+    };
+    const target = {
+      targetId: "t",
+      chainId: 1,
+      address: PROXY,
+      identityStrategy: "eip1967",
+      expectedRuntimeCodeHash: codeHash("0x60806040aa"),
+    };
+    expect(() => compareIdentityTarget(target, forged, PIN, CTX2)).toThrow(/inconsistent_observation/);
+  });
+
+  test("F7a: a claimed 'current' aggregate over a stale assessment is rejected", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    expect(() =>
+      compareIdentityTarget(DIRECT_TARGET2, observed, PIN, {
+        ...CTX2,
+        freshness: {
+          aggregate: "current",
+          assessments: [
+            {
+              policyId: "fp-reference",
+              boundary: { kind: "execution_block", block: PIN },
+              state: "stale",
+            },
+          ],
+        },
+      }),
+    ).toThrow(/invalid_context/);
+  });
+
+  test("F7a: a claimed 'current' aggregate with NO assessments is rejected — empty can only be unknown", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    expect(() =>
+      compareIdentityTarget(DIRECT_TARGET2, observed, PIN, {
+        ...CTX2,
+        freshness: { aggregate: "current", assessments: [] },
+      }),
+    ).toThrow(/invalid_context/);
+  });
+
+  test("F7a: a coherent current assessment still allows pass", async () => {
+    const observed = await observeIdentity("direct", DIRECT, adaptersFor(sealBundle(READS)), PIN, QUORUM);
+    const { verifications } = compareIdentityTarget(DIRECT_TARGET2, observed, PIN, CTX2);
+    expect(verifications[0].state).toBe("pass");
   });
 });
 
