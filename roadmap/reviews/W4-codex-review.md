@@ -128,6 +128,17 @@ mechanical closures are known deferred work, NOT identity-evaluator scope:
 Captured as [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] for owner visibility; W4's evidence claims only recorded-scenario
 identity over reviewed fixtures, which is accurate. Framed for Codex re-assessment.
 
+## Convergence pass 7 (2026-07-23, Codex session 019f8dee-2324-7bc3-9d07-920d4762bcf8)
+
+Items 1–3 (freeze, value↔hash, pin binding) CONFIRMED closed; item-4 boundary rationale
+CONFIRMED sound and adequately tracked; all prior closures (canonicality, conflict,
+beacon, F7a/F7b, precedence, provenance brand) CONFIRMED non-regressed. One new high —
+the last thread of the freshness-honesty class — fixed TDD (1 test, 314/314):
+
+| Finding | Disposition |
+|---------|-------------|
+| high: freshness assessments were not bound to the observed block — a `current` assessment for block B could certify evidence observed at block A (pin_mismatch only guarded the identity read, not the freshness boundary) | ACCEPTED — validateContext now requires every freshness assessment's execution-block boundary to equal observed.pinned (chainId/number/hash). A foreign-block assessment is invalid_context; an empty set still derives to unknown (never pass), so absence stays honest. Mutation-tested |
+
 ## Disposition landing (2026-07-23)
 
 All ACCEPTED rows implemented TDD in one pass: 20 new tests in

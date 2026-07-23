@@ -787,6 +787,28 @@ describe("convergence pass 6 — branded observations are immutable, hash-bound,
     expect(() => compareIdentityTarget(T6, observed, otherBlock, CTX6)).toThrow(/pin_mismatch/);
   });
 
+  test("P0/pass7: a freshness assessment for a DIFFERENT block cannot vouch for this observation", async () => {
+    // Observe (and compare) at PIN, but supply a 'current' assessment for another block.
+    // Stale/irrelevant evidence must not pass under a mislabeled boundary.
+    const observed = await observeIdentity(
+      "direct",
+      DIRECT,
+      adaptersFor(sealBundle([{ method: "eth_getCode", params: [DIRECT, atPin(PIN.hash)], result: DIRECT_CODE }])),
+      PIN,
+      QUORUM,
+    );
+    const otherBlock = { ...PIN, number: "24000000", hash: `0x${"33".repeat(32)}` };
+    expect(() =>
+      compareIdentityTarget(T6, observed, PIN, {
+        ...CTX6,
+        freshness: {
+          aggregate: "current",
+          assessments: [{ policyId: "fp", boundary: { kind: "execution_block", block: otherBlock }, state: "current" }],
+        },
+      }),
+    ).toThrow(/invalid_context/);
+  });
+
   test("evidence boundary is derived from the observation's own bound pin", async () => {
     const observed = await observeIdentity(
       "direct",

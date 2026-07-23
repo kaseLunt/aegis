@@ -168,7 +168,22 @@ function derivedAggregate(assessments: readonly FreshnessAssessment[]): Freshnes
   return worst;
 }
 
-function validateContext(context: IdentityComparisonContext): void {
+// A freshness assessment vouches for evidence at THIS observation's boundary only
+// (Codex W4 pass-7): its execution-block boundary must be exactly observedPin, so a
+// `current` assessment for a different (e.g. newer) block cannot certify stale evidence.
+function assessmentBindsPin(assessment: FreshnessAssessment, pin: PinnedBlock): boolean {
+  const b = assessment.boundary as
+    | { kind?: string; block?: { chainId?: number; number?: string; hash?: string } }
+    | null;
+  return (
+    b?.kind === "execution_block" &&
+    b.block?.chainId === pin.chainId &&
+    b.block?.number === pin.number &&
+    b.block?.hash === pin.hash
+  );
+}
+
+function validateContext(context: IdentityComparisonContext, observedPin: PinnedBlock): void {
   const me = context?.manifestEvidence;
   const fresh = context?.freshness;
   if (
@@ -191,11 +206,15 @@ function validateContext(context: IdentityComparisonContext): void {
     !Array.isArray(fresh.assessments) ||
     // The claimed aggregate must be DERIVABLE from its own assessments (F7a survivor):
     // an optimistic label over stale/absent assessments is rejected, not trusted.
-    derivedAggregate(fresh.assessments) !== fresh.aggregate
+    derivedAggregate(fresh.assessments) !== fresh.aggregate ||
+    // Every assessment must be for THIS observation's boundary (pass-7): a non-empty
+    // assessment set carrying a foreign block cannot certify this evidence. (An empty set
+    // derives to "unknown", which can never pass, so absence stays honest.)
+    !fresh.assessments.every((a) => assessmentBindsPin(a, observedPin))
   ) {
     throw new IdentityError(
       "invalid_context",
-      "requires provenanceClass, the trusted manifestHash, a manifest EvidenceRef bound to it, and a freshness block whose aggregate matches its assessments",
+      "requires provenanceClass, the trusted manifestHash, a manifest EvidenceRef bound to it, and a freshness block whose aggregate matches its assessments and whose assessments are bound to the observed block",
     );
   }
 }
@@ -283,7 +302,7 @@ export function compareIdentityTarget(
     );
   }
   validateTarget(target);
-  validateContext(context);
+  validateContext(context, observedPin);
   if (target.chainId !== observedPin.chainId) {
     throw new IdentityError(
       "target_chain_mismatch",
