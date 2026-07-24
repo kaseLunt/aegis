@@ -5,8 +5,8 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: none
-updated: 2026-07-23
+active_task: W5
+updated: 2026-07-24
 ---
 
 # STATUS — where we are right now
@@ -20,25 +20,42 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**No active task — W4 ACHIEVED; W5 is next (candidate, not yet started).**
+**W5 — one engine, four surfaces — ACTIVE** (kickoff complete 2026-07-24; no code written
+yet, start at slice S0).
 
-**W4 — identity adapters + code-hash-scoped ABI registry — ACHIEVED** (EV-W4,
-tested_commit 4fcfa17, npm test 339/339; stamped). Landed under the Codex convergence gate
-([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]]): the review loop ran to a clean SHIP-READY
-pass (session 019f8e98, no material findings) after THIRTEEN passes down the input-domain
-hardening arc on compareIdentityTarget — provenance brand (5) → single-channel snapshot
-(8) → snapshot-all-before-validate (9) → REFUSE active inputs (10) → reject proxies +
-require runtime hash (11) → type-guard against RegExp.test coercion (12) → clean (13).
-Three input-domain layers closed: no active objects, no programmable reflection, no coerced
-scalars. Full disposition table in roadmap/reviews/W4-codex-review.md. Lesson thread:
-[[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] (3 addenda).
+Kickoff mapped the W1–W4 spine with a four-agent read-only fan-out (run wf_c29e08ca-2a8) and
+established the decisive fact: **there is no packaged pass-to-report composer** — the
+W1+W2+W3(+W4) composition exists only inside `tests/engine.test.ts` ("W1+W2+W3 composition",
+lines 122–178). All four M1 surfaces are that same pipeline behind different transports, so
+W5 builds the composer once and surfaces are transports that never evaluate.
 
-**Next: W5 — one engine, four surfaces (aegis verify CLI + report API + CI adapter + web
-evidence drawer)**, closes M1. To start W5: open a fresh fable-main claim on W5, set W5
-status active + STATUS active_task W5. Hard constraint: W5 must TRUST provenance-branded
-engine output, not re-validate structural copies ([[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]]).
-Carry-ins for W5: manifest→target binding + recorded-fixture independence
-([[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3). Codex-dispatch guardrails (no worktree,
+Shape settled in [[D-6bedc848-2a42-411a-a65b-d623f7418121]] (owner delegated: "gold standard,
+no shortcuts"): (1) the manifest→target binding lands **in `lib/aegis/manifest/trust.ts`**
+structurally, not as an assertion — closes
+[[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3; (2) the API **accepts** caller-supplied
+manifest bytes (visibly noncanonical, cannot create a production pass/fail), which activates
+and therefore **closes [[R-003]]** (duplicate-key JSON) in W5; (3) the CLI ships as a vite
+SSR-built artifact with `node:util parseArgs` — no new dependency; (4) the M1 scenario-fixture
+corpus splits out as **W6**, so **M1 closes at W6, not W5** (the prior "W5 closes M1" claim was
+optimistic and is corrected).
+
+Consequence to plan for: (1) and (2) both modify paths in W4's `invalidated_by`, so EV-W4
+auto-invalidates — honest, not a defect. Slice S1 mints `EV-W4-R2` and supersedes `EV-W4`
+**in the same commit** per [[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]]. W5's `allowed_paths`
+were amended at activation to add `bin/**`, `components/**`, `package.json`,
+`vite.cli.config.ts`; `.github/workflows/**` is deliberately excluded (the CI adapter ships as
+library code + a documented snippet, so W5 never touches [[D-007]]/[[R-005]] machinery).
+
+Hard constraint carried in: W5 must TRUST provenance-branded engine output, and the kickoff
+sharpened why — **a WeakSet brand is process- and module-instance-local**, so it survives no
+serialization boundary. Each surface re-earns the brand from raw bytes in-process and persists
+only outputs ([[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] addendum 3).
+
+Slices: S0 facade+request → S1 target binding + W4 re-attestation → S2 R-003 strict parse →
+S3 CLI → S4 report API → S5 CI adapter → S6 evidence drawer → S7 cross-surface byte identity.
+Then the Codex convergence gate before any achieved stamp.
+
+**Standing notes for the W5 lane.** Codex-dispatch guardrails (no worktree,
 neutral+static brief, .serena/ clarification, never rm -rf shared temp) in [[INS-004]] +
 [[INS-fa971e14-587c-4565-907e-839ec51a3101]]. Lanes WR1/WR2/WR3/WR6 closed; WR4/WR5
 deferred. W0C parked. NOTE: R-006 selftest flake ([[R-f4c78054-c6fa-4a34-80ea-16b94b323664]])
@@ -46,6 +63,18 @@ deferred. W0C parked. NOTE: R-006 selftest flake ([[R-f4c78054-c6fa-4a34-80ea-16
 roadmap/tools change.
 
 ## Recently completed
+- **W4 — identity adapters + code-hash-scoped ABI registry** ACHIEVED (EV-W4,
+  tested_commit 4fcfa17, npm test 339/339; stamped). Landed under the Codex convergence gate
+  ([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]]): the review loop ran to a clean SHIP-READY
+  pass (session 019f8e98, no material findings) after THIRTEEN passes down the input-domain
+  hardening arc on compareIdentityTarget — provenance brand (5) → single-channel snapshot
+  (8) → snapshot-all-before-validate (9) → REFUSE active inputs (10) → reject proxies +
+  require runtime hash (11) → type-guard against RegExp.test coercion (12) → clean (13).
+  Three input-domain layers closed: no active objects, no programmable reflection, no
+  coerced scalars. Full disposition table in roadmap/reviews/W4-codex-review.md. Lesson
+  thread: [[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] (4 addenda). NOTE: EV-W4 will
+  auto-invalidate at W5 slice S1 (manifest/** change) and be re-attested as EV-W4-R2 in that
+  same commit — expected, per [[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]].
 - **W0F — control-plane bundle migration** ACHIEVED ([[IDEA-003]] promotion): seven tools
   + shared runtime replaced with the upstream bundle; corpus on the new grammar;
   D-001..D-004 re-issued as D-010..D-013 under the append-only decision law; 12
@@ -75,12 +104,15 @@ roadmap/tools change.
   source register, interview brief) — authority hierarchy in `docs/README.md`.
 
 ## Next up
-1. W3 slices 2–3 (block selection; adapter interface + recorded fixtures + provider configs).
-2. W4 (identity adapters + ABI registry) after W3.
-2. Manifest-owner open items: live rate-limit value (3k vs 10k weETH/4h), executor pin,
+1. W5 slices S0→S7 (active lane) — see the work file for the slice plan.
+2. W6 (M1 recorded scenario fixture corpus + reorg supersession) — `candidate`; the owner
+   authorized the split at the W5 kickoff but promotion to `committed` is a phase-review
+   action. **M1 closes at W6.**
+3. Manifest-owner open items: live rate-limit value (3k vs 10k weETH/4h), executor pin,
    historical setPeer tx. WR4/WR5 round 2 at M3/M4 planning.
-3. R-001 residual (owner, low urgency): enable branch protection requiring the "Control plane"
-   check once PR flow starts mattering.
+4. Serena index does not resolve inside subagents in this repo
+   ([[INS-f3f74c16-f56e-46b1-85bd-55464e4183ce]]) — `.serena/` is untracked; committing the
+   project config is the candidate fix. Tooling-scoped, low urgency, affects fan-out cost.
 
 ## Blockers
 - OWNER (control-plane enforcement): the upgraded bundle's authoritative gate is the

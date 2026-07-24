@@ -1,23 +1,27 @@
 ---
-claim_id: 345de4df-98b9-4173-83d2-527ef649ae72
-generation: 3
+claim_id: df1b04f0-027c-4356-809b-2753e578dc0f
+generation: 4
 agent: fable-main
-task: W4
-status: released
+task: W5
+status: active
 integrator: true
 branch: main
 worktree_id: de0e68c2-2c3a-50b0-8989-ea790058ae41
-base_commit: 616078792c4fa1f808c28bf20a3c145adc16d7c0
+base_commit: 0f6110f878ad6a70f9eb4e8553a0d5b323da96d6
 allowed_paths:
   - lib/**
   - tests/**
-  - data/recordings/**
-scope_hash: sha256:8760462d2e157ef42a926f73b8be7d067044419486357009513da531924ade20
-issued_at: 2026-07-23T02:48:44Z
-lease_expires: 2026-07-23T10:48:44Z
-updated_at: 2026-07-23T14:50:32Z
+  - app/**
+  - bin/**
+  - components/**
+  - package.json
+  - vite.cli.config.ts
+scope_hash: sha256:a58ef081d441156c591946218684b821b845510f223ed0f0069276f79b40f4b7
+issued_at: 2026-07-24T19:47:15Z
+lease_expires: 2026-07-25T03:47:15Z
+updated_at: 2026-07-24T19:47:15Z
 ---
 
-# Claim: fable-main -> W4
+# Claim: fable-main -> W5
 
 This is a serial task/scope binding, not a distributed lock.

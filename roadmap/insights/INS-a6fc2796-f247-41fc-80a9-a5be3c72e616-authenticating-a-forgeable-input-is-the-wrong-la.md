@@ -81,3 +81,28 @@ timing across siblings (snapshot-all-first) → REFUSE active inputs entirely. E
 treated a symptom; the last removes the cause (caller behavior entering the evaluator).
 Note the scoping line this draws: same-realm prototype pollution BEFORE the call stays out
 of the threat model — the guarantee is only that no caller code runs DURING the evaluation.
+
+## Addendum 3 (W5 kickoff, 2026-07-24): a provenance brand is PROCESS-LOCAL — surfaces re-verify bytes
+The W5 mapping pass established the operational corollary of this insight, and it inverts the
+naive reading of "W5 must trust provenance-branded engine output". A WeakSet brand
+authenticates an object REFERENCE in one module instance of one process. It therefore does
+not survive: JSON round-trips, `structuredClone`, worker/IPC/process boundaries, HTTP, an
+artifact written by one surface and read by another — nor even a second module instance of
+the same file (an ESM+CJS dual load, or a Next.js server/edge split, creates a SECOND
+`VERIFIED_BUNDLES`, so a bundle branded by one instance is refused by the other).
+Consequences for the four surfaces:
+- Trust branded output only WITHIN the process that produced it. Never ship a "verified"
+  `RecordingBundle` or `ObservedIdentity` between surfaces and never re-brand one on
+  arrival — each surface re-runs `loadRecordingBytes` on the raw BYTES to re-earn the brand,
+  and runs observe→compare in-process, persisting only the OUTPUT (`IdentityComparison`).
+- So the artifact that legitimately crosses a surface boundary is the canonical report
+  payload, whose integrity mechanism is different in kind: revalidation-on-hash
+  (`reportHash` runs the full `validateReport` every call) rather than provenance. That is
+  why the report needs no brand and the bundle cannot do without one.
+- Corollary for W5's layering: the trust boundary is the BYTES + the deployment config, so
+  each surface must be handed bytes and config, not objects. A facade that returns branded
+  handles to a transport layer would be a design error; one that returns inert I-JSON plain
+  data (frozen) is correct — matching Addendum 1's "engine output handed across a trust
+  boundary should be plain frozen data".
+- Pin one import path for the spine in every surface (CLI, API route, CI adapter, web) so a
+  bundler cannot silently duplicate the module and split the WeakSet.
