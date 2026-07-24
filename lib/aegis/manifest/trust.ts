@@ -285,23 +285,52 @@ export interface PolicyTrustBlock {
 // to load is `invalid` and is NEVER evaluated for trust (spec: an invalid policy is not
 // evaluated) — the block then anchors to the sha256 of the exact rejected bytes so the
 // report still identifies which document was refused, with the typed failure as reason code.
+// The trusted manifest travels WITH its trust block (W5 seam, R-b4e2e152 §3).
+//
+// `loaded` is non-null ONLY when `block.state === "trusted"`, and it is then by construction
+// the manifest whose recomputed content hash IS `block.manifestHash` — evaluateTrust recomputed
+// it to decide approval. Consumers therefore read targets from a manifest that is already
+// bound to the hash the report carries, instead of accepting caller-supplied targets that
+// nothing ties to the trusted policy. An unapproved or invalid manifest yields no manifest at
+// all: its targets are unreachable, not merely unused.
+export interface ManifestTrustResult {
+  block: PolicyTrustBlock;
+  loaded: LoadedManifest | null;
+}
+
+export function trustedManifestFromBytes(
+  bytes: Uint8Array,
+  policy: ManifestTrustPolicy,
+  evidence: readonly unknown[],
+): ManifestTrustResult {
+  try {
+    const loaded = loadManifestBytes(bytes);
+    const evaluation = evaluateTrust(loaded, policy);
+    return {
+      block: { ...evaluation, evidence: [...evidence] },
+      loaded: evaluation.state === "trusted" ? loaded : null,
+    };
+  } catch (e) {
+    if (!(e instanceof ManifestError)) throw e;
+    return {
+      block: {
+        state: "invalid",
+        trustPolicyId: policy.trustPolicyId,
+        manifestHash: `sha256:${createHash("sha256").update(bytes).digest("hex")}`,
+        reasonCodes: [e.code],
+        evidence: [...evidence],
+      },
+      loaded: null,
+    };
+  }
+}
+
 export function policyTrustFromBytes(
   bytes: Uint8Array,
   policy: ManifestTrustPolicy,
   evidence: readonly unknown[],
 ): PolicyTrustBlock {
-  try {
-    return { ...evaluateTrust(loadManifestBytes(bytes), policy), evidence: [...evidence] };
-  } catch (e) {
-    if (!(e instanceof ManifestError)) throw e;
-    return {
-      state: "invalid",
-      trustPolicyId: policy.trustPolicyId,
-      manifestHash: `sha256:${createHash("sha256").update(bytes).digest("hex")}`,
-      reasonCodes: [e.code],
-      evidence: [...evidence],
-    };
-  }
+  return trustedManifestFromBytes(bytes, policy, evidence).block;
 }
 
 export interface ApplicabilityResult {
