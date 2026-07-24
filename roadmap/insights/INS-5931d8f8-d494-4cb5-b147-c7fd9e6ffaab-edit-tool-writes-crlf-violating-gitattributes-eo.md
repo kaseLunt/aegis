@@ -5,7 +5,7 @@ title: "Edit tool writes CRLF violating .gitattributes eol=lf; worktree-snapshot
 status: candidate
 informs: [W4, W5]
 review_when: date:2026-08-06
-updated: 2026-07-23
+updated: 2026-07-24
 ---
 
 # INS-5931d8f8-d494-4cb5-b147-c7fd9e6ffaab — Edit tool writes CRLF violating .gitattributes eol=lf; worktree-snapshot receipt validation fails at stamp time on Windows
@@ -46,3 +46,37 @@ nothing flagged it — until the achieved stamp.
 4. Proper durable fix (out of W4 scope): the doctor's worktree Snapshot should read files
    through git's eol filter (LF) rather than raw bytes, so a compliant CRLF-checked-out
    worktree cannot diverge from LF blob fingerprints. Candidate for a tooling-scoped task.
+
+## Addendum (W5 S0, 2026-07-24): the same tool also emits raw CONTROL characters, silently
+The CRLF finding above is one instance of a wider class: **the Write/Edit path interprets
+escape sequences instead of writing them literally.** Asking it to write the six characters
+`\u0000` inside a template literal produced a single raw NUL byte in the file. This happened
+THREE times in one session — in lib/aegis/surfaces/request.ts, in a new test's regex character
+class, and even in the prepared git commit message — each time silently.
+
+Why it is dangerous, and why nothing caught it:
+- A raw control character makes git classify the file as BINARY. It is then exempt from
+  `.gitattributes * text=auto eol=lf` and lands in history as an opaque blob that diffs as
+  `Bin 0 -> 5736 bytes` and cannot be reviewed line by line.
+- Every normal gate stays GREEN: the code compiles, `tsc --noEmit` is clean, eslint is clean,
+  and the whole suite passes — because a control character is a perfectly legal string
+  character. It was found only by reading a diffstat.
+- Same root as the CRLF case: the editor writes bytes the repo forbids, and git's own
+  normalisation/rendering hides the divergence until stamp time.
+
+Standing guidance:
+1. NEVER author `\uXXXX` / `\xXX` escape sequences through Write/Edit. Build such content
+   with Bash + python using numeric byte construction (`bytes([0])`, `bytes([92]) + b'u0000'`),
+   which is how all three instances above were repaired. The Bash tool additionally refuses
+   commands containing raw control characters, so numeric construction is required there too.
+2. The tooth for this class now exists: `tests/repo-source-hygiene.test.ts` fails on any raw
+   control character (other than tab/newline, and INCLUDING carriage return, so it doubles as a
+   CRLF check) across lib/, app/, tests/, components/. It was written RED against the live NUL
+   and immediately found two pre-existing instances nobody knew about:
+   tests/manifest-properties.test.ts (two NULs that are DELIBERATE test data for the
+   latin1-collision property — re-encoded as escapes, identical runtime value, intent intact)
+   and tests/w4-codex-fixes.test.ts (a CRLF worktree, the exact residue this insight predicted,
+   invisible in `git diff` because its committed blob was always LF).
+3. Consequence for item 4 of the Consequence list above: the durable doctor fix should read
+   worktree files through git's eol filter AND reject control characters, since both defects
+   are the same failure — worktree bytes diverging from what the repo permits.

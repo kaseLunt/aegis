@@ -51,9 +51,26 @@ sharpened why — **a WeakSet brand is process- and module-instance-local**, so 
 serialization boundary. Each surface re-earns the brand from raw bytes in-process and persists
 only outputs ([[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] addendum 3).
 
-Slices: S0 facade+request → S1 target binding + W4 re-attestation → S2 R-003 strict parse →
-S3 CLI → S4 report API → S5 CI adapter → S6 evidence drawer → S7 cross-surface byte identity.
-Then the Codex convergence gate before any achieved stamp.
+Slices: ~~S0 facade+request+trust seam~~ **DONE** → S1 target extraction + identity
+verifications → S2 R-003 strict parse → S3 CLI → S4 report API → S5 CI adapter → S6 evidence
+drawer → S7 cross-surface byte identity. Then the Codex convergence gate before any achieved
+stamp.
+
+**S0 landed** (06f44c6, 368/368, tsc + lint clean; re-attestation follow-on): the engine facade
+`runVerification`, the canonical request model, and the `trustedManifestFromBytes` seam that
+closes [[R-b4e2e152-96dc-4238-b76b-c16336e93dbd]] §3 by construction. S0 absorbed the trust seam
+from S1 (applicability needs the loaded manifest, so splitting meant writing then deleting a
+throwaway pattern). The facade also wires `checkApplicability`, which **nothing called before** —
+a trusted manifest outside its validity window or environment used to apply silently.
+
+Two corrections from S0, both worth carrying: (1) the kickoff said the trust.ts change would need
+ONE re-attestation; it needed **TWO** (`EV-W2-R2` + `EV-W4-R2`) because trust.ts is W2's own
+deliverable as well as being in W4's `invalidated_by` — ask which item OWNS a file, not just
+which list it. (2) A raw NUL byte from the editing tool made a source file register as BINARY to
+git with every gate green (compile, tsc, eslint, 366 tests) — caught only by reading a diffstat.
+New tooth `tests/repo-source-hygiene.test.ts` fails on any raw control character; written RED
+against the live defect, it immediately found two pre-existing instances
+([[INS-5931d8f8-d494-4cb5-b147-c7fd9e6ffaab]] addendum).
 
 **Standing notes for the W5 lane.** Codex-dispatch guardrails (no worktree,
 neutral+static brief, .serena/ clarification, never rm -rf shared temp) in [[INS-004]] +

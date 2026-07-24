@@ -18,13 +18,13 @@ deliverables:
   - lib/aegis/manifest/trust.ts
   - data/manifests/reference-code-identity.json
 evidence_receipts:
-  - roadmap/evidence/EV-W2.md
+  - roadmap/evidence/EV-W2-R2.md
 invalidated_by:
   - lib/aegis/report/**
   - lib/aegis/manifest/**
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:d769f152b2e83dacf562b7c76ae1ea1c2e8f11db7ecfb750c30b731484e43641
+evidence_fingerprint: sha256:a238fce6915e477f0cf361815261c76deb830c66b76e1f7de988675ef4224e41
 ---
 
 # W2 — Manifest model + trust root
@@ -92,6 +92,14 @@ npm test
   contract, same error class is fine).
 
 ## Evidence
+- 2026-07-24: RE-ATTESTED at 06f44c6 (EV-W4-R2's sibling EV-W2-R2, npm test 368/368). W5
+  slice S0 added `trustedManifestFromBytes` to `lib/aegis/manifest/trust.ts` — a W2
+  deliverable — so EV-W2 auto-invalidated and was superseded in place. The addition is
+  additive and `policyTrustFromBytes` now delegates to it with behavior-equivalence asserted
+  by test; no W2 semantics changed and `contract_fingerprint` is unchanged. Note for the
+  R-003 line in the Handoff below: the duplicate-aware parse is no longer deferred — W5
+  slice S2 closes it, because [[D-6bedc848-2a42-411a-a65b-d623f7418121]] has the report API
+  accept caller-supplied manifest bytes.
 - 2026-07-22: TDD slice 1 — RED 13 (module missing), GREEN 13/13; full suite 72/72; lint
   clean; trust-everything mutation killed by 3 tests incl. adversarial test 30 form.
 - 2026-07-22: spine-review hardening — 90/90 incl. spine-review-fixes.

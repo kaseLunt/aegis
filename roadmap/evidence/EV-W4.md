@@ -2,7 +2,8 @@
 id: EV-W4
 type: evidence
 title: W4 identity adapters + ABI registry verified at the Codex-converged commit
-status: recorded
+status: superseded
+superseded_by: EV-W4-R2
 work: W4
 result: pass
 commands:
@@ -12,7 +13,7 @@ tested_commit: 4fcfa1785c1f9d7686c9b9dc40391e4dbebd7847
 contract_fingerprint: sha256:2dfafe2e60b9e0ee0c2a0cd8abc96cf8d43c58f6f3a45f610521530b484537db
 input_fingerprint: sha256:5c15c03c46d81601066b1da70283740c14edb3c18a0e5d72009ea5fd29cbd13d
 environment: node 22.20.0, vitest 4.1.10, local win32-x64
-updated: 2026-07-23
+updated: 2026-07-24
 ---
 
 # EV-W4 — W4 verification receipt

@@ -126,15 +126,24 @@ Shape decisions and their rejected alternatives:
 
 ## Slices (each TDD, each ends green)
 
-- **S0 — engine facade + request model.** `surfaces/engine.ts` (`runVerification`) +
-  `surfaces/request.ts` (canonical request, deterministic `requestHash`). Returns
-  `{ payload, reportHash, diagnostics }` where `payload` is inert frozen I-JSON and
-  `diagnostics` carries the in-process-only detail (unresolved reasons, `ObservedIdentity.reads`)
-  that must never enter the hashed payload.
-- **S1 — manifest→target binding in `lib/aegis/manifest/trust.ts` + W4 re-attestation.**
-  `trustedManifestFromBytes` yields `{ block, loaded }`; targets come from `loaded` only when
-  `block.state === 'trusted'`. **Same commit** mints `EV-W4-R2` and supersedes `EV-W4`
-  (recipe: [[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]]).
+- **S0 — engine facade + request model + the trust seam. DONE (06f44c6, 368/368).**
+  `surfaces/engine.ts` (`runVerification`) + `surfaces/request.ts` (canonical request,
+  deterministic `requestHash`). Returns `{ payload, reportHash, request, diagnostics }` where
+  `payload` is inert frozen I-JSON and `diagnostics` carries the in-process-only detail
+  (unresolved reasons, applicability) that must never enter the hashed payload.
+  S0 **absorbed the trust seam** originally planned for S1: `checkApplicability` needs the
+  loaded manifest, so deferring the seam would have meant writing a throwaway
+  load-it-separately pattern and deleting it one slice later. `trustedManifestFromBytes`
+  yields `{ block, loaded }` with `loaded` non-null ONLY when `block.state === 'trusted'`,
+  and `policyTrustFromBytes` delegates to it so the two cannot diverge.
+  Re-attestation done in the follow-on commit: **TWO** receipts, not one —
+  `EV-W2-R2` **and** `EV-W4-R2`. The kickoff decision record said one; that was wrong,
+  because `lib/aegis/manifest/trust.ts` is W2's own **deliverable** as well as sitting in
+  W4's `invalidated_by`. Ask which item OWNS a file, not only which items list it.
+- **S1 — target extraction + identity verifications.** Read targets from the trusted
+  `loaded.manifest.targets`, run `observeIdentity` per target at the pinned boundary, and
+  `compareIdentityTarget` into the payload's `verifications` (S0 emits `[]`). No control-plane
+  obligation attached — the seam it depended on already landed in S0.
 - **S2 — [[R-003]]: duplicate-aware strict parse** at both byte boundaries + API request
   size/shape limits. Negative test must prove the pre-fix behavior would have passed.
 - **S3 — CLI.** `bin/aegis.ts` + `vite.cli.config.ts` + `package.json` bin/scripts;
@@ -159,11 +168,18 @@ npm test
 
 ## Handoff
 
-- next: W5 ACTIVE, kickoff complete, no code written yet. Start at **S0** (engine facade +
-  request model) using the reference recipe in `tests/engine.test.ts` describe
-  "W1+W2+W3 composition" (lines 122–178) and the identity e2e in
-  `tests/identity-compare.test.ts`. S1 is the one slice with a control-plane obligation
-  attached (W4 re-attestation in the same commit) — do not split it across commits.
+- next: **S0 DONE** (06f44c6 code; re-attestation follow-on). Start at **S1** — target
+  extraction + identity verifications: read targets from the trusted `loaded.manifest.targets`
+  that `trustedManifestFromBytes` now returns, `observeIdentity` per target at
+  `result.boundary.block`, then `compareIdentityTarget` into `payload.verifications` (S0 emits
+  `[]`). The identity e2e in `tests/identity-compare.test.ts` is the reference for building the
+  `IdentityComparisonContext` (manifestEvidence bound to `manifestHash`, freshness bound to the
+  pin). Note S0 loads only `role: "heads"` recordings; S1 wires the `"identity"` role.
+  Two carry-overs S0 deliberately left: the fully-unresolved case is a typed `SurfaceError`,
+  but a PARTIALLY unresolved run (one chain pinned, one not) is only covered by diagnostics —
+  add an explicit test; and `manifestVersion` degrades to `"unknown"` for untrusted/invalid
+  manifests by design (a refused document must not place chosen strings in a canonical field)
+  — confirm that reads honestly on the CLI/drawer.
 - read_first: [[D-6bedc848-2a42-411a-a65b-d623f7418121]] (shape + rejected alternatives);
   [[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] addendum 3 (brands are process-local —
   surfaces re-verify bytes, never ship verified objects);

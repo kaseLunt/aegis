@@ -19,7 +19,7 @@ deliverables:
   - lib/aegis/identity/compare.ts
   - lib/aegis/identity/abi.ts
 evidence_receipts:
-  - roadmap/evidence/EV-W4.md
+  - roadmap/evidence/EV-W4-R2.md
 invalidated_by:
   - lib/aegis/identity/**
   - lib/aegis/chain/**
@@ -28,7 +28,7 @@ invalidated_by:
   - data/recordings/**
 review_when: phase:P1:exit
 updated: 2026-07-23
-evidence_fingerprint: sha256:1483528113e92b272549db0bbf77d0706352a0cba44f065f4c1d3276cd1f6b23
+evidence_fingerprint: sha256:b430c6a9c2fbc079721221e1288b70c65830ea8f563e086a4737dac04377b495
 ---
 
 # W4 — Identity adapters + code-hash-scoped ABI registry
@@ -124,6 +124,12 @@ npm test
   ([[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]]).
 
 ## Evidence
+
+RE-ATTESTED at 06f44c6 (EV-W4-R2, npm test 368/368): W5 slice S0 added
+`trustedManifestFromBytes` to `lib/aegis/manifest/trust.ts`, inside W4's `invalidated_by`, so
+EV-W4 auto-invalidated and was superseded in place. Nothing under `lib/aegis/identity/**`
+changed; the manifest change is additive plus a delegation whose behavior-equivalence is
+asserted by test. `contract_fingerprint` is unchanged — input re-basis only.
 
 ACHIEVED (EV-W4, tested_commit 4fcfa17, npm test 339/339). Landed under the Codex
 convergence gate ([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]]): the review loop ran to a
