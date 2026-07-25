@@ -6,7 +6,7 @@
 ## Scope control
 1. **One active phase.** Everything else is planned or parked.
 2. **One current task per agent** (WIP = 1 per agent, [[D-006]]). Every active work item holds
-   exactly one active, unexpired claim (`roadmap/claims/`, `claim.py`); each agent holds at
+   exactly one active claim (`roadmap/claims/`, `claim.py`); each agent holds at
    most one. `STATUS.md active_task` is the integration/orchestrator lane. Starting something
    else means releasing or parking first. Concurrent *committing* writers additionally need
    per-writer worktrees/branches before launch; research and read-only lanes do not.
