@@ -20,26 +20,28 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W0H — retire claim lease expiry. Code + both Codex dispositions landed. BLOCKED on the
-convergence gate: the Codex backend is down.**
+**W0H — retire claim lease expiry. Code + receipts + both review rounds' dispositions landed;
+round-3 scoped re-review pending before the achieved stamp.**
 
-> ### 🔴 BLOCKER — Codex unreachable, W0H cannot be stamped achieved
-> Round-2 re-review could not be dispatched. Four attempts over ~9 minutes all failed at the
-> backend before any job id existed:
-> `503 Service Unavailable ... auth error code: biscuit_baker_service_me_circuit_open`.
-> Zero jobs were recorded, so this is a service outage, not a wedged queue. No review was
-> performed and none was fabricated.
->
-> [[D-b4ab3c69]] is explicit that complex work is never approved until the Codex loop converges
-> clean, so **W0H stays `active` and is NOT achieved.** Green local evidence is necessary, never
-> sufficient — and round 1 proved that concretely here: it found a P1 (executor docs) that every
-> local gate was blind to.
->
-> **Retry recipe (setup already validated, reuse as-is):** pin a detached worktree at `fc85b52`,
-> `--base 1290e4d`, `--scope branch`, and re-send the round-2 brief — verify the `issued > now`
-> subsumption analysis adversarially, sweep the whole repo for surviving executor-facing text
-> implying expiry/renewal, and judge whether the owner-only `RULES.md:9` residual is a shipping
-> blocker.
+**Codex round 2 (after a ~1h backend outage; dispatched on retry, pinned at `fc85b52`):**
+needs-attention, no P0. Dispositions, each verified at the CURRENT head:
+- **P2 (subsumption analysis): CLOSED by Codex** — confirmed `issued > now` is unreachable as a
+  sole cause, equality creates no counterexample, fixtures check distinct diagnostics, and the
+  protected-root-doc scope amendment "does not weaken authority".
+- **P1a (doctor-red / stale R4 receipts): resolved by timing** — the review pinned `fc85b52`
+  while the R5 receipts sat staged awaiting owner ack; `190d255` landed mid-review. Doctor at
+  current HEAD: OK 0 errors, re-verified.
+- **P1b-1 (RULES.md:9 "unexpired"): resolved by timing** — owner landed `1c01aac` mid-review.
+- **P1b-2 (D-007 reqs 2/5/7 still require lease expiry): GENUINE NEW FINDING**, missed by the
+  agent-side sweep. Dispositioned as a reader hazard, not a contradiction: D-007 governs future
+  ALLOCATOR leases (fenced expiry required), D-9646 governs today's cooperative serial claims
+  (no clock). Both decisions are immutable, so the binding reconciliation lives in
+  [[INS-fe09afdb-676b-42f6-9a60-0b1e61fa7978]] (promotable to decision grade at a phase review
+  if the owner wants); [[R-005]] annotated to point the future allocator designer there.
+
+[[D-b4ab3c69]]: W0H stays `active`, NOT achieved, until the round-3 scoped re-review returns
+converged-clean against a head containing `190d255`, `1c01aac`, and the reconciliation. On
+clean: mint EV-W0H, owner-ack the achieved stamp, release the claim, unpark W5 at S3.
 
 **Round 1 (completed, verdict needs-attention, no P0) — both findings dispositioned:**
 - **P1** `AGENTS.md:75` + `CLAUDE.md:80` still said "leases expire — renew or release". Fixed in

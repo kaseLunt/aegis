@@ -22,7 +22,12 @@ becomes live when concurrent repository writers start (pre-W5/M2 planning gate).
    attribution design (e.g. AEGIS_AGENT trailer) before it can be closed.
 2. Doctor reads working-tree control state; scope gate reads the staged index — a
    staged-vs-tree divergence can pass one and fail the other.
-3. Lease validation checks timestamp SHAPE only (regex), not real-datetime validity.
+3. ~~Lease validation checks timestamp SHAPE only (regex), not real-datetime validity.~~
+   **OVERTAKEN 2026-07-25, twice over:** the W0F bundle's `parse_utc` validates real calendar
+   time (`primitive:real-calendar-time`, `doctor:invalid-calendar-timestamp`), and lease
+   validation itself was retired by [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]] (W0H) — claim
+   timestamp sanity survives as `validate_claim_timestamps` with per-invariant mutation-tested
+   fixtures. The audit's verbatim text is struck, not deleted, to preserve the record.
 4. base_commit is format-checked, never verified to exist / be an ancestor.
 5. Claim `worktree` field unused; claim acquisition optimistic, not atomic across
    worktrees; claim transition + archival not atomic (evidenced by the orphaned
@@ -44,6 +49,10 @@ becomes live when concurrent repository writers start (pre-W5/M2 planning gate).
   prerequisites; the rest ride along in the same hardening pass. Target architecture and
   sequencing now owner-ratified in [[D-007]] (wave model, atomic allocator, worktree
   lanes, serialized merge queue; machinery built after W3, piloted after W4).
+- Lease semantics at the machinery phase: [[D-007]] reqs 2/5/7 still REQUIRE allocator
+  leases with fenced expiry, and W0H's clock retirement did not amend them — the two
+  decisions govern different mechanisms. Binding reconciliation:
+  [[INS-fe09afdb-676b-42f6-9a60-0b1e61fa7978]]. The allocator designer starts there.
 
 owner: klunt · review_when: phase:P1:exit
 
