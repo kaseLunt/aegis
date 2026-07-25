@@ -12,6 +12,8 @@ informs: []
 allowed_paths:
   - roadmap/tools/**
   - .github/workflows/control-plane.yml
+  - CLAUDE.md
+  - AGENTS.md
 deliverables:
   - roadmap/tools/_control_plane.py
   - roadmap/tools/claim.py
@@ -85,6 +87,20 @@ erase a retired field is explicitly out of scope.
   tools where the invariant is new, and watched red after reverting the fix where it is not).
 - **Non-regression:** `issued_at`/`updated_at` sanity is still enforced — a future `issued_at`
   is still rejected. Removing the clock must not remove timestamp validation.
+
+## Scope amendment 2026-07-25 — executor instructions (Codex P1)
+
+`CLAUDE.md` and `AGENTS.md` were added to `allowed_paths` after the Codex review found both
+still carry *"One active claim per agent; leases expire — renew or release"*
+(`AGENTS.md:75`, `CLAUDE.md:80`). Those files are the FIRST thing an executor reads, so leaving
+them stale would tell every future agent to run a command this item deletes — and the recorded
+failure mode is precisely an agent hitting that dead end and concluding the tooling is broken
+([[INS-c80e5b1e-d02d-4d0d-a48f-167aacf2eef7]]). Shipping the tooling without them would be a
+stale-green: gates and instructions disagreeing, with the instructions winning in practice.
+
+Both are PROTECTED surfaces, so the amendment is an owner-acknowledged scope expansion rather
+than an agent-side widening. `roadmap/RULES.md:9` stays OUT of scope — owner-only regardless of
+task — and remains the owner's one manual edit.
 
 ## Non-goals
 

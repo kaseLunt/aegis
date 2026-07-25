@@ -534,6 +534,10 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # The three timestamp invariants get ORTHOGONAL cases, so that breaking any one comparison
+    # in validate_claim_timestamps turns exactly one case red. A single both-fields-future
+    # fixture would stay green if either half of the future check were deleted, since the other
+    # field still produces the same diagnostic (Codex W0H review, P2).
     claim = read(claim_path)
     future = replace_claim_times(
         claim,
@@ -546,6 +550,42 @@ def test_doctor_and_gate(root: Path) -> None:
     check(
         "claim:future-issued-rejected",
         result.returncode == 1 and "may not be in the future" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    # Isolates the `updated_at > now` half: issued_at is safely in the past, so only the
+    # updated_at comparison can produce this diagnostic.
+    claim = read(claim_path)
+    future_updated = replace_claim_times(
+        claim,
+        issued="2000-01-01T00:00:00Z",
+        updated="2999-01-01T00:00:00Z",
+    )
+    write(claim_path, future_updated)
+    must(git(repo, "add", "roadmap/claims/CLAIM-synthetic.md"), "stage future updated_at")
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "claim:future-updated-rejected",
+        result.returncode == 1 and "may not be in the future" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    # Isolates the ordering rule: both stamps are in the past, so ONLY `issued_at > updated_at`
+    # can fire, and the diagnostic must be the ordering one rather than the future one.
+    claim = read(claim_path)
+    misordered = replace_claim_times(
+        claim,
+        issued="2000-01-02T00:00:00Z",
+        updated="2000-01-01T00:00:00Z",
+    )
+    write(claim_path, misordered)
+    must(git(repo, "add", "roadmap/claims/CLAIM-synthetic.md"), "stage misordered stamps")
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "claim:issued-after-updated-rejected",
+        result.returncode == 1 and "issued_at must not follow updated_at" in output(result),
         output(result),
     )
     reset(repo, active)

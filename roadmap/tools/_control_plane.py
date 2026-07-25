@@ -235,6 +235,12 @@ def validate_claim_timestamps(
     updated = parse_utc(scalar(data, "updated_at", path, required=True), f"{path}:updated_at")
     if issued > updated:
         raise ControlPlaneError(f"{path}: issued_at must not follow updated_at")
+    # `issued > now` is deliberately redundant, NOT dead code awaiting removal. The ordering
+    # check above guarantees issued <= updated, so `updated <= now` implies `issued <= now`:
+    # the issued half can never be the sole cause, and no fixture can isolate it. Verified by
+    # mutation -- deleting `issued > now` turns no selftest case red, while deleting either
+    # `updated > now` or the ordering check turns exactly one red. It is kept so the invariant
+    # still holds if the ordering rule is ever relaxed.
     if issued > now or updated > now:
         raise ControlPlaneError(f"{path}: issued_at/updated_at may not be in the future")
     return issued, updated
