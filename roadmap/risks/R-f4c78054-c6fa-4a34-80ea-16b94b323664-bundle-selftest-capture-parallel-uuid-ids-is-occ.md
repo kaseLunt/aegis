@@ -70,4 +70,15 @@ urgent if ... flakes and masks a real failure"): it is now blocking pushes outri
 stinging. [[W0G]] was filed as `candidate` for after W5 on the assumption that the retry-once
 rule covered the gap; that assumption is now falsified and the sequencing should be revisited.
 
+### Flake rate observed at the escalation (useful for reproduction)
+The THIRD push attempt passed, with no bypass used at any point. So in that window the local
+Windows failure rate was roughly two in three, and the gate is not deterministic in either
+direction. Two consequences: (a) W0G's reproduction loop should hit the failure within a few
+iterations rather than needing a long soak; (b) a single green local selftest is NOT evidence
+the race is fixed — W0G's acceptance must run the case enough times to bound the rate, which is
+why its acceptance says "run the case enough times to bound the flake, not once".
+For the record, the halt was honoured: after the second consecutive red the push was stopped and
+investigated rather than retried blindly, and the attempt that finally succeeded carried new
+commits (the escalation record and the W0G diagnosis), not a bare re-run.
+
 owner: klunt · review_when: date:2026-08-06
