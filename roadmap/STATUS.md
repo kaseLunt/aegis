@@ -20,16 +20,39 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W0H — retire claim lease expiry.** Owner directive 2026-07-25 ("we need to get rid of the
-leasing system"), decided in [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]]. Removes the lease
-*clock* only: `lease_expires`, `renew`, `--hours`, `MAX_LEASE_HOURS`, `check_expiry`, and
-`--check-live-lease(s)`. Claims themselves stay — scope, `scope_hash`, branch/worktree binding,
-`rebind --owner-reviewed`, WIP=1, and the `active -> released|failed|abandoned` lifecycle are all
-unchanged. Abandonment recovery becomes the explicit `release --status abandoned`.
+**W0H — retire claim lease expiry. CODE + RECEIPTS LANDED AND PUSHED; awaiting Codex
+convergence ([[D-b4ab3c69]]) before any achieved stamp.**
 
-This is a PROTECTED-surface change (`roadmap/tools/**`) and carries a five-receipt
-re-attestation chain (W0A, W0B, W0D, W0E, W0F). Deliberately NOT bundled with [[W0G]] defect 1
-— the decision records why. Owner-only follow-up: `RULES.md:9` still says "unexpired".
+Owner directive 2026-07-25 ("we need to get rid of the leasing system"), decided in
+[[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]]. Removed the lease *clock* only: `lease_expires`,
+`renew`, `--hours`, `MAX_LEASE_HOURS`, `check_expiry`, `--check-live-lease(s)`,
+`Authority.expired`, and `scope_diff.validate_live_head`. Claims themselves are unchanged —
+scope, `scope_hash`, branch/worktree binding, `rebind --owner-reviewed`, WIP=1, and the
+`active -> released|failed|abandoned` lifecycle. Abandonment recovery is now the explicit
+`release --status abandoned`.
+
+Landed: `724fe40` kickoff -> `6850f1a` code (owner `--no-verify`, deliberately doctor-red
+mid-chain) -> `1290e4d` six receipts (owner acknowledgement). Pushed at `1290e4d`.
+
+Verified fresh: doctor **OK 0 errors** at HEAD · selftest **0 failing** · **384/384** · tsc 0.
+Teeth negative-tested with two mutants — reintroducing ANY time-based refusal kills all three
+stale-claim cases; reintroducing a `lease_expires` write kills the open-writes case.
+
+**SIX receipts, not five** (W0, W0A, W0B, W0D, W0E, W0F). The decision's estimate of five was
+carried over from W0G, whose file set missed W0's narrow `invalidated_by`
+(`roadmap/tools/doctor.py`). Method recorded in
+[[INS-ede05c7a-0d89-49ab-a324-d4ef35d92c6e]]: derive the set from a doctor run, never predict it.
+EV-W0D-R4 and EV-W0E-R4 are explicit scope **reductions** — both items had attested lease
+behaviour by name, and both handoffs are annotated so nobody is told to run `renew`.
+
+CI: Control plane remains red at the SAME pre-existing failure as `0a75f8e`
+(`owner approval requires a positive decimal pull-request number` — a direct push has no PR
+number; [[R-005]]/[[D-007]]). Doctor and selftest jobs PASS remotely with the flags removed.
+
+- **Owner-only follow-up:** `roadmap/RULES.md:9` still reads "exactly one active, unexpired
+  claim". Delete `, unexpired` — the word is now false.
+- **Not bundled with [[W0G]] defect 1** (worktree CRLF/control-char snapshot) — the decision
+  records why: that edit changes fingerprint semantics, the evidence root.
 
 **W5 remains PARKED at `committed` after S0/S1/S2, mid-slice-plan** — the lease lapse that
 parked it is the very thing W0H removes. **To resume W5 after W0H lands:** set W5
