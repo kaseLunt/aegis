@@ -153,8 +153,12 @@ Shape decisions and their rejected alternatives:
   `capturedAt` plus a fail-closed `ambiguous_head_provenance` refusal when more than one heads
   recording is supplied. Full analysis and the deferred durable fix:
   [[INS-84853447-d1bb-4095-bfd6-9cc0fbaafabc]].
-- **S2 — [[R-003]]: duplicate-aware strict parse** at both byte boundaries + API request
-  size/shape limits. Negative test must prove the pre-fix behavior would have passed.
+- **S2 — [[R-003]] duplicate-aware strict parse. DONE (3e70cf2, 384/384).**
+  `findDuplicateJsonKey` in `report/canonical.ts`; both byte boundaries reject duplicate keys
+  before parsing, with typed `duplicate_json_key` errors. Per-object scoping, string-value
+  colons and escaped key quotes all pinned; guard negative-tested at both call sites. R-003
+  CLOSED. Four receipts re-attested (W1 included by the deliberate placement choice).
+  API request size/shape limits move to **S4**, where the HTTP edge actually exists.
 - **S3 — CLI.** `bin/aegis.ts` + `vite.cli.config.ts` + `package.json` bin/scripts;
   `node:util parseArgs`; `surfaces/render.ts`; exit-code matrix.
 - **S4 — report API.** `app/api/v1/verify` (POST) + `app/api/v1/reports/<hash>` (GET,
@@ -177,13 +181,14 @@ npm test
 
 ## Handoff
 
-- next: **S0 + S1 DONE** (374/374, tsc + lint clean). Start at **S2 — [[R-003]] duplicate-aware
-  strict parse** at `loadManifestBytes` and `loadRecordingBytes`, plus API-edge size/shape
-  limits. NOTE: S2 touches `lib/aegis/manifest/**` and `lib/aegis/chain/**`, so it WILL
-  invalidate the W2, W3 and W4 receipt bases — plan the same two-commit re-attestation chain S0
-  used (code commit lands doctor-red under owner authorization, then `EV-*-R*` minted at that
-  SHA and superseded in place). Check which items OWN the files, not just which list them:
-  expect W2 (owns trust.ts), W3 (owns chain/adapter.ts) and W4 (lists both).
+- next: **S0 + S1 + S2 DONE** (384/384, tsc + lint clean). Start at **S3 — the CLI**:
+  `bin/aegis.ts` + `vite.cli.config.ts` + `package.json` bin/scripts, `node:util parseArgs`,
+  `surfaces/render.ts`, and the exit-code matrix (0 clean / 2 blocking fail / 3
+  unknown-stale-conflict / 4 invalid request or manifest / 5 engine failure).
+  **No more re-attestation chains in W5**: S3-S7 touch `bin/`, `app/`, `components/` and
+  `lib/aegis/surfaces/`, none of which appear in any other item's `invalidated_by`. S2 was the
+  last one, and it cost FOUR receipts (W1, W2, W3, W4) — one more than predicted, because the
+  scanner was placed in `report/canonical.ts` on purpose.
   Carry-overs still open:
   - Verdicts over the shipped fixtures are all `unknown` by construction — the manifest's
     targets have no recorded reads and its expected hashes are placeholders. A matched

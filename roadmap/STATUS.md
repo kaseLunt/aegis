@@ -52,7 +52,7 @@ serialization boundary. Each surface re-earns the brand from raw bytes in-proces
 only outputs ([[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] addendum 3).
 
 Slices: ~~S0 facade+request+trust seam~~ **DONE** → ~~S1 target extraction + identity
-verifications~~ **DONE** → S2 R-003 strict parse → S3 CLI → S4 report API → S5 CI adapter → S6 evidence
+verifications~~ **DONE** → ~~S2 R-003 strict parse~~ **DONE** → S3 CLI → S4 report API → S5 CI adapter → S6 evidence
 drawer → S7 cross-surface byte identity. Then the Codex convergence gate before any achieved
 stamp.
 
@@ -83,9 +83,13 @@ because none looked INSIDE `evidence`. Fixed with the verified bundle's own time
 fail-closed refusal when head provenance would be ambiguous
 ([[INS-84853447-d1bb-4095-bfd6-9cc0fbaafabc]]).
 
-Heads-up for **S2**: it touches `lib/aegis/manifest/**` and `lib/aegis/chain/**`, so it will
-invalidate the W2, W3 **and** W4 receipt bases — budget the same owner-authorized two-commit
-re-attestation chain S0 used.
+**S2 landed** (3e70cf2, 384/384): [[R-003]] CLOSED — both untrusted byte boundaries now reject
+duplicate JSON keys before parsing, so a document can no longer be hashed under one meaning and
+read under another. Cost FOUR receipts (W1, W2, W3, W4), one more than predicted: the scanner
+went into `report/canonical.ts` beside `jcsSerialize` on purpose, rather than splitting JSON
+discipline across modules to save a mechanical re-attestation.
+**S2 was the last re-attestation chain in W5** — S3-S7 touch only `bin/`, `app/`, `components/`
+and `lib/aegis/surfaces/`.
 
 **Standing notes for the W5 lane.** Codex-dispatch guardrails (no worktree,
 neutral+static brief, .serena/ clarification, never rm -rf shared temp) in [[INS-004]] +

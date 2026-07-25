@@ -2,7 +2,8 @@
 id: EV-W1-R2
 type: evidence
 title: W1 canonical verification passed at the module-scoped basis commit
-status: recorded
+status: superseded
+superseded_by: EV-W1-R3
 work: W1
 result: pass
 commands:
@@ -14,7 +15,7 @@ contract_fingerprint: sha256:f493c51701753b96aed2e081c17728869cd1614c7837b91ac31
 input_fingerprint: sha256:34a9574f9b0fbd79d1694835c16000ed43310e2cb90ed125ab32ec2951b995cd
 environment: node 22.20.0, vitest 4.1.10, local win32-x64
 supersedes: [EV-W1]
-updated: 2026-07-22
+updated: 2026-07-25
 ---
 
 # EV-W1-R2 — W1 verification receipt (module-scoped basis)

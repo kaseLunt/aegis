@@ -18,13 +18,13 @@ deliverables:
   - lib/aegis/manifest/trust.ts
   - data/manifests/reference-code-identity.json
 evidence_receipts:
-  - roadmap/evidence/EV-W2-R2.md
+  - roadmap/evidence/EV-W2-R3.md
 invalidated_by:
   - lib/aegis/report/**
   - lib/aegis/manifest/**
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:a238fce6915e477f0cf361815261c76deb830c66b76e1f7de988675ef4224e41
+evidence_fingerprint: sha256:4e2d3b835af7f18abb914bfd2eb78f4ef1d9fa3f7af3b19673a7d0fd70aab22f
 ---
 
 # W2 — Manifest model + trust root

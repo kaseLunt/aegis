@@ -18,12 +18,12 @@ deliverables:
   - lib/aegis/report/canonical.ts
   - tests/report-properties.test.ts
 evidence_receipts:
-  - roadmap/evidence/EV-W1-R2.md
+  - roadmap/evidence/EV-W1-R3.md
 invalidated_by:
   - lib/aegis/report/**
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:adf9304a01cb808abd9acff3d2de21a77e8b061233221c27843c310da18141f7
+evidence_fingerprint: sha256:c345866a5d149df4d399a5dfd40a853c792c623616b3e857737980613f902d4a
 ---
 
 # W1 — Canonical report core

@@ -2,7 +2,8 @@
 id: EV-W4-R2
 type: evidence
 title: W4 verification re-attested at the W5 S0 manifest->target trust seam commit
-status: recorded
+status: superseded
+superseded_by: EV-W4-R3
 work: W4
 result: pass
 commands:
@@ -13,7 +14,7 @@ contract_fingerprint: sha256:2dfafe2e60b9e0ee0c2a0cd8abc96cf8d43c58f6f3a45f61052
 input_fingerprint: sha256:bbb9f3f1e77131297e459544d7a361f39446fff50a7b6e5124ce172bb72eaae2
 environment: node 22.20.0, vitest 4.1.10, local win32-x64
 supersedes: [EV-W4]
-updated: 2026-07-24
+updated: 2026-07-25
 ---
 
 # EV-W4-R2 — W4 verification receipt (re-attested)
