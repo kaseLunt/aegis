@@ -2,7 +2,8 @@
 id: EV-W0D-R2
 type: evidence
 title: W0D verification re-attested at the historical-receipt fix commit
-status: recorded
+status: superseded
+superseded_by: EV-W0D-R3
 work: W0D
 result: pass
 commands:
@@ -13,7 +14,7 @@ contract_fingerprint: sha256:e8016e57f9163a5fc28a3ff47e743faaf4bd1e347567ff0d23e
 input_fingerprint: sha256:3321cccd0537e459567377b3573a3d41daaeb543d282b4208c70b9731b465c2d
 environment: python 3.x, node 22.20.0, local win32-x64
 supersedes: [EV-W0D]
-updated: 2026-07-22
+updated: 2026-07-25
 ---
 
 # EV-W0D-R2 — W0D verification receipt (re-attested)

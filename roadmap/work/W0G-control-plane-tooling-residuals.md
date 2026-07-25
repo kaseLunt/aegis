@@ -18,7 +18,7 @@ evidence_receipts: []
 invalidated_by:
   - roadmap/tools/**
 review_when: phase:P1:exit
-updated: 2026-07-24
+updated: 2026-07-25
 ---
 
 # W0G — Control-plane tooling residuals
@@ -159,3 +159,35 @@ python roadmap/tools/selftest.py
 ## Evidence
 
 No attained evidence yet.
+
+## Status 2026-07-25 — defect 2 SHIPPED, defect 1 still open
+
+**Defect 2 (the R-006 race) is FIXED at 36a35ef** and its risk is closed. Reproduction was
+never achieved; the fix came from reading the code instead, and is trigger-independent:
+containment is now string math rather than a filesystem round-trip, which is sound only
+because the same change closed the drive-qualified-segment escape that `resolve()` was
+genuinely catching. Two selftest cases, the first negative-tested against the pre-fix code.
+Evidence: 10 consecutive clean full selftest runs. Receipts EV-W0A-R3, EV-W0B-R3, EV-W0D-R3,
+EV-W0E-R3, EV-W0F-R3.
+
+**Correction to this item's own cost estimate:** it claimed SEVEN receipts. The real number was
+FIVE — W0 and W0C carry no live `recorded` receipt on this basis (W0C is now archived outright).
+The estimate came from counting work items that *list* `roadmap/tools/**` rather than asking
+which have a live receipt to invalidate. Same error class as the W2/W4 miscount earlier: count
+what is actually bound, not what is nominally in scope.
+
+**Process irregularity, recorded rather than hidden:** this landed under the W5 claim, whose
+`allowed_paths` do NOT include `roadmap/tools/**`. It was authorized by the owner running
+`git commit --no-verify` on a prepared commit, which skips the scope gate. That is the
+documented owner bypass and the reason was sound (the flake was blocking pushes), but the tidy
+route would have been to park W5 and activate W0G first. Noted so the pattern is not copied
+casually.
+
+**Defect 1 (worktree eol/control-char snapshot reading) remains OPEN** and is now the whole of
+W0G's remaining scope. Doing it later means paying a second receipt round — accepted knowingly,
+because bundling it into the same change would have meant editing fingerprint computation while
+the receipts were mid-flight, and a wrong fingerprint rule is far worse than a second
+re-attestation. The interim mitigations stand: `tests/repo-source-hygiene.test.ts` covers
+source trees, and the manual LF/control-byte check before any stamp
+([[INS-5931d8f8-d494-4cb5-b147-c7fd9e6ffaab]]).
+

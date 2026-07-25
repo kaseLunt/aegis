@@ -26,7 +26,7 @@ Dependency-gated: an item can't be certified while anything it depends on is unp
 | W0 | Stand up the repo-native control plane for agent-swarm coordination | P0 | — | Correct | achieved |
 | W0A | Adopt the sibling orchestrator's control-plane directive, right-sized for Aegis | P0 | W0 | Correct | achieved |
 | W0B | Harden the control plane per external review (enforcement gaps, honest claims) | P0 | W0A | Correct + Robust | achieved |
-| W0C | Purge work-email identity from history and prevent recurrence mechanically | P0 | W0B | Correct | committed |
+| W0C | Purge work-email identity from history and prevent recurrence mechanically | P0 | W0B | Correct | archived |
 | W0D | Parallelism prep — claims model, lane charters, doctrine (D-006) | P0 | W0B | Correct + Robust | achieved |
 | W0E | Lane hardening per second review — close cooperative-gate holes before lane commits | P1 | W0D | Correct + Robust | achieved |
 | W0F | Migrate to upgraded control-plane bundle (receipts, snapshot coherence, writer_mode) | P1 | — | Correct + Robust | achieved |

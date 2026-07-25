@@ -2,10 +2,10 @@
 id: R-f4c78054-c6fa-4a34-80ea-16b94b323664
 type: risk
 title: "Bundle selftest capture:parallel-uuid-ids is occasionally flaky (parallel UUID timing)"
-status: open
+status: closed
 informs: [W0F]
 review_when: date:2026-08-06
-updated: 2026-07-23
+updated: 2026-07-25
 ---
 
 # R-f4c78054-c6fa-4a34-80ea-16b94b323664 — Bundle selftest capture:parallel-uuid-ids is occasionally flaky (parallel UUID timing)
@@ -80,5 +80,29 @@ why its acceptance says "run the case enough times to bound the flake, not once"
 For the record, the halt was honoured: after the second consecutive red the push was stopped and
 investigated rather than retried blindly, and the attempt that finally succeeded carried new
 commits (the escalation record and the W0G diagnosis), not a bare re-run.
+
+## CLOSED 2026-07-25 — root cause fixed at 36a35ef
+Not a UUID race and not a test-harness quirk: `safe_worktree_path` proved containment with
+`Path.resolve()` + `relative_to`, a FILESYSTEM round-trip establishing a property that was
+already structural. On Windows under concurrent I/O `resolve()` can transiently disagree with
+itself, so the guard failed closed with "destination escapes repository root" — a robustness
+check that had become an intermittent liveness failure.
+
+Fix: containment is now `os.path.normcase`/`normpath` string comparison (no filesystem access,
+cannot race). That is only sound because the same change closed the one escape `resolve()` was
+genuinely catching — `normalize_repo_path` rejected a LEADING drive but never re-checked split
+segments, so `roadmap/C:/x` passed, and on Windows `Path(root) / "C:"` DISCARDS the root. That
+segment is now rejected at the boundary. The selftest case for it FAILED against the old code,
+so the hole was real and this closure is a net security improvement, not just a de-flake.
+
+Evidence: 10 consecutive full selftest runs, zero failures (soak truncated at a 10-minute tool
+limit). The pre-fix rate blocked 4 of ~7 push attempts that day, at which rate 10 clean runs in
+a row has probability ~0.4%. Teeth: `primitive:drive-qualified-segment-rejected` (negative-tested
+— it fails against the pre-fix code) and `primitive:containment-holds-without-filesystem-resolve`.
+Receipts EV-W0A-R3, EV-W0B-R3, EV-W0D-R3, EV-W0E-R3, EV-W0F-R3 re-attest the affected items.
+
+Two hypotheses were tested and DISCARDED first, recorded so nobody re-walks them: 8.3 short-path
+expansion, and something specific to the parallel-capture harness (20/20 clean in isolation).
+The standing retry-once operational rule is retired with this closure.
 
 owner: klunt · review_when: date:2026-08-06

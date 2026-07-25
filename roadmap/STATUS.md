@@ -6,7 +6,7 @@ enforcement_evidence: []
 project_state: active
 active_phase: P1
 active_task: W5
-updated: 2026-07-24
+updated: 2026-07-25
 ---
 
 # STATUS — where we are right now
@@ -90,9 +90,8 @@ re-attestation chain S0 used.
 **Standing notes for the W5 lane.** Codex-dispatch guardrails (no worktree,
 neutral+static brief, .serena/ clarification, never rm -rf shared temp) in [[INS-004]] +
 [[INS-fa971e14-587c-4565-907e-839ec51a3101]]. Lanes WR1/WR2/WR3/WR6 closed; WR4/WR5
-deferred. W0C parked. NOTE: R-006 selftest flake ([[R-f4c78054-c6fa-4a34-80ea-16b94b323664]])
-— retry a red push once, halt on a second consecutive red; fix batched with the next
-roadmap/tools change.
+deferred. W0C archived. **R-006 is CLOSED** (36a35ef) — the retry-once-then-halt rule for
+red pushes is RETIRED; a red selftest is now a real failure with no known flake behind it.
 
 ## Recently completed
 - **W4 — identity adapters + code-hash-scoped ABI registry** ACHIEVED (EV-W4,
@@ -142,10 +141,11 @@ roadmap/tools change.
    action. **M1 closes at W6.**
 3. Manifest-owner open items: live rate-limit value (3k vs 10k weETH/4h), executor pin,
    historical setPeer tx. WR4/WR5 round 2 at M3/M4 planning.
-4. [[W0G]] — control-plane tooling residuals (worktree eol/control-char snapshot + the R-006
-   race, whose root cause is now identified as path resolution, NOT UUID timing). `candidate`;
-   filed rather than fixed inline because any `roadmap/tools/**` change invalidates SEVEN
-   receipt bases on an owner-gated protected surface. Recommended AFTER W5.
+4. [[W0G]] — **R-006 half is DONE** (36a35ef, risk closed): the path-containment race that had
+   been blocking pushes is fixed, with two selftest teeth and a 10-run clean soak. Remaining
+   W0G scope is the worktree eol/control-char snapshot fix only; it needs a second receipt round,
+   knowingly accepted. Real receipt cost was FIVE, not seven — count what is actually bound, not
+   what is nominally in scope.
 5. Serena-in-subagents: **resolved by diagnosis, no action needed**
    ([[INS-f3f74c16-f56e-46b1-85bd-55464e4183ce]] item 2). The "untracked `.serena/`" hypothesis
    was DISPROVEN — a subagent inherits the cwd, sees the config, and `find_symbol` succeeds.
@@ -193,9 +193,13 @@ roadmap/tools change.
   made visible; and a deliberately doctor-RED middle commit (06f44c6) did NOT break CI,
   confirming the doctor validates the push HEAD while `scope_diff` replays transitions — the
   two-commit re-attestation chain shape is CI-safe.
-- W0C (parked): GitHub repo deletion needs owner auth — run
-  `gh auth refresh -h github.com -s delete_repo` or delete kaseLunt/aegis via web; agent
-  then recreates, pushes, verifies, and closes W0C.
+- ~~W0C (parked)~~ **ARCHIVED 2026-07-25.** The substance shipped (history rewritten, identity
+  tooth installed and negative-tested, repo verifies clean). The remnant — pre-rewrite commits
+  still fetchable by direct SHA from GitHub's cache until the repo is deleted and recreated —
+  was judged not worth its cost: it waited indefinitely on an owner `delete_repo` auth scope,
+  the exposure needs a guessed full SHA against an already-clean repo, and recreating would
+  discard stars, CI history and the issue graph. Reopen if that residue ever matters; the
+  procedure is recorded in the work file.
 
 ## Owner decisions resolved 2026-07-22 (audit #2 follow-through)
 - W2→W3 transition: AEGIS-OWNER-APPROVED marker landed (9e4d0d8) with the CI

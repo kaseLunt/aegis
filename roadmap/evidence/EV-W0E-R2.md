@@ -2,7 +2,8 @@
 id: EV-W0E-R2
 type: evidence
 title: W0E verification re-attested at the historical-receipt fix commit
-status: recorded
+status: superseded
+superseded_by: EV-W0E-R3
 work: W0E
 result: pass
 commands:
@@ -13,7 +14,7 @@ contract_fingerprint: sha256:716684b2eeb35083e9a1cb59ed4134387333121bdc36f5ac19c
 input_fingerprint: sha256:bb6678089151714d4ff6fd144ad5190d59de452b06637004bd2e3271129f0b6d
 environment: python 3.x, node 22.20.0, local win32-x64
 supersedes: [EV-W0E]
-updated: 2026-07-22
+updated: 2026-07-25
 ---
 
 # EV-W0E-R2 — W0E verification receipt (re-attested)

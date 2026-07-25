@@ -3,7 +3,7 @@ id: W0C
 type: work
 title: Purge work-email identity from history and prevent recurrence mechanically
 phase: P0
-status: committed
+status: archived
 evidence_target: "Correct"
 priority: 1
 depends_on: [W0B]
@@ -18,7 +18,7 @@ evidence_receipts: []
 review_when: event:repo-deletion-auth
 invalidated_by:
   - .githooks/**
-updated: 2026-07-21
+updated: 2026-07-25
 ---
 
 # W0C — Identity scrub (work email must never appear publicly)
@@ -68,3 +68,20 @@ python roadmap/tools/doctor.py
   only the personal email. Direct-SHA fetch of old history still returns cached objects --
   deletion pending owner auth (see handoff).
 - 2026-07-21: global git config: user.useConfigOnly=true, user.email unset.
+
+## ARCHIVED 2026-07-25 — the substance shipped; the remnant is not worth the cost
+The objective was met: history was rewritten, the identity allowlist tooth landed in
+`.githooks/pre-commit` (negative-tested), R-002 was recorded, and the public repo verifies clean
+— the GitHub API reports only the personal identity on main.
+
+The only remnant was that PRE-rewrite commits stay fetchable from GitHub's cache by direct SHA
+until the repository is deleted and recreated. Archiving that deliberately, with reasons:
+its `review_when: event:repo-deletion-auth` made this item wait on an owner granting a
+`delete_repo` auth scope, so it sat blocked indefinitely; the exposure is a dangling object
+reachable only by guessing a full SHA on an already-clean repo; and deleting/recreating the
+repository would discard stars, watchers, CI history and the issue graph for that marginal gain.
+The mechanical guarantee that matters — no future commit can carry the work identity — is
+already installed and enforced.
+If the residue ever needs erasing, the path is unchanged: `gh auth refresh -h github.com -s
+delete_repo`, delete, recreate public, push, re-verify zero occurrences. Reopen this item then.
+
