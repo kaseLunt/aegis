@@ -271,6 +271,11 @@ def normalize_repo_path(value: str, label: str = "path") -> str:
     parts = value.split("/")
     if any(part in ("", ".", "..") for part in parts):
         raise ControlPlaneError(f"{label}: traversal or empty segment is forbidden: '{value}'")
+    # A drive-qualified SEGMENT is the one input that can escape containment by construction:
+    # on Windows `Path(root) / "C:"` DISCARDS the root and yields a drive-relative path. The
+    # whole-value guard above only sees a LEADING drive, so "roadmap/C:/x" slipped past it.
+    if any(re.match(r"^[A-Za-z]:", part) for part in parts):
+        raise ControlPlaneError(f"{label}: drive-qualified segment is forbidden: '{value}'")
     return value
 
 
@@ -284,11 +289,16 @@ def safe_worktree_path(repo: str, value: str, label: str = "path") -> Path:
         is_junction = getattr(current, "is_junction", lambda: False)
         if current.is_symlink() or is_junction():
             raise ControlPlaneError(f"{label}: symlink destination or parent is forbidden")
-    resolved = current.resolve(strict=False)
-    try:
-        resolved.relative_to(root)
-    except ValueError as exc:
-        raise ControlPlaneError(f"{label}: destination escapes repository root") from exc
+    # Containment is STRUCTURAL here: `current` is `root / parts`, normalize_repo_path has
+    # rejected empty/./.. and drive-qualified segments (the only ways `/` can discard the root),
+    # and no component is a symlink or junction. So prove it with pure string math instead of
+    # Path.resolve(), which consults the filesystem and can transiently disagree with itself
+    # under concurrent I/O on Windows -- that turned this robustness guard into an intermittent
+    # liveness failure that blocked pushes (R-f4c78054 / W0G).
+    root_key = os.path.normcase(os.path.normpath(str(root)))
+    current_key = os.path.normcase(os.path.normpath(str(current)))
+    if current_key != root_key and not current_key.startswith(root_key + os.sep):
+        raise ControlPlaneError(f"{label}: destination escapes repository root")
     return current
 
 

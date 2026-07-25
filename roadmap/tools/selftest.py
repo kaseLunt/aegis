@@ -20,9 +20,11 @@ from pathlib import Path
 
 from _control_plane import (
     Snapshot,
+    normalize_repo_path,
     parse_frontmatter,
     parse_scope,
     parse_utc,
+    safe_worktree_path,
     scope_hash,
     snapshot_fingerprint,
 )
@@ -437,6 +439,28 @@ def test_shared_primitives() -> None:
     except Exception:
         wildcard_failed = True
     check("primitive:exact-or-subtree-only", wildcard_failed)
+
+    # R-006: a drive-qualified SEGMENT (not just a leading drive) must be rejected. On Windows
+    # `Path(root) / "C:"` DISCARDS the root, so this is the one input that can escape
+    # containment by construction, and the whole-value guard above never saw it.
+    try:
+        normalize_repo_path("roadmap/C:/escaped.md", "synthetic")
+        drive_segment_failed = False
+    except Exception:
+        drive_segment_failed = True
+    check("primitive:drive-qualified-segment-rejected", drive_segment_failed)
+
+    # Containment must still hold, and must not depend on a filesystem round-trip: the check
+    # is what R-006 turned into an intermittent liveness failure, so it is now pure string math.
+    with tempfile.TemporaryDirectory(prefix="control-plane-containment-") as containment_root:
+        inside = safe_worktree_path(containment_root, "roadmap/ideas/IDEA-x.md", "synthetic")
+        contained = str(inside).startswith(str(Path(containment_root).resolve()))
+        try:
+            safe_worktree_path(containment_root, "roadmap/../../escaped.md", "synthetic")
+            traversal_failed = False
+        except Exception:
+            traversal_failed = True
+    check("primitive:containment-holds-without-filesystem-resolve", contained and traversal_failed)
 
 
 def test_doctor_and_gate(root: Path) -> None:
