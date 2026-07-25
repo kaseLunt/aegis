@@ -162,6 +162,81 @@ const EVIDENCE_MANDATORY = [
 
 const ROLE_LISTS = ["expectedEvidenceIds", "actualEvidenceIds", "derivationInputIds", "inputEvidenceIds"] as const;
 
+// R-003 — duplicate JSON keys at an untrusted byte boundary.
+//
+// JSON.parse silently keeps the LAST value for a duplicated key, so two readers of the same
+// document can disagree about what it says while the hash covers only whatever the parser
+// happened to keep. That is a content-identity hazard precisely where bytes arrive from
+// outside the repo. This scans the TEXT (JSON.parse cannot help — by the time a reviver runs
+// the duplicate is already gone) and returns the JSON-pointer path of the first duplicated key,
+// or null. Callers throw their own typed error, so this stays free of report vocabulary.
+export function findDuplicateJsonKey(text: string): string | null {
+  type Frame = { readonly isObject: boolean; readonly keys: Set<string>; index: number; key: string };
+  const stack: Frame[] = [];
+  const frame = (): Frame | undefined => stack[stack.length - 1];
+
+  const pointer = (leaf: string): string => {
+    const parts: string[] = [];
+    for (const f of stack) {
+      if (f.isObject) {
+        if (f.key !== "") parts.push(f.key);
+      } else {
+        parts.push(String(f.index));
+      }
+    }
+    // The leaf replaces the innermost object's current key, which is the key being opened.
+    if (frame()?.isObject && frame()!.key !== "") parts.pop();
+    parts.push(leaf);
+    return "/" + parts.map((p) => p.replace(/~/g, "~0").replace(/\//g, "~1")).join("/");
+  };
+
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (ch === '"') {
+      // Read one string with escape handling, then decide whether it is a KEY: a string is a
+      // key exactly when the next non-whitespace character is ':' and we are inside an object.
+      let raw = "";
+      i += 1;
+      while (i < text.length && text[i] !== '"') {
+        if (text[i] === "\\") {
+          raw += text[i] + (text[i + 1] ?? "");
+          i += 2;
+          continue;
+        }
+        raw += text[i];
+        i += 1;
+      }
+      i += 1; // closing quote
+      let j = i;
+      while (j < text.length && /\s/.test(text[j])) j += 1;
+      const current = frame();
+      if (text[j] === ":" && current !== undefined && current.isObject) {
+        let decoded: string;
+        try {
+          decoded = JSON.parse('"' + raw + '"') as string;
+        } catch {
+          decoded = raw; // malformed escapes are JSON.parse's problem, not ours
+        }
+        if (current.keys.has(decoded)) return pointer(decoded);
+        current.keys.add(decoded);
+        current.key = decoded;
+      }
+      continue;
+    }
+    if (ch === "{" || ch === "[") {
+      stack.push({ isObject: ch === "{", keys: new Set<string>(), index: 0, key: "" });
+    } else if (ch === "}" || ch === "]") {
+      stack.pop();
+    } else if (ch === ",") {
+      const current = frame();
+      if (current !== undefined && !current.isObject) current.index += 1;
+    }
+    i += 1;
+  }
+  return null;
+}
+
 const DECIMAL_RE = /^(0|[1-9][0-9]*)$/;
 const HEX_RE = /^0x[0-9a-f]*$/;
 

@@ -4,7 +4,7 @@
 // they participate in the hash, never in the trust decision (THREAT_MODEL: a self-consistent
 // manifest hash or reviewer-name field is not proof the manifest is authorized).
 import { createHash } from "node:crypto";
-import { assertJsonDomain, cmpDecimal, jcsSerialize } from "../report/canonical";
+import { assertJsonDomain, cmpDecimal, findDuplicateJsonKey, jcsSerialize } from "../report/canonical";
 
 export class ManifestError extends Error {
   constructor(
@@ -231,7 +231,7 @@ function deepFreeze<T>(v: T): T {
 // here; decoding is strict in-memory UTF-8 so platform text handling never touches hashed
 // bytes. Content identity is over JCS bytes of the parsed content, so JSON whitespace
 // (CRLF vs LF) cannot change the hash, while undecodable or malformed bytes are typed load
-// failures. R-003: JSON.parse collapses duplicate keys; the duplicate-aware strict parser
+// failures. R-003 is CLOSED here: duplicate keys are rejected below (the strict parser
 // is deferred until this boundary accepts untrusted bytes (W3/W5 API surface).
 export function loadManifestBytes(bytes: Uint8Array): LoadedManifest {
   let text: string;
@@ -239,6 +239,15 @@ export function loadManifestBytes(bytes: Uint8Array): LoadedManifest {
     text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     throw new ManifestError("invalid_utf8", "/", "manifest bytes are not valid UTF-8");
+  }
+  // R-003 CLOSED: reject duplicate keys before parsing. JSON.parse keeps the LAST value
+  // silently, so a manifest could state one environment/target and be READ as another, with the
+  // content hash covering only the surviving value. Checked ahead of the parse so the defect is
+  // reported as itself rather than as a downstream integrity_mismatch.
+  const duplicate = findDuplicateJsonKey(text);
+  if (duplicate !== null) {
+    throw new ManifestError("duplicate_json_key", duplicate,
+      "JSON.parse would silently keep the last value for this key");
   }
   let raw: unknown;
   try {

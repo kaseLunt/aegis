@@ -4,7 +4,7 @@
 // response's canonical form is integrity-verified against its recorded sha256 at load;
 // a missing recording is a typed failure — missing evidence is never an invented value.
 import { createHash } from "node:crypto";
-import { jcsSerialize } from "../report/canonical";
+import { findDuplicateJsonKey, jcsSerialize } from "../report/canonical";
 import { ChainError } from "./quorum";
 import type { ProviderConfig } from "./providers";
 import type { PinnedBlock } from "./selection";
@@ -105,6 +105,12 @@ export function loadRecordingBytes(bytes: Uint8Array): RecordingBundle {
     text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     return bad("invalid_utf8", "/", "recording bytes are not valid UTF-8") as never;
+  }
+  // R-003 CLOSED: a duplicated key would let a relabeled response survive re-serialization
+  // with a different value than the one whose envelope hash was verified.
+  const duplicate = findDuplicateJsonKey(text);
+  if (duplicate !== null) {
+    bad("duplicate_json_key", duplicate, "JSON.parse would silently keep the last value for this key");
   }
   let raw: unknown;
   try {
