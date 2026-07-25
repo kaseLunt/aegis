@@ -157,7 +157,26 @@ roadmap/tools change.
   trusted `pull_request_target` audit, which needs a hosting ruleset "required workflow"
   plus repo variables `CONTROL_PLANE_TRUST_REF`, `CONTROL_PLANE_TARGET_BRANCH`, and
   `CONTROL_PLANE_POLICY_APPROVAL`. Until wired, enforcement stays `bootstrap` (advisory
-  push jobs only). This is D-007 machinery-phase work (also [[R-005]]). Branch protection
+  push jobs only). This is D-007 machinery-phase work (also [[R-005]]).
+  **Mechanism read from the code 2026-07-25 — the framing above was incomplete:**
+  1. `CONTROL_PLANE_TRUST_REF` and `CONTROL_PLANE_TARGET_BRANCH` are OPTIONAL overrides —
+     `.github/workflows/control-plane.yml` already falls back to
+     `github.event.repository.default_branch`. They are not what blocks anything.
+  2. The trusted audit is `skipped` for one reason only: it triggers on
+     `pull_request_target`, and **we push straight to main, so no PR event ever fires.**
+     Likewise the advisory scope review is red because a push has no PR number —
+     structurally unsatisfiable on a direct push, not a defect and not fixable by config.
+     Both symptoms clear the moment work lands via branch + PR.
+  3. `CONTROL_PLANE_POLICY_APPROVAL` is NOT a boolean or a static secret. `scope_diff.py`
+     derives `policy_approval_token(pr_number, base_sha, head_sha)` and requires the variable
+     to EQUAL that hash, so an approval is cryptographically bound to one exact
+     (PR, base, head) triple and cannot be replayed onto different content. There is a
+     built-in minting command: `scope_diff.py --print-policy-approval-token`. So authorizing
+     an owner-gated PR is a per-PR act by the owner, not one-time setup.
+  4. Agent note: this session held `admin: true` on the repo and could therefore have set
+     that variable itself. It deliberately did not, and no future agent should — an agent
+     minting and installing its own approval token is self-approval, and would hollow out
+     the exact control D-007 exists to establish. Only the human owner mints it. Branch protection
   now requires the advisory doctor + selftest + Product tests.
 - NOTE (advisory scope review): red on any push containing owner-gated transitions
   (contract changes, protected tools, recorded-evidence supersessions) because the push
