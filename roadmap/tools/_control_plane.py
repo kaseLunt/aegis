@@ -217,36 +217,27 @@ def parse_utc(value: str, label: str) -> dt.datetime:
     return parsed.replace(tzinfo=dt.timezone.utc)
 
 
-def validate_lease(
+def validate_claim_timestamps(
     data: dict,
     path: str,
     now: dt.datetime,
-    *,
-    active: bool,
-    check_live: bool,
-    max_hours: int = 24,
-) -> tuple[dt.datetime, dt.datetime, dt.datetime]:
+) -> tuple[dt.datetime, dt.datetime]:
+    """Claim timestamp sanity.
+
+    Lease expiry was retired by D-9646fc3c (W0H): a claim's authority ends at an explicit
+    lifecycle transition (`release`/`failed`/`abandoned`), never at a clock reading. Timestamp
+    VALIDATION is deliberately kept -- removing the clock must not remove calendar sanity, so a
+    malformed or future-dated stamp is still refused.
+
+    A `lease_expires` key may survive on closed historical records; it is inert and unread.
+    """
     issued = parse_utc(scalar(data, "issued_at", path, required=True), f"{path}:issued_at")
     updated = parse_utc(scalar(data, "updated_at", path, required=True), f"{path}:updated_at")
-    expires = parse_utc(
-        scalar(data, "lease_expires", path, required=True), f"{path}:lease_expires"
-    )
     if issued > updated:
         raise ControlPlaneError(f"{path}: issued_at must not follow updated_at")
     if issued > now or updated > now:
         raise ControlPlaneError(f"{path}: issued_at/updated_at may not be in the future")
-    if expires <= issued:
-        raise ControlPlaneError(f"{path}: lease_expires must follow issued_at")
-    if expires > updated + dt.timedelta(hours=max_hours):
-        raise ControlPlaneError(
-            f"{path}: lease window exceeds {max_hours} hours from updated_at"
-        )
-    if active:
-        if expires <= updated:
-            raise ControlPlaneError(f"{path}: active lease_expires must follow updated_at")
-        if check_live and expires <= now:
-            raise ControlPlaneError(f"{path}: active lease expired at {expires.isoformat()}")
-    return issued, updated, expires
+    return issued, updated
 
 
 def parse_iso_date(value: str, label: str) -> dt.date:

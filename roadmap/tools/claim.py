@@ -6,11 +6,14 @@ claim mutations when more than one linked worktree exists and supports one expli
 integrator claim.  A real concurrent writer wave requires an external transactional
 allocator with fencing tokens.
 
+A claim has no lease and never expires: authority ends only at an explicit lifecycle
+transition (D-9646fc3c / W0H).  A lane that was genuinely abandoned is recovered with
+`release --status abandoned`, not by waiting for a clock.
+
 Usage:
-  python roadmap/tools/claim.py open AGENT TASK --integrator [--owner-reviewed] [--hours N] [--path SCOPE ...]
-  python roadmap/tools/claim.py renew AGENT [--hours N]
-  python roadmap/tools/claim.py rescope AGENT [--hours N] [--path SCOPE ...]
-  python roadmap/tools/claim.py rebind AGENT --owner-reviewed [--hours N]
+  python roadmap/tools/claim.py open AGENT TASK --integrator [--owner-reviewed] [--path SCOPE ...]
+  python roadmap/tools/claim.py rescope AGENT [--path SCOPE ...]
+  python roadmap/tools/claim.py rebind AGENT --owner-reviewed
   python roadmap/tools/claim.py release AGENT [--status released|failed|abandoned]
   python roadmap/tools/claim.py list
 """
@@ -49,7 +52,6 @@ TOOLS = os.path.dirname(os.path.abspath(__file__))
 REPO = repo_root(TOOLS)
 AGENT_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,63}$")
 TASK_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
-MAX_LEASE_HOURS = 24
 FINAL_STATUSES = {"released", "failed", "abandoned"}
 
 
@@ -66,16 +68,10 @@ def arguments() -> argparse.Namespace:
         action="store_true",
         help="authorize terminal-record takeover onto this branch/worktree",
     )
-    opened.add_argument("--hours", type=int, default=8)
     opened.add_argument("--path", action="append", default=[])
-
-    renewed = sub.add_parser("renew")
-    renewed.add_argument("agent")
-    renewed.add_argument("--hours", type=int, default=8)
 
     rescoped = sub.add_parser("rescope")
     rescoped.add_argument("agent")
-    rescoped.add_argument("--hours", type=int, default=8)
     rescoped.add_argument("--path", action="append", default=[])
 
     rebound = sub.add_parser(
@@ -84,7 +80,6 @@ def arguments() -> argparse.Namespace:
     )
     rebound.add_argument("agent")
     rebound.add_argument("--owner-reviewed", action="store_true")
-    rebound.add_argument("--hours", type=int, default=8)
 
     released = sub.add_parser("release")
     released.add_argument("agent")
@@ -100,11 +95,6 @@ def utc_now() -> dt.datetime:
 
 def iso(value: dt.datetime) -> str:
     return value.astimezone(dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def validate_hours(hours: int) -> None:
-    if hours < 1 or hours > MAX_LEASE_HOURS:
-        raise ControlPlaneError(f"lease hours must be between 1 and {MAX_LEASE_HOURS}")
 
 
 def claim_rel(agent: str) -> str:
@@ -233,6 +223,11 @@ def render_claim(data: dict) -> str:
     )
     lines = ["---"]
     for key in order:
+        # Render only the keys actually present. `lease_expires` is retired for new claims
+        # (D-9646fc3c) but stays in `order` so that a pre-W0H record carrying it keeps both the
+        # field and its canonical position when a later transition re-renders the file.
+        if key not in data:
+            continue
         value = data.get(key)
         if isinstance(value, list):
             if value:
@@ -280,7 +275,6 @@ def open_claim(args: argparse.Namespace) -> int:
             "the bundled serial runtime requires explicit --integrator; "
             "worker lanes require an external atomic allocator"
         )
-    validate_hours(args.hours)
     relative = claim_rel(args.agent)
     ensure_path_clean(relative)
     snapshot = Snapshot(REPO, "worktree")
@@ -329,7 +323,6 @@ def open_claim(args: argparse.Namespace) -> int:
         "allowed_paths": [scope.raw for scope in scopes],
         "scope_hash": scope_hash(scopes),
         "issued_at": iso(now),
-        "lease_expires": iso(now + dt.timedelta(hours=args.hours)),
         "updated_at": iso(now),
     }
     atomic_write(target, render_claim(data))
@@ -343,32 +336,7 @@ def open_claim(args: argparse.Namespace) -> int:
     return 0
 
 
-def renew_claim(args: argparse.Namespace) -> int:
-    validate_hours(args.hours)
-    relative, data = read_claim(args.agent)
-    ensure_path_clean(relative)
-    if scalar(data, "status", relative, required=True) != "active":
-        raise ControlPlaneError("only an active claim can be renewed")
-    now = utc_now()
-    validate_claim(
-        REPO,
-        Snapshot(REPO, "worktree"),
-        relative,
-        data,
-        now,
-        check_local_binding=True,
-        descendant="HEAD",
-        check_expiry=True,
-    )
-    data["lease_expires"] = iso(now + dt.timedelta(hours=args.hours))
-    data["updated_at"] = iso(now)
-    atomic_write(safe_worktree_path(REPO, relative, "claim target"), render_claim(data))
-    print(f"renewed {args.agent} through {data['lease_expires']}")
-    return 0
-
-
 def rescope_claim(args: argparse.Namespace) -> int:
-    validate_hours(args.hours)
     relative, data = read_claim(args.agent)
     ensure_path_clean(relative)
     if scalar(data, "status", relative, required=True) != "active":
@@ -382,7 +350,6 @@ def rescope_claim(args: argparse.Namespace) -> int:
         now,
         check_local_binding=True,
         descendant="HEAD",
-        check_expiry=True,
     )
     task = scalar(data, "task", relative, required=True)
     scopes = requested_scopes(Snapshot(REPO, "worktree"), task, args.path)
@@ -397,7 +364,6 @@ def rescope_claim(args: argparse.Namespace) -> int:
             "allowed_paths": [scope.raw for scope in scopes],
             "scope_hash": scope_hash(scopes),
             "issued_at": iso(now),
-            "lease_expires": iso(now + dt.timedelta(hours=args.hours)),
             "updated_at": iso(now),
         }
     )
@@ -407,12 +373,11 @@ def rescope_claim(args: argparse.Namespace) -> int:
 
 
 def rebind_claim(args: argparse.Namespace) -> int:
-    """Rotate only location identity and lease after explicit human takeover review."""
+    """Rotate only location identity after explicit human takeover review."""
     if not args.owner_reviewed:
         raise ControlPlaneError(
             "rebind is a recovery/takeover operation and requires --owner-reviewed"
         )
-    validate_hours(args.hours)
     relative, data = read_claim(args.agent)
     ensure_path_clean(relative)
     if scalar(data, "status", relative, required=True) != "active":
@@ -426,7 +391,6 @@ def rebind_claim(args: argparse.Namespace) -> int:
         now,
         check_local_binding=False,
         descendant="HEAD",
-        check_expiry=False,
     )
     branch = current_branch(REPO)
     worktree = local_worktree_id(REPO)
@@ -435,7 +399,9 @@ def rebind_claim(args: argparse.Namespace) -> int:
         and scalar(data, "worktree_id", relative, required=True) == worktree
     ):
         raise ControlPlaneError(
-            f"{relative}: claim already belongs to this branch and worktree; use renew or rescope"
+            f"{relative}: claim already belongs to this branch and worktree, so there is "
+            "nothing to rebind. To change its paths use 'rescope'; to close the lane use "
+            "'release' (--status abandoned if the work is being dropped)."
         )
     generation = scalar(data, "generation", relative, required=True)
     if not generation.isdigit() or int(generation) < 1:
@@ -448,7 +414,6 @@ def rebind_claim(args: argparse.Namespace) -> int:
             "worktree_id": worktree,
             "base_commit": full_head(REPO),
             "issued_at": iso(now),
-            "lease_expires": iso(now + dt.timedelta(hours=args.hours)),
             "updated_at": iso(now),
         }
     )
@@ -475,7 +440,6 @@ def release_claim(args: argparse.Namespace) -> int:
         now,
         check_local_binding=True,
         descendant="HEAD",
-        check_expiry=False,
     )
     data["status"] = args.status
     data["updated_at"] = iso(now)
@@ -495,7 +459,7 @@ def list_claims() -> int:
                     scalar(data, "task", path, required=True),
                     scalar(data, "status", path, required=True),
                     f"generation={scalar(data, 'generation', path, required=True)}",
-                    f"expires={scalar(data, 'lease_expires', path, required=True)}",
+                    f"updated={scalar(data, 'updated_at', path, required=True)}",
                 ]
             )
         )
@@ -510,8 +474,6 @@ def main() -> int:
     with claim_lock():
         if args.command == "open":
             return open_claim(args)
-        if args.command == "renew":
-            return renew_claim(args)
         if args.command == "rescope":
             return rescope_claim(args)
         if args.command == "rebind":

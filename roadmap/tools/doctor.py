@@ -2,7 +2,7 @@
 """Validate the repo-native control plane from one coherent repository snapshot.
 
 Usage:
-  python roadmap/tools/doctor.py [--snapshot worktree|index|<commit>] [--check-live-leases]
+  python roadmap/tools/doctor.py [--snapshot worktree|index|<commit>]
   python roadmap/tools/doctor.py --stamp <work-id>
 """
 
@@ -34,7 +34,7 @@ from _control_plane import (
     scopes_overlap,
     snapshot_fingerprint,
     string_list,
-    validate_lease,
+    validate_claim_timestamps,
 )
 
 
@@ -79,7 +79,6 @@ UUID_RE = re.compile(
 def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--snapshot", default="worktree")
-    parser.add_argument("--check-live-leases", action="store_true")
     parser.add_argument("--now", help="fixed strict-UTC clock for deterministic tests")
     parser.add_argument("--stamp", metavar="WORK_ID")
     parser.add_argument("--receipt-basis", metavar="WORK_ID")
@@ -897,13 +896,7 @@ def main() -> int:
                 errors.append(f"{path}: integrator must be true or false")
             if writer_mode == "serial" and claim_status == "active" and integrator != "true":
                 errors.append(f"{path}: active serial claim must set integrator:true")
-            validate_lease(
-                claim,
-                path,
-                now,
-                active=claim_status == "active",
-                check_live=args.check_live_leases,
-            )
+            validate_claim_timestamps(claim, path, now)
             if not FULL_SHA_RE.fullmatch(base):
                 errors.append(f"{path}: base_commit must be a full 40-character lowercase SHA")
             elif not commit_exists(REPO, base):

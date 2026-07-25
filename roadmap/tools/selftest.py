@@ -279,13 +279,16 @@ def replace_claim_times(
     *,
     issued: str,
     updated: str,
-    expires: str,
+    expires: str | None = None,
 ) -> str:
+    # `expires` is retained only so a fixture can exercise the INERT historical `lease_expires`
+    # field ([[D-9646fc3c]] keeps it on closed records). Omit it for current-schema fixtures.
     replacements = {
         "issued_at": issued,
         "updated_at": updated,
-        "lease_expires": expires,
     }
+    if expires is not None:
+        replacements["lease_expires"] = expires
     for key, value in replacements.items():
         text, count = re.subn(
             rf"^{key}:.*$", f"{key}: {value}", text, count=1, flags=re.M
@@ -467,7 +470,7 @@ def test_doctor_and_gate(root: Path) -> None:
     print("Doctor and staged-index gate")
     repo = root / "doctor-gate"
     _, active = build_active(repo)
-    result = tool(repo, "doctor.py", "--snapshot", "index", "--check-live-leases")
+    result = tool(repo, "doctor.py", "--snapshot", "index")
     check("doctor:synthetic-baseline", result.returncode == 0, output(result))
 
     write(repo / "src" / "allowed.txt", "frozen-index change\n")
@@ -508,22 +511,24 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # W0H / D-9646fc3c: the lease CLOCK is retired, but timestamp sanity is not. A malformed
+    # `updated_at` must still be rejected -- removing expiry must not remove calendar validation.
     claim_path = repo / "roadmap" / "claims" / "CLAIM-synthetic.md"
     claim = read(claim_path)
     write(
         claim_path,
         re.sub(
-            r"^lease_expires:.*$",
-            "lease_expires: 2099-02-30T00:00:00Z",
+            r"^updated_at:.*$",
+            "updated_at: 2099-02-30T00:00:00Z",
             claim,
             count=1,
             flags=re.M,
         ),
     )
-    must(git(repo, "add", "roadmap/claims/CLAIM-synthetic.md"), "stage bad lease")
+    must(git(repo, "add", "roadmap/claims/CLAIM-synthetic.md"), "stage bad timestamp")
     result = tool(repo, "doctor.py", "--snapshot", "index")
     check(
-        "doctor:invalid-calendar-lease",
+        "doctor:invalid-calendar-timestamp",
         result.returncode == 1 and "invalid calendar" in output(result),
         output(result),
     )
@@ -534,63 +539,75 @@ def test_doctor_and_gate(root: Path) -> None:
         claim,
         issued="2999-01-01T00:00:00Z",
         updated="2999-01-01T00:00:00Z",
-        expires="2999-01-01T08:00:00Z",
     )
     write(claim_path, future)
-    must(git(repo, "add", "roadmap/claims/CLAIM-synthetic.md"), "stage future lease")
+    must(git(repo, "add", "roadmap/claims/CLAIM-synthetic.md"), "stage future claim")
     result = tool(repo, "doctor.py", "--snapshot", "index")
     check(
-        "lease:future-issued-rejected",
+        "claim:future-issued-rejected",
         result.returncode == 1 and "may not be in the future" in output(result),
         output(result),
     )
     reset(repo, active)
 
-    claim = read(claim_path)
-    overlong = replace_claim_times(
-        claim,
-        issued="2000-01-01T00:00:00Z",
-        updated="2000-01-01T00:00:00Z",
-        expires="2000-01-03T00:00:00Z",
-    )
-    write(claim_path, overlong)
-    must(git(repo, "add", "roadmap/claims/CLAIM-synthetic.md"), "stage overlong lease")
-    result = tool(repo, "doctor.py", "--snapshot", "index")
-    check(
-        "lease:overlong-window-rejected",
-        result.returncode == 1 and "exceeds 24 hours" in output(result),
-        output(result),
-    )
-    reset(repo, active)
-
+    # A claim whose timestamps are years old is still fully authoritative. Under the retired
+    # lease model this exact fixture was refused, which is the failure this item removes: the
+    # refusal was silent (doctor stayed green), deferred, and dead-ended at `renew`.
     claim = replace_claim_times(
         read(claim_path),
         issued="2000-01-01T00:00:00Z",
         updated="2000-01-01T00:00:00Z",
-        expires="2000-01-01T08:00:00Z",
     )
     write(claim_path, claim)
-    expired_head = commit_all(repo, "synthetic expired lease")
-    write(repo / "src" / "allowed.txt", "expired writer output\n")
-    must(git(repo, "add", "src/allowed.txt"), "stage expired output")
-    blocked = tool(repo, "scope_gate.py")
-    reset(repo, expired_head)
+    stale_head = commit_all(repo, "synthetic stale claim")
+    write(repo / "src" / "allowed.txt", "stale writer output\n")
+    must(git(repo, "add", "src/allowed.txt"), "stage stale in-scope output")
+    allowed = tool(repo, "scope_gate.py")
+    check(
+        "claim:stale-claim-authorizes-in-scope-output",
+        allowed.returncode == 0,
+        output(allowed),
+    )
+    reset(repo, stale_head)
+
+    # ...and scope is still enforced on that same stale claim. This is the non-regression guard:
+    # the refusal must come from SCOPE, never from elapsed time.
+    write(repo / "outside.txt", "stale out-of-scope output\n")
+    must(git(repo, "add", "outside.txt"), "stage stale out-of-scope output")
+    refused = tool(repo, "scope_gate.py")
+    check(
+        "claim:stale-claim-still-refuses-out-of-scope-output",
+        refused.returncode == 1
+        and "outside committed authority" in output(refused)
+        and "expired" not in output(refused).casefold(),
+        output(refused),
+    )
+    reset(repo, stale_head)
+
+    # NB: assert against the subcommand listing, not on the substring "lease" -- "release"
+    # contains it, so a naive check passes for the wrong reason.
     renewal = tool(repo, "claim.py", "renew", "synthetic")
-    released = tool(repo, "claim.py", "release", "synthetic")
+    claim_help = output(tool(repo, "claim.py", "--help"))
+    check(
+        "claim:renew-command-removed",
+        renewal.returncode != 0 and "renew" not in claim_help,
+        output(renewal) + "\n" + claim_help,
+    )
+
+    # The replacement recovery path for a genuinely abandoned lane: explicit, loud, and needing
+    # no owner token -- as opposed to a timestamp revoking authority on its own.
+    abandoned = tool(repo, "claim.py", "release", "synthetic", "--status", "abandoned")
     set_work_state(repo, "candidate", ["src/**"])
-    must(git(repo, "add", "roadmap"), "stage expired cleanup")
+    must(git(repo, "add", "roadmap"), "stage abandonment cleanup")
     cleanup = tool(
         repo,
         "scope_gate.py",
         env={"CONTROL_PLANE_OWNER_REVIEWED": "1"},
     )
     check(
-        "lease:expired-output-blocked-cleanup-allowed",
-        blocked.returncode == 1
-        and renewal.returncode == 1
-        and released.returncode == 0
-        and cleanup.returncode == 0,
-        "\n".join(map(output, (blocked, renewal, released, cleanup))),
+        "claim:abandon-recovers-without-time-travel",
+        abandoned.returncode == 0 and cleanup.returncode == 0,
+        "\n".join(map(output, (abandoned, cleanup))),
     )
     reset(repo, active)
 
@@ -1217,7 +1234,7 @@ def test_claim_lifecycle(root: Path) -> None:
         "scope_gate.py",
         env={"CONTROL_PLANE_OWNER_REVIEWED": "1"},
     )
-    doctor = tool(repo, "doctor.py", "--snapshot", "index", "--check-live-leases")
+    doctor = tool(repo, "doctor.py", "--snapshot", "index")
     check(
         "claim:bootstrap-metadata-only-valid",
         gate.returncode == 0 and doctor.returncode == 0,
@@ -1225,15 +1242,15 @@ def test_claim_lifecycle(root: Path) -> None:
     )
     commit_all(repo, "synthetic claim bootstrap")
 
-    result = tool(repo, "claim.py", "renew", "writer", "--hours", "2")
-    must(git(repo, "add", "roadmap/claims/CLAIM-writer.md"), "stage renewal")
-    gate = tool(
-        repo,
-        "scope_gate.py",
-        env={"CONTROL_PLANE_OWNER_REVIEWED": "1"},
+    # W0H / D-9646fc3c: a freshly opened claim carries no lease field, and no `--hours` knob
+    # survives that could write one back.
+    opened = read(claim_path)
+    open_help = output(tool(repo, "claim.py", "open", "--help"))
+    check(
+        "claim:open-writes-no-lease-field",
+        "lease_expires" not in opened and "--hours" not in open_help,
+        opened + "\n" + open_help,
     )
-    check("claim:renewal-transition", result.returncode == 0 and gate.returncode == 0, output(gate))
-    commit_all(repo, "synthetic renewal")
 
     result = tool(repo, "claim.py", "release", "writer")
     set_work_state(repo, "candidate", ["src/**"])
@@ -1323,8 +1340,6 @@ def test_claim_rebind(root: Path) -> None:
         "rebind",
         "synthetic",
         "--owner-reviewed",
-        "--hours",
-        "2",
     )
     after = parse_frontmatter(read(claim_path), "claim after rebind", required=True)
     check(

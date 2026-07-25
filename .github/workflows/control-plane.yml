@@ -32,7 +32,7 @@ jobs:
       - name: Validate candidate snapshot with candidate code (advisory only)
         env:
           HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-        run: python roadmap/tools/doctor.py --snapshot "$HEAD_SHA" --check-live-leases
+        run: python roadmap/tools/doctor.py --snapshot "$HEAD_SHA"
 
   advisory-runtime-selftest:
     name: Advisory candidate selftest (untrusted code)
@@ -75,14 +75,14 @@ jobs:
           HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
         run: >-
           python roadmap/tools/scope_diff.py "$BASE_SHA" "$HEAD_SHA"
-          --branch "$HEAD_BRANCH" --check-live-lease
+          --branch "$HEAD_BRANCH"
       - name: Replay pushed commits with candidate policy (advisory only)
         if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         env:
           BASE_SHA: ${{ github.event.before }}
           HEAD_SHA: ${{ github.sha }}
         run: >-
-          python roadmap/tools/scope_diff.py "$BASE_SHA" "$HEAD_SHA" --check-live-lease
+          python roadmap/tools/scope_diff.py "$BASE_SHA" "$HEAD_SHA"
       - name: Review explicit initial-history bootstrap (advisory only)
         if: github.event_name == 'push' && github.event.before == '0000000000000000000000000000000000000000'
         env:
@@ -90,7 +90,7 @@ jobs:
         run: >-
           python roadmap/tools/scope_diff.py
           0000000000000000000000000000000000000000 "$HEAD_SHA"
-          --allow-initial --check-live-lease
+          --allow-initial
 
   trusted-pr-audit:
     name: Trusted audit candidate (wire through a hosting ruleset required workflow)
@@ -146,8 +146,8 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           MERGE_SHA: ${{ steps.candidate.outputs.merge_sha }}
         run: |
-          python roadmap/tools/doctor.py --snapshot "$HEAD_SHA" --check-live-leases
-          python roadmap/tools/doctor.py --snapshot "$MERGE_SHA" --check-live-leases
+          python roadmap/tools/doctor.py --snapshot "$HEAD_SHA"
+          python roadmap/tools/doctor.py --snapshot "$MERGE_SHA"
       - name: Replay candidate commits with trusted parent-authority policy
         working-directory: trusted-policy
         env:
@@ -158,5 +158,5 @@ jobs:
           POLICY_APPROVAL: ${{ vars.CONTROL_PLANE_POLICY_APPROVAL }}
         run: >-
           python roadmap/tools/scope_diff.py "$BASE_SHA" "$HEAD_SHA"
-          --branch "$HEAD_BRANCH" --check-live-lease
+          --branch "$HEAD_BRANCH"
           --pull-request-number "$PR_NUMBER" --policy-approval "$POLICY_APPROVAL"

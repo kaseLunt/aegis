@@ -176,6 +176,12 @@ The estimate came from counting work items that *list* `roadmap/tools/**` rather
 which have a live receipt to invalidate. Same error class as the W2/W4 miscount earlier: count
 what is actually bound, not what is nominally in scope.
 
+> **Do not reuse the number "five" for a different change.** It is correct only for THIS change's
+> file set (`_control_plane.py` + `selftest.py`). W0's `invalidated_by` is the narrow
+> `roadmap/tools/doctor.py`, which this change missed — so a change that also edits `doctor.py`
+> invalidates SIX. [[W0H]] made exactly that mistake by carrying this figure forward. Derive the
+> set from a doctor run every time: [[INS-ede05c7a-0d89-49ab-a324-d4ef35d92c6e]].
+
 **Process irregularity, recorded rather than hidden:** this landed under the W5 claim, whose
 `allowed_paths` do NOT include `roadmap/tools/**`. It was authorized by the owner running
 `git commit --no-verify` on a prepared commit, which skips the scope gate. That is the

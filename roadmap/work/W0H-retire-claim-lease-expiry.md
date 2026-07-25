@@ -112,8 +112,11 @@ npm test
   [[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]] (the five-receipt re-attestation recipe).
 - hazards: `roadmap/tools/**` is a PROTECTED surface — expect a doctor-red mid-chain commit
   needing owner authorization, exactly as W5 S0 and W0G defect 2 did. Budget for the full
-  five-receipt chain (W0A, W0B, W0D, W0E, W0F) before starting; a half-landed protected-tools
-  change leaves the doctor red for everyone. `roadmap/tools/**` is also upstream bundle code
+  **six**-receipt chain — W0, W0A, W0B, W0D, W0E, W0F — before starting; a half-landed
+  protected-tools change leaves the doctor red for everyone. (Six, not the five W0G's note
+  quotes: W0's `invalidated_by` is the narrow `roadmap/tools/doctor.py`, which W0G's change did
+  not touch and this one does. Derived from a doctor run, not predicted —
+  [[INS-ede05c7a-0d89-49ab-a324-d4ef35d92c6e]].) `roadmap/tools/**` is also upstream bundle code
   ([[INS-006]]) — write the divergence up for the next bundle sync rather than silently forking.
 - do NOT: patch around a refusal you do not understand. That is exactly what produced the
   reverted `claim.py` change this item supersedes.
