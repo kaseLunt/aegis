@@ -47,4 +47,27 @@ invalidates SEVEN work-item receipt bases (W0, W0A, W0B, W0C, W0D, W0E, W0F) on 
 protected surface — so the re-attestation is paid once, deliberately, as this record already
 instructed. Standing retry-once operational rule stays in force until W0G lands.
 
+## ESCALATION 2026-07-25: the retry-once rule is no longer sufficient
+Two CONSECUTIVE reds on `git push` immediately after the W0G triage commit — the standing
+"retry once" rule was applied exactly as written and did not clear it. Per that same rule a
+second consecutive red is treated as real, so the push HALTED and was not bypassed.
+
+Evidence gathered at the halt:
+- Failure is byte-identical to every prior sighting: `capture: FAIL -- capture target:
+  destination escapes repository root`, from `safe_worktree_path`.
+- It is NON-DESTRUCTIVE: the harness cleans up after itself (`git status` clean, no stray
+  `roadmap/ideas/IDEA-*-same-title.md` left behind), so a failed run leaves no residue.
+- The doctor is green (0 errors) and the product suite is 374/374 at the same tree, so nothing
+  else corroborates a real defect.
+- **Platform-bound:** the same `Advisory candidate selftest` is a REQUIRED CI check and it
+  passed on the Linux runner for this exact tree (run 30138208996). The race is Windows-local.
+  Consequence for the owner's decision: bypassing the LOCAL pre-push hook does not skip the
+  check — CI re-runs it authoritatively on a platform where the race does not occur, which is
+  precisely the "hooks nudge, CI gates" split in SYSTEM.md.
+
+This fires the escalation trigger already written into the Bounding section above ("becomes
+urgent if ... flakes and masks a real failure"): it is now blocking pushes outright, not merely
+stinging. [[W0G]] was filed as `candidate` for after W5 on the assumption that the retry-once
+rule covered the gap; that assumption is now falsified and the sequencing should be revisited.
+
 owner: klunt · review_when: date:2026-08-06
