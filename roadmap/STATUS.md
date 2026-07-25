@@ -20,8 +20,35 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W0H — retire claim lease expiry. CODE + RECEIPTS LANDED AND PUSHED; awaiting Codex
-convergence ([[D-b4ab3c69]]) before any achieved stamp.**
+**W0H — retire claim lease expiry. Code + both Codex dispositions landed. BLOCKED on the
+convergence gate: the Codex backend is down.**
+
+> ### 🔴 BLOCKER — Codex unreachable, W0H cannot be stamped achieved
+> Round-2 re-review could not be dispatched. Four attempts over ~9 minutes all failed at the
+> backend before any job id existed:
+> `503 Service Unavailable ... auth error code: biscuit_baker_service_me_circuit_open`.
+> Zero jobs were recorded, so this is a service outage, not a wedged queue. No review was
+> performed and none was fabricated.
+>
+> [[D-b4ab3c69]] is explicit that complex work is never approved until the Codex loop converges
+> clean, so **W0H stays `active` and is NOT achieved.** Green local evidence is necessary, never
+> sufficient — and round 1 proved that concretely here: it found a P1 (executor docs) that every
+> local gate was blind to.
+>
+> **Retry recipe (setup already validated, reuse as-is):** pin a detached worktree at `fc85b52`,
+> `--base 1290e4d`, `--scope branch`, and re-send the round-2 brief — verify the `issued > now`
+> subsumption analysis adversarially, sweep the whole repo for surviving executor-facing text
+> implying expiry/renewal, and judge whether the owner-only `RULES.md:9` residual is a shipping
+> blocker.
+
+**Round 1 (completed, verdict needs-attention, no P0) — both findings dispositioned:**
+- **P1** `AGENTS.md:75` + `CLAUDE.md:80` still said "leases expire — renew or release". Fixed in
+  `fc85b52` under an owner-acknowledged scope expansion; claim rotated to generation 6. This was
+  a genuine miss: only `RULES.md` had been tracked, and `CLAUDE.md` is what every future session
+  reads as authority, so a fresh agent would have been told to run a deleted command.
+- **P2** the future-timestamp selftest case set BOTH stamps to 2999 and would have survived
+  deletion of either half of the check. Fixed in `d17dfd7` with three orthogonal fixtures, each
+  comparison mutation-tested independently.
 
 Owner directive 2026-07-25 ("we need to get rid of the leasing system"), decided in
 [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]]. Removed the lease *clock* only: `lease_expires`,

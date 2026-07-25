@@ -2,7 +2,8 @@
 id: EV-W0E-R4
 type: evidence
 title: W0E re-attested with an explicit scope REDUCTION: strict-lease checks retired
-status: recorded
+status: superseded
+superseded_by: EV-W0E-R5
 work: W0E
 result: pass
 commands:

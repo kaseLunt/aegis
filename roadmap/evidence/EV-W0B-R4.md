@@ -2,7 +2,8 @@
 id: EV-W0B-R4
 type: evidence
 title: W0B verification re-attested at the lease-expiry retirement
-status: recorded
+status: superseded
+superseded_by: EV-W0B-R5
 work: W0B
 result: pass
 commands:

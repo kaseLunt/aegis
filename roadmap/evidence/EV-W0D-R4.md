@@ -2,7 +2,8 @@
 id: EV-W0D-R4
 type: evidence
 title: W0D re-attested with an explicit scope REDUCTION: the lease element is retired
-status: recorded
+status: superseded
+superseded_by: EV-W0D-R5
 work: W0D
 result: pass
 commands:

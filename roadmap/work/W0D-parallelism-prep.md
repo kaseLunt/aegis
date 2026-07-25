@@ -18,12 +18,12 @@ deliverables:
   - roadmap/tools/claim.py
   - roadmap/decisions/D-006-asymmetric-parallelism-one-semantic-spine-owner-.md
 evidence_receipts:
-  - roadmap/evidence/EV-W0D-R4.md
+  - roadmap/evidence/EV-W0D-R5.md
 review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
 updated: 2026-07-21
-evidence_fingerprint: sha256:2ab85c9de1eb554ced6bb1dc9a2ccc7505c297f1a655d632b2d6e3e1fd213e07
+evidence_fingerprint: sha256:63e67f04dd518580e730a1553b241973c8bfd3d5481f0b20cf68c9aae438a558
 ---
 
 # W0D — Parallelism prep
