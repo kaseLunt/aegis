@@ -46,6 +46,27 @@ That is sufficient to prove the engine fails closed — which is W5's robustness
 it is NOT a corpus a reviewer can point a surface at. Splitting keeps W5 shippable and keeps
 W5's evidence claim honest (four-surface identity over the reviewed success fixtures).
 
+## Hard constraint discovered in W5 S1 (2026-07-24)
+
+**No shipped fixture can currently produce a `pass`, and a "success" bundle alone will not fix
+it.** Three facts found while wiring identity verifications:
+1. `data/manifests/reference-code-identity.json` declares targets at `0xcccc…` (chain 1,
+   eip1967) and `0xeeee…` (chain 10, direct), while
+   `data/recordings/reference-identity-reads.json` records reads for `0xa1a1…`/`0xb2b2…` on
+   chain 1 only. **No declared target has recorded evidence**, so every expectation lands
+   `unknown` — honest, but not a demonstration.
+2. The manifest's `expectedRuntimeCodeHash` values are placeholders (`sha256:3333…`,
+   `sha256:4444…`). No code bytes hash to those, so a `pass` is unreachable by construction.
+3. Therefore a success fixture is a **matched PAIR**: the recording's `eth_getCode` result and
+   the manifest's `expectedRuntimeCodeHash` must be authored together, with the expected hash
+   computed as sha256 over the recorded code BYTES (never over a hex string — W4 hazard), and
+   the manifest's embedded `contentHash` recomputed afterwards. Same for `expectedImplementation`
+   versus the recorded EIP-1967 slot word.
+
+This is why W5 proves its non-success paths with inline `sealedBundle` constructions instead: a
+reviewable success corpus needs authored manifest/recording pairs, which is W6's job. W5's
+evidence claim is scoped accordingly.
+
 ## Acceptance (to refine at kickoff — candidate placeholder)
 
 - Correct: one sealed bundle per M1 scenario (success, mismatch, missing-evidence,

@@ -17,6 +17,7 @@ import { requestHash } from "../lib/aegis/surfaces/request";
 const DATA = join(__dirname, "..", "data");
 const manifestBytes = () => readFileSync(join(DATA, "manifests", "reference-code-identity.json"));
 const headsBytes = () => readFileSync(join(DATA, "recordings", "reference-eth-op-heads.json"));
+const identityBytes = () => readFileSync(join(DATA, "recordings", "reference-identity-reads.json"));
 
 const SELECTOR = { sourceMode: "recorded", at: "finalized", chainIds: [1, 10] } as const;
 
@@ -40,6 +41,7 @@ const deployment = () => ({
     maxHeadLagBlocks: "1000",
   },
   providers: [PROVIDERS.alchemy, PROVIDERS.quicknode],
+  freshnessPolicyId: "fp-reference",
 });
 
 describe("W5 S0 — runVerification", () => {
@@ -85,6 +87,18 @@ describe("W5 S0 — runVerification", () => {
     expect(reportHash(run.payload)).toBe(run.reportHash);
   });
 
+  // A report that asserts boundaries but carries no evidence for them has lost its provenance:
+  // the reader cannot tell WHICH provider observations put the pin where it is.
+  test("each pinned boundary carries head evidence for every agreeing provider", async () => {
+    const run = await runVerification(inputs(), SELECTOR, deployment());
+    const evidence = (run.payload as { evidence: { kind: string; providerId?: string }[] }).evidence;
+    const heads = evidence.filter((e) => e.kind === "rpc_call");
+
+    expect(heads).toHaveLength(4); // 2 chains x 2 agreeing providers
+    expect([...new Set(heads.map((e) => e.providerId))].sort()).toEqual(["alchemy", "quicknode"]);
+    expect(heads.every((e) => typeof (e as { capturedAt?: unknown }).capturedAt === "string")).toBe(true);
+  });
+
   test("delivery metadata never enters the hashed payload", async () => {
     const run = await runVerification(inputs(), SELECTOR, deployment());
 
@@ -112,6 +126,100 @@ describe("W5 S0 — runVerification", () => {
     expect((run.payload as { limitations: { code: string }[] }).limitations.map((l) => l.code))
       .toContain("manifest_not_applicable");
     expect(() => validateReport(run.payload)).not.toThrow();
+  });
+});
+
+// S1 — the manifest's targets are verified, and the targets come from the TRUSTED manifest
+// rather than from anything a caller supplied.
+//
+// Note what the shipped fixtures do here: the reference manifest declares targets at
+// 0xcccc... (chain 1, eip1967) and 0xeeee... (chain 10, direct), while
+// reference-identity-reads.json records reads for 0xa1a1.../0xb2b2... on chain 1 only. So no
+// declared target has recorded evidence, and the honest outcome is `unknown` on every
+// expectation. That is the correct result to assert — a matched manifest/recording pair for a
+// genuine `pass` is a scenario fixture, which is W6's deliverable, not W5's.
+describe("W5 S1 — identity verifications from the trusted manifest", () => {
+  const withIdentity = () => ({
+    manifestBytes: manifestBytes(),
+    recordings: [
+      { role: "heads", bytes: headsBytes() },
+      { role: "identity", bytes: identityBytes() },
+    ] as const,
+  });
+
+  test("every declared manifest expectation becomes its own verification", async () => {
+    const run = await runVerification(withIdentity(), SELECTOR, deployment());
+    const verifications = (run.payload as { verifications: { invariantId: string }[] }).verifications;
+
+    expect(verifications.map((v) => v.invariantId).sort()).toEqual([
+      "deployment.code_identity/reference-direct/runtime_code_hash",
+      "deployment.code_identity/reference-eip1967-proxy/implementation",
+      "deployment.code_identity/reference-eip1967-proxy/runtime_code_hash",
+    ]);
+  });
+
+  test("a target with no recorded evidence can never pass", async () => {
+    const run = await runVerification(withIdentity(), SELECTOR, deployment());
+    const verifications = (run.payload as { verifications: { state: string }[] }).verifications;
+
+    expect(verifications.length).toBeGreaterThan(0);
+    expect(verifications.map((v) => v.state)).not.toContain("pass");
+  });
+
+  test("the verified report still satisfies the strict validator and hash round-trip", async () => {
+    const run = await runVerification(withIdentity(), SELECTOR, deployment());
+
+    expect(() => validateReport(run.payload)).not.toThrow();
+    expect(reportHash(JSON.parse(JSON.stringify(run.payload)))).toBe(run.reportHash);
+  });
+
+  // Partial degradation: one chain pins, the other does not. The target on the unresolved chain
+  // must be SURFACED as unevaluated — silently omitting it would read as "checked and fine".
+  test("a target on an unresolved chain is reported unevaluated, not quietly dropped", async () => {
+    const doc = JSON.parse(new TextDecoder().decode(headsBytes())) as {
+      responses: { providerId: string; chainId: number }[];
+    };
+    doc.responses = doc.responses.filter((r) => !(r.providerId === "quicknode" && r.chainId === 10));
+    const partial = new TextEncoder().encode(JSON.stringify(doc));
+
+    const run = await runVerification(
+      {
+        manifestBytes: manifestBytes(),
+        recordings: [
+          { role: "heads", bytes: partial },
+          { role: "identity", bytes: identityBytes() },
+        ],
+      },
+      SELECTOR,
+      deployment(),
+    );
+    const payload = run.payload as {
+      verifications: { invariantId: string }[];
+      limitations: { code: string; text: string }[];
+    };
+
+    // Chain 10 never pinned, so its target could not be evaluated...
+    expect(run.diagnostics.boundaries.find((b) => b.chainId === 10)?.status).toBe("unresolved");
+    const unevaluated = payload.limitations.filter((l) => l.code === "target_boundary_unavailable");
+    expect(unevaluated).toHaveLength(1);
+    expect(unevaluated[0].text).toContain("reference-direct");
+    expect(payload.verifications.map((v) => v.invariantId)).not.toContain(
+      "deployment.code_identity/reference-direct/runtime_code_hash",
+    );
+    // ...while chain 1 still pinned and was verified.
+    expect(payload.verifications.map((v) => v.invariantId)).toContain(
+      "deployment.code_identity/reference-eip1967-proxy/runtime_code_hash",
+    );
+    expect(() => validateReport(run.payload)).not.toThrow();
+  });
+
+  test("an untrusted manifest yields no verifications at all — targets are unreachable", async () => {
+    const untrusting = { ...deployment(), trustPolicy: { trustPolicyId: "tp-x", approvedHashes: [] } };
+    const run = await runVerification(withIdentity(), SELECTOR, untrusting);
+    const payload = run.payload as { verifications: unknown[]; policyTrust: { state: string } };
+
+    expect(payload.policyTrust.state).toBe("untrusted");
+    expect(payload.verifications).toEqual([]);
   });
 });
 

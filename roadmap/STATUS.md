@@ -51,8 +51,8 @@ sharpened why — **a WeakSet brand is process- and module-instance-local**, so 
 serialization boundary. Each surface re-earns the brand from raw bytes in-process and persists
 only outputs ([[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] addendum 3).
 
-Slices: ~~S0 facade+request+trust seam~~ **DONE** → S1 target extraction + identity
-verifications → S2 R-003 strict parse → S3 CLI → S4 report API → S5 CI adapter → S6 evidence
+Slices: ~~S0 facade+request+trust seam~~ **DONE** → ~~S1 target extraction + identity
+verifications~~ **DONE** → S2 R-003 strict parse → S3 CLI → S4 report API → S5 CI adapter → S6 evidence
 drawer → S7 cross-surface byte identity. Then the Codex convergence gate before any achieved
 stamp.
 
@@ -71,6 +71,21 @@ git with every gate green (compile, tsc, eslint, 366 tests) — caught only by r
 New tooth `tests/repo-source-hygiene.test.ts` fails on any raw control character; written RED
 against the live defect, it immediately found two pre-existing instances
 ([[INS-5931d8f8-d494-4cb5-b147-c7fd9e6ffaab]] addendum).
+
+**S1 landed** (374/374): identity verifications from the trusted manifest's targets, comparison
+evidence merged into top-level evidence deduped by id, and a `target_boundary_unavailable`
+limitation so a target on an unresolved chain is surfaced rather than silently dropped. S1
+touched only `lib/aegis/surfaces/**`, so no receipt was invalidated. It also found a real
+provenance hole: the report was emitting ZERO head evidence while asserting two boundaries,
+because a conjunctive filter required a `capturedAt` the W3 `ChainAdapter` head contract
+structurally never supplies — nine S0 tests passed over it, including a key-set assertion,
+because none looked INSIDE `evidence`. Fixed with the verified bundle's own timestamp plus a
+fail-closed refusal when head provenance would be ambiguous
+([[INS-84853447-d1bb-4095-bfd6-9cc0fbaafabc]]).
+
+Heads-up for **S2**: it touches `lib/aegis/manifest/**` and `lib/aegis/chain/**`, so it will
+invalidate the W2, W3 **and** W4 receipt bases — budget the same owner-authorized two-commit
+re-attestation chain S0 used.
 
 **Standing notes for the W5 lane.** Codex-dispatch guardrails (no worktree,
 neutral+static brief, .serena/ clarification, never rm -rf shared temp) in [[INS-004]] +

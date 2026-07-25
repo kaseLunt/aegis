@@ -140,10 +140,19 @@ Shape decisions and their rejected alternatives:
   `EV-W2-R2` **and** `EV-W4-R2`. The kickoff decision record said one; that was wrong,
   because `lib/aegis/manifest/trust.ts` is W2's own **deliverable** as well as sitting in
   W4's `invalidated_by`. Ask which item OWNS a file, not only which items list it.
-- **S1 — target extraction + identity verifications.** Read targets from the trusted
-  `loaded.manifest.targets`, run `observeIdentity` per target at the pinned boundary, and
-  `compareIdentityTarget` into the payload's `verifications` (S0 emits `[]`). No control-plane
-  obligation attached — the seam it depended on already landed in S0.
+- **S1 — target extraction + identity verifications. DONE (374/374).** Targets read from the
+  trusted `loaded.manifest.targets` (untrusted/invalid manifest ⇒ zero verifications, asserted),
+  `observeIdentity` per target at the pinned block, `compareIdentityTarget` into
+  `payload.verifications`; comparison evidence merged into top-level `evidence` deduped by id
+  for referential integrity. A target whose chain never pinned is surfaced as a
+  `target_boundary_unavailable` limitation, never silently dropped (mutation-tested).
+  Touched only `lib/aegis/surfaces/**` + tests, so no receipt was invalidated.
+  **Defect found and fixed here:** the report was emitting ZERO `rpc_call` evidence while
+  asserting two boundaries — a conjunctive filter required `o.capturedAt`, which the W3
+  `ChainAdapter` head contract structurally never provides. Fixed with the verified bundle's own
+  `capturedAt` plus a fail-closed `ambiguous_head_provenance` refusal when more than one heads
+  recording is supplied. Full analysis and the deferred durable fix:
+  [[INS-84853447-d1bb-4095-bfd6-9cc0fbaafabc]].
 - **S2 — [[R-003]]: duplicate-aware strict parse** at both byte boundaries + API request
   size/shape limits. Negative test must prove the pre-fix behavior would have passed.
 - **S3 — CLI.** `bin/aegis.ts` + `vite.cli.config.ts` + `package.json` bin/scripts;
@@ -168,18 +177,24 @@ npm test
 
 ## Handoff
 
-- next: **S0 DONE** (06f44c6 code; re-attestation follow-on). Start at **S1** — target
-  extraction + identity verifications: read targets from the trusted `loaded.manifest.targets`
-  that `trustedManifestFromBytes` now returns, `observeIdentity` per target at
-  `result.boundary.block`, then `compareIdentityTarget` into `payload.verifications` (S0 emits
-  `[]`). The identity e2e in `tests/identity-compare.test.ts` is the reference for building the
-  `IdentityComparisonContext` (manifestEvidence bound to `manifestHash`, freshness bound to the
-  pin). Note S0 loads only `role: "heads"` recordings; S1 wires the `"identity"` role.
-  Two carry-overs S0 deliberately left: the fully-unresolved case is a typed `SurfaceError`,
-  but a PARTIALLY unresolved run (one chain pinned, one not) is only covered by diagnostics —
-  add an explicit test; and `manifestVersion` degrades to `"unknown"` for untrusted/invalid
-  manifests by design (a refused document must not place chosen strings in a canonical field)
-  — confirm that reads honestly on the CLI/drawer.
+- next: **S0 + S1 DONE** (374/374, tsc + lint clean). Start at **S2 — [[R-003]] duplicate-aware
+  strict parse** at `loadManifestBytes` and `loadRecordingBytes`, plus API-edge size/shape
+  limits. NOTE: S2 touches `lib/aegis/manifest/**` and `lib/aegis/chain/**`, so it WILL
+  invalidate the W2, W3 and W4 receipt bases — plan the same two-commit re-attestation chain S0
+  used (code commit lands doctor-red under owner authorization, then `EV-*-R*` minted at that
+  SHA and superseded in place). Check which items OWN the files, not just which list them:
+  expect W2 (owns trust.ts), W3 (owns chain/adapter.ts) and W4 (lists both).
+  Carry-overs still open:
+  - Verdicts over the shipped fixtures are all `unknown` by construction — the manifest's
+    targets have no recorded reads and its expected hashes are placeholders. A matched
+    manifest/recording pair is required for a `pass`; that constraint is now written up in the
+    W6 work file. Do NOT "fix" it inside W5.
+  - `manifestVersion` degrades to `"unknown"` for untrusted/invalid manifests by design (a
+    refused document must not place chosen strings in a canonical field) — confirm that reads
+    honestly on the CLI and in the drawer.
+  - Head evidence `capturedAt` is bundle-level, identity-read `capturedAt` is per-response
+    ([[INS-84853447-d1bb-4095-bfd6-9cc0fbaafabc]]). The drawer must not imply per-call head
+    timestamps.
 - read_first: [[D-6bedc848-2a42-411a-a65b-d623f7418121]] (shape + rejected alternatives);
   [[INS-a6fc2796-f247-41fc-80a9-a5be3c72e616]] addendum 3 (brands are process-local —
   surfaces re-verify bytes, never ship verified objects);
