@@ -5,7 +5,7 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: none
+active_task: W0H
 updated: 2026-07-25
 ---
 
@@ -20,12 +20,21 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**No active task — W5 PARKED at `committed` after S0/S1/S2, mid-slice-plan.** Parked (not
-abandoned) because the `fable-main` lease lapsed and an expired lease is deliberately not
-renewable — release plus a task transition is the designed recovery
-([[INS-c80e5b1e-d02d-4d0d-a48f-167aacf2eef7]]). Work is genuinely paused, so parking states
-the truth rather than papering over it. **To resume:** set W5 `status: active`, STATUS
-`active_task: W5`, then `claim.py open fable-main W5 --integrator`, and start at slice S3.
+**W0H — retire claim lease expiry.** Owner directive 2026-07-25 ("we need to get rid of the
+leasing system"), decided in [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]]. Removes the lease
+*clock* only: `lease_expires`, `renew`, `--hours`, `MAX_LEASE_HOURS`, `check_expiry`, and
+`--check-live-lease(s)`. Claims themselves stay — scope, `scope_hash`, branch/worktree binding,
+`rebind --owner-reviewed`, WIP=1, and the `active -> released|failed|abandoned` lifecycle are all
+unchanged. Abandonment recovery becomes the explicit `release --status abandoned`.
+
+This is a PROTECTED-surface change (`roadmap/tools/**`) and carries a five-receipt
+re-attestation chain (W0A, W0B, W0D, W0E, W0F). Deliberately NOT bundled with [[W0G]] defect 1
+— the decision records why. Owner-only follow-up: `RULES.md:9` still says "unexpired".
+
+**W5 remains PARKED at `committed` after S0/S1/S2, mid-slice-plan** — the lease lapse that
+parked it is the very thing W0H removes. **To resume W5 after W0H lands:** set W5
+`status: active`, STATUS `active_task: W5`, then `claim.py open fable-main W5 --integrator`,
+and start at slice S3.
 
 Kickoff mapped the W1–W4 spine with a four-agent read-only fan-out (run wf_c29e08ca-2a8) and
 established the decisive fact: **there is no packaged pass-to-report composer** — the
