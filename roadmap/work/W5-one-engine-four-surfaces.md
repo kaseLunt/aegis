@@ -3,7 +3,7 @@ id: W5
 type: work
 title: aegis verify CLI + report API + CI adapter + web evidence drawer over one engine
 phase: P1
-status: active
+status: committed
 evidence_target: "Correct + Robust + Demonstrated"
 priority: 1
 depends_on: [W4]
@@ -31,7 +31,7 @@ invalidated_by:
   - data/**
   - package.json
 review_when: phase:P1:exit
-updated: 2026-07-24
+updated: 2026-07-25
 ---
 
 # W5 — One engine, four surfaces
@@ -185,10 +185,17 @@ npm test
   `bin/aegis.ts` + `vite.cli.config.ts` + `package.json` bin/scripts, `node:util parseArgs`,
   `surfaces/render.ts`, and the exit-code matrix (0 clean / 2 blocking fail / 3
   unknown-stale-conflict / 4 invalid request or manifest / 5 engine failure).
-  **No more re-attestation chains in W5**: S3-S7 touch `bin/`, `app/`, `components/` and
-  `lib/aegis/surfaces/`, none of which appear in any other item's `invalidated_by`. S2 was the
-  last one, and it cost FOUR receipts (W1, W2, W3, W4) — one more than predicted, because the
-  scanner was placed in `report/canonical.ts` on purpose.
+  **No more re-attestation chains in W5** — verified systematically, not from memory: every
+  work item's `invalidated_by` was matched against the concrete S3-S7 path set and no item
+  holding a LIVE (`status: recorded`) receipt is hit. Note the precise reason, because the
+  loose version of this claim is wrong: W5 and W6 DO list those paths (`bin/**`,
+  `components/**`, `package.json`, and `lib/aegis/**` which covers `surfaces/`), but W5 is
+  `active` with `evidence_receipts: []` and W6 is `candidate` — neither has a receipt to
+  invalidate yet. Forward implication: once W5 is STAMPED it acquires a receipt over
+  `lib/aegis/**`, `bin/**`, `components/**`, `data/**` and `package.json`, so any later work in
+  those paths (W6 especially) will invalidate W5's own receipt. Do not stamp W5 mid-slice.
+  S2 was the last chain, and it cost FOUR receipts (W1, W2, W3, W4) — one more than predicted,
+  because the scanner was placed in `report/canonical.ts` on purpose.
   Carry-overs still open:
   - Verdicts over the shipped fixtures are all `unknown` by construction — the manifest's
     targets have no recorded reads and its expected hashes are placeholders. A matched

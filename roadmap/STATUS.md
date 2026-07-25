@@ -5,7 +5,7 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: W5
+active_task: none
 updated: 2026-07-25
 ---
 
@@ -20,8 +20,12 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W5 — one engine, four surfaces — ACTIVE** (kickoff complete 2026-07-24; no code written
-yet, start at slice S0).
+**No active task — W5 PARKED at `committed` after S0/S1/S2, mid-slice-plan.** Parked (not
+abandoned) because the `fable-main` lease lapsed and an expired lease is deliberately not
+renewable — release plus a task transition is the designed recovery
+([[INS-c80e5b1e-d02d-4d0d-a48f-167aacf2eef7]]). Work is genuinely paused, so parking states
+the truth rather than papering over it. **To resume:** set W5 `status: active`, STATUS
+`active_task: W5`, then `claim.py open fable-main W5 --integrator`, and start at slice S3.
 
 Kickoff mapped the W1–W4 spine with a four-agent read-only fan-out (run wf_c29e08ca-2a8) and
 established the decisive fact: **there is no packaged pass-to-report composer** — the
