@@ -2,7 +2,8 @@
 id: EV-W0-R2
 type: evidence
 title: W0 verification re-attested at the historical-receipt fix commit
-status: recorded
+status: superseded
+superseded_by: EV-W0-R3
 work: W0
 result: pass
 commands:

@@ -18,12 +18,12 @@ deliverables:
   - roadmap/tools/claim.py
   - roadmap/decisions/D-006-asymmetric-parallelism-one-semantic-spine-owner-.md
 evidence_receipts:
-  - roadmap/evidence/EV-W0D-R3.md
+  - roadmap/evidence/EV-W0D-R4.md
 review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
 updated: 2026-07-21
-evidence_fingerprint: sha256:4f384407d0aa184aabd423d5b06dce0e15a1ba2ae50dce926bc53482184069b4
+evidence_fingerprint: sha256:2ab85c9de1eb554ced6bb1dc9a2ccc7505c297f1a655d632b2d6e3e1fd213e07
 ---
 
 # W0D — Parallelism prep
@@ -64,9 +64,12 @@ python roadmap/tools/claim.py list
   roadmap/tools/doctor.py, roadmap/tools/scope_gate.py (AEGIS_AGENT branch).
 - hazards: claims live under roadmap/claims/ and are read from the STAGED index by the gate
   — stage the claim before committing under it; claim allowed_paths may only narrow (must be
-  literal members of the task's list); an expired lease is a commit-blocking doctor error —
-  renew or release promptly; WR researchers must never later implement the observed-side
-  acquisition for the same values (D-006 independence rule).
+  literal members of the task's list); ~~an expired lease is a commit-blocking doctor error —
+  renew or release promptly~~ **RETIRED 2026-07-25 by [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]]
+  (W0H): claims no longer expire and `claim.py renew` no longer exists. A claim stays
+  authoritative until an explicit transition; recover an abandoned lane with
+  `claim.py release <agent> --status abandoned`.**; WR researchers must never later implement
+  the observed-side acquisition for the same values (D-006 independence rule).
 
 ## Evidence
 - 2026-07-21: doctor + 19/19 selftests green locally; CI on push e0cbf8f.

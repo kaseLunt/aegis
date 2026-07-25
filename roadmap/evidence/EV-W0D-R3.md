@@ -2,7 +2,8 @@
 id: EV-W0D-R3
 type: evidence
 title: W0D verification re-attested at the R-006 path-containment fix
-status: recorded
+status: superseded
+superseded_by: EV-W0D-R4
 work: W0D
 result: pass
 commands:

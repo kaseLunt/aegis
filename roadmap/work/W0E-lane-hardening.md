@@ -19,12 +19,12 @@ deliverables:
   - roadmap/tools/selftest.py
   - roadmap/tools/scope_diff.py
 evidence_receipts:
-  - roadmap/evidence/EV-W0E-R3.md
+  - roadmap/evidence/EV-W0E-R4.md
 review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
 updated: 2026-07-22
-evidence_fingerprint: sha256:30073aa0991c677c1cb88a7b952255b19217df25691569b78c87e01c19001491
+evidence_fingerprint: sha256:908df053f1d70ad9ecf1f371c9e56aeea8e1c8ed52e95b5c5ace763433d70c6e
 ---
 
 # W0E — Lane hardening (second external review)
@@ -64,8 +64,10 @@ python roadmap/tools/doctor.py && python roadmap/tools/selftest.py
   second external review (key items recorded in this charter).
 - hazards: 7 active claims exist in the index — after this lands, EVERY commit needs
   AEGIS_AGENT set (fable-main for integration); lane capture is narrowed to
-  ideas/insights/risks — lanes cannot edit charters, claims (beyond lease renewal), STATUS,
-  or other lanes' outputs.
+  ideas/insights/risks — lanes cannot edit charters, claims (beyond ~~lease renewal~~ **their own
+  lifecycle transitions; lease renewal was retired 2026-07-25 by
+  [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]] (W0H), which makes this permission set strictly
+  smaller**), STATUS, or other lanes' outputs.
 
 ## Evidence
 - 2026-07-22: 28/28 selftests (incl. none-with-claims block, identity-mandatory, lane
