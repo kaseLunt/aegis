@@ -33,4 +33,18 @@ a real defect in id generation).
   operational rule until then: a red on this one check is retried ONCE; a second
   consecutive red is treated as real and halts.
 
+## Root cause identified (2026-07-24, W5 S0/S1 boundary)
+The "parallel UUID timing" framing in the title is WRONG and has misdirected every reader
+since. The recurrence log's own failure text is the answer: `capture: FAIL -- capture target:
+destination escapes repository root`, emitted by `safe_worktree_path` in
+`roadmap/tools/_control_plane.py`. This is a **path-resolution race under concurrency on
+Windows**; `new.py` id generation is not implicated at all. Fix the path resolution and correct
+this record's title at the same time.
+
+Scheduled: [[W0G]] bundles this with the worktree eol/control-char snapshot fix
+([[INS-5931d8f8-d494-4cb5-b147-c7fd9e6ffaab]] item 4), because any `roadmap/tools/**` change
+invalidates SEVEN work-item receipt bases (W0, W0A, W0B, W0C, W0D, W0E, W0F) on an owner-gated
+protected surface — so the re-attestation is paid once, deliberately, as this record already
+instructed. Standing retry-once operational rule stays in force until W0G lands.
+
 owner: klunt · review_when: date:2026-08-06

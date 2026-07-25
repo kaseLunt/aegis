@@ -142,9 +142,15 @@ roadmap/tools change.
    action. **M1 closes at W6.**
 3. Manifest-owner open items: live rate-limit value (3k vs 10k weETH/4h), executor pin,
    historical setPeer tx. WR4/WR5 round 2 at M3/M4 planning.
-4. Serena index does not resolve inside subagents in this repo
-   ([[INS-f3f74c16-f56e-46b1-85bd-55464e4183ce]]) — `.serena/` is untracked; committing the
-   project config is the candidate fix. Tooling-scoped, low urgency, affects fan-out cost.
+4. [[W0G]] — control-plane tooling residuals (worktree eol/control-char snapshot + the R-006
+   race, whose root cause is now identified as path resolution, NOT UUID timing). `candidate`;
+   filed rather than fixed inline because any `roadmap/tools/**` change invalidates SEVEN
+   receipt bases on an owner-gated protected surface. Recommended AFTER W5.
+5. Serena-in-subagents: **resolved by diagnosis, no action needed**
+   ([[INS-f3f74c16-f56e-46b1-85bd-55464e4183ce]] item 2). The "untracked `.serena/`" hypothesis
+   was DISPROVEN — a subagent inherits the cwd, sees the config, and `find_symbol` succeeds.
+   The kickoff failure was a cold index (`.serena/cache/**`, which is gitignored and could
+   never have been shipped). Mitigation is to warm the index before fanning out.
 
 ## Blockers
 - OWNER (control-plane enforcement): the upgraded bundle's authoritative gate is the
@@ -159,6 +165,15 @@ roadmap/tools change.
   receipt-lifecycle chain (required checks all green). Correct behavior for the current
   bootstrap posture; clears when the trusted PR flow (ruleset + policy variables) is
   wired per [[D-007]]/[[R-005]]. Routine non-owner pushes replay green.
+  **Re-confirmed 2026-07-25** on the W5 kickoff+S0+S1 chain (pushed c6fe363, run 30138208996):
+  all THREE required checks green — `Product tests`, `Advisory candidate doctor`,
+  `Advisory candidate selftest` — with the single red being the non-required
+  `Advisory candidate scope review`, failing `owner approval requires a positive decimal
+  pull-request number`. Two facts worth keeping: the `Trusted audit candidate` job reports
+  **skipped** ("wire through a hosting ruleset required workflow"), which is the D-007 gap
+  made visible; and a deliberately doctor-RED middle commit (06f44c6) did NOT break CI,
+  confirming the doctor validates the push HEAD while `scope_diff` replays transitions — the
+  two-commit re-attestation chain shape is CI-safe.
 - W0C (parked): GitHub repo deletion needs owner auth — run
   `gh auth refresh -h github.com -s delete_repo` or delete kaseLunt/aegis via web; agent
   then recreates, pushes, verifies, and closes W0C.

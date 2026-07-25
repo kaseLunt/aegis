@@ -37,10 +37,24 @@ via ToolSearch and preferring symbolic navigation over whole-file reads.
    calls. Either (a) verify Serena resolves from the main session and do symbol-level work
    inline, or (b) budget subagent fan-outs at whole-file-read cost and scope their file
    lists tightly (name the exact files, as this run did — that is why it still converged).
-2. `.serena/` is currently UNTRACKED (`?? .serena/`) — a per-machine config, so subagents
-   in a fresh worktree/cwd have no activated project at all. This is the likely root cause
-   and also means the config is not shared. Committing `.serena/project.yml` is a candidate
-   fix; verifying whether workflow agents inherit the session cwd is the diagnostic.
+2. ~~`.serena/` is UNTRACKED, so subagents have no activated project; committing
+   `.serena/project.yml` is a candidate fix.~~ **DISPROVEN 2026-07-24 — do not commit it for
+   this reason.** The diagnostic named here was actually run: a `serena-coder` subagent
+   reported cwd `C:\Users\kasel\source\repos\etherfi\aegis`, confirmed `.serena/project.yml`
+   was visible from it, and `find_symbol("establishBoundary", "lib/aegis/chain/engine.ts")`
+   **succeeded**, returning byte-identical output to the main session
+   (`body_location 97–203`). So subagents DO inherit the session cwd and DO see the config;
+   its absence from git was never the cause.
+   Revised root cause: the failing run was a **cold index**. Serena builds
+   `.serena/cache/typescript/*.pkl` on first indexing; during the kickoff fan-out those
+   caches did not yet exist and four agents raced to build them concurrently, which is what
+   produced `FileNotFoundError` on every path. The caches exist now (~150K), and
+   `.serena/.gitignore` excludes `/cache` — so the artifact that actually mattered is one
+   git could never have shipped.
+   Correct mitigation: **warm the index in the main session before fanning out** (one
+   `find_symbol` call is enough), or accept full-file-read cost on the first fan-out in a
+   fresh clone. Committing `.serena/project.yml` is harmless but buys nothing, and it would
+   cost a scope amendment (the gate correctly refuses `.serena/**` under W5's authority).
 3. Do not silently trust a subagent's "I used the right tools" — the three hazard notes
    only surfaced because the schema had a `hazards` field. Ask fan-out agents to report
    tool-level degradation explicitly; it is the difference between a 335k-token map and an
