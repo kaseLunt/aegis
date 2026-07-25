@@ -72,13 +72,40 @@ short path — and ten parallel `new.py` invocations mean the target file and it
 directory flicker in and out of existence WHILE `resolve()` runs. A call that observes a
 partially-existing prefix can normalize differently from one that does not, which is exactly a
 result that varies run to run on one platform only.
-**Do not fix on this hypothesis alone.** Reproduce first: loop the parallel-capture case until
-it fails, then print `repo`, `root`, `current`, `resolved` at the failure. Candidate fix shape
-once confirmed: compare using `os.path.normcase` on both sides, and/or avoid re-resolving a
-path already built from a resolved root (the containment property is structural — `current` is
-`root / parts` with traversal already rejected by `normalize_repo_path`, so the final
-`resolve()` may be redundant for containment and only needed for the symlink check, which the
-loop above already performs per-component).
+### 2a-bis. Reproduction attempts 2026-07-25 — findings that narrow it sharply
+Two probes were run (standalone scripts, deleted after; the real repo was never modified):
+
+**Finding 1 — the 8.3 short-path theory is DISPROVEN.** `tempfile.gettempdir()` here is
+`C:\Users\kasel\AppData\Local\Temp` with no `~` short-name component, `Path(td).resolve()`
+equals `td`, and `resolve(strict=False)` on a NON-existent deep child agrees with the resolved
+root. So short-name expansion is not the mechanism.
+
+**Finding 2 — it does NOT reproduce in isolation: 20/20 clean.** Building the synthetic repo
+with `selftest.build_candidate` and running the 8 parallel `new.py` invocations twenty times in
+a fresh temp dir produced zero failures. The flake therefore depends on the FULL selftest run
+context (many prior phases, thousands of files created under one temp root), not on the
+parallel capture alone. That is consistent with transient filesystem interference — a Windows
+`_getfinalpathname` failing under concurrent I/O or a scanner touching the tree, which sends
+`Path.resolve()` down its fallback branch — rather than anything wrong with the path arithmetic.
+
+**Finding 3 — you CANNOT instrument the tools inside the synthetic repo.** Patching
+`repo/roadmap/tools/_control_plane.py` in the candidate makes it a modified PROTECTED surface,
+so `scope_diff` correctly demands owner approval and the unrelated case
+`owner:routine-capture-needs-no-owner-token` fails instead. The gate is right; the probe was
+wrong. Next attempt should instrument WITHOUT touching repo files — e.g. a `sitecustomize.py`
+on `PYTHONPATH` that wraps `pathlib.Path.resolve` to log arguments and results, since
+`sitecustomize` is imported before the target script and needs no file in the repo.
+
+**Candidate fix, independent of the transient trigger.** The final
+`resolved.relative_to(root)` is a FILESYSTEM round-trip used to prove a property that is
+already structural: `current` is literally `root / parts`, `normalize_repo_path` rejects `""`,
+`.` and `..`, and the loop rejects a symlink or junction at every component. A check that can
+fail spuriously under I/O pressure has turned a robustness guard into a liveness bug. Replace it
+with pure string containment (`os.path.normcase` + `os.path.normpath`, no filesystem access) —
+BUT first make `normalize_repo_path` reject absolute or drive-qualified segments, because
+`Path("C:/a") / "C:"` yields `Path("C:")`: `/` with an absolute right-hand side REPLACES the
+root, and catching that is the one thing the `resolve()` currently earns its keep for. With that
+rejection in place, string containment is exact and race-free, and no security property is lost.
 
 ### 2b. R-006 is a Windows path-resolution race, NOT a UUID collision
 The risk title says "parallel UUID timing", but the recurrence log records the actual failure
