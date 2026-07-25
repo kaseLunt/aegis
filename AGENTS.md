@@ -72,7 +72,9 @@ verified a concurrent-writer contract.
 - **Capture with one command:** `python roadmap/tools/new.py <idea|insight|decision|risk> "title"`.
 - **Parallel lanes run under claims** (D-006): `python roadmap/tools/claim.py open <agent> <task>`;
   commit a lane's work with `AEGIS_AGENT=<agent>` set so the scope gate judges the claim's
-  scope. One active claim per agent; leases expire — renew or release. Never source an
-  expected value, implement its observed-side check, AND certify it — pick at most one role.
+  scope. One active claim per agent; claims do NOT expire ([[D-9646fc3c]]) — close a lane
+  explicitly with `claim.py release <agent>`, using `--status abandoned` if the work is being
+  dropped. Never source an expected value, implement its observed-side check, AND certify it —
+  pick at most one role.
 
 Full standing rules: `roadmap/RULES.md` §13–20.
