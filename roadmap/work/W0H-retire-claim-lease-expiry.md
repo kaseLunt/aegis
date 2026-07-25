@@ -99,16 +99,17 @@ failure mode is precisely an agent hitting that dead end and concluding the tool
 stale-green: gates and instructions disagreeing, with the instructions winning in practice.
 
 Both are PROTECTED surfaces, so the amendment is an owner-acknowledged scope expansion rather
-than an agent-side widening. `roadmap/RULES.md:9` stays OUT of scope — owner-only regardless of
-task — and remains the owner's one manual edit.
+than an agent-side widening. `roadmap/RULES.md:9` stayed OUT of scope — owner-only regardless
+of task — and the owner applied that one-word edit personally at `1c01aac`.
 
 ## Non-goals
 
 - [[W0G]] defect 1 (worktree CRLF/control-char snapshot reading). Deliberately not bundled;
   the decision records why (fingerprint semantics vs governance model, attributability).
 - Any relaxation of `rebind --owner-reviewed`, of scope containment, or of WIP=1.
-- `roadmap/RULES.md:9` ("exactly one active, **unexpired** claim") — owner-only surface. Prepare
-  the exact one-word edit for the owner; do not apply it.
+- ~~`roadmap/RULES.md:9` — owner-only surface. Prepare the exact one-word edit for the owner;
+  do not apply it.~~ **DONE by the owner at `1c01aac` (2026-07-25):** RULES.md:9 now reads
+  "exactly one active claim". No owner follow-up remains on this item.
 
 ## Canonical commands
 
@@ -124,8 +125,9 @@ npm test
   `_control_plane.py` first (the shared validator all four gates call), then the gates, then
   `claim.py`, then CI, then selftest last so the new cases run against finished code.
 - read_first: [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]] (the decision and its cost section);
-  [[INS-c80e5b1e-d02d-4d0d-a48f-167aacf2eef7]] (why `renew` refuses, and the reverted patch);
-  [[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]] (the five-receipt re-attestation recipe).
+  [[INS-c80e5b1e-d02d-4d0d-a48f-167aacf2eef7]] (HISTORICAL incident record only — the reverted
+  patch and the read-the-tests lesson; its operational directives are struck as overtaken);
+  [[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]] (the re-attestation recipe).
 - hazards: `roadmap/tools/**` is a PROTECTED surface — expect a doctor-red mid-chain commit
   needing owner authorization, exactly as W5 S0 and W0G defect 2 did. Budget for the full
   **six**-receipt chain — W0, W0A, W0B, W0D, W0E, W0F — before starting; a half-landed

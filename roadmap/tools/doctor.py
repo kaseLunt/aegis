@@ -444,6 +444,49 @@ def section_body(text: str, heading: str) -> str:
     return re.split(r"^## ", text[match.end():], maxsplit=1, flags=re.M)[0].strip()
 
 
+STANDING_INSTRUCTION_FILES = (
+    "CLAUDE.md",
+    "AGENTS.md",
+    "roadmap/RULES.md",
+    "roadmap/SYSTEM.md",
+    "roadmap/VISION.md",
+)
+# D-9646fc3c (W0H) retired claim-lease expiry; a Codex review then found a live insight still
+# PRESCRIBING the deleted renew command. This rule keeps retired lease/renewal mechanics out of
+# executor-facing text: the recorded failure mode is an agent following stale instructions into
+# a dead end and concluding the tooling is broken.
+RETIRED_STANDING_RE = re.compile(
+    r"claim\.py renew|\bunexpired\b|leases? expire\b|lease renewal", re.I
+)
+RETIRED_NARRATIVE_RE = re.compile(r"claim\.py renew")
+LIVE_NARRATIVE_DIRS = ("roadmap/work", "roadmap/insights", "roadmap/risks", "roadmap/ideas")
+
+
+def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> None:
+    for path in STANDING_INSTRUCTION_FILES:
+        if not snapshot.exists(path):
+            continue
+        for lineno, line in enumerate(snapshot.read_text(path).splitlines(), 1):
+            if RETIRED_STANDING_RE.search(line):
+                errors.append(
+                    f"{path}:{lineno}: retired lease/renewal language on a standing "
+                    f"instruction surface: '{line.strip()[:80]}'"
+                )
+    narrative = ["roadmap/STATUS.md"]
+    for directory in LIVE_NARRATIVE_DIRS:
+        narrative.extend(snapshot.list(directory, ".md"))
+    for path in narrative:
+        if not snapshot.exists(path):
+            continue
+        for lineno, line in enumerate(snapshot.read_text(path).splitlines(), 1):
+            # A struck-through (~~) line is marked-historical and exempt.
+            if RETIRED_NARRATIVE_RE.search(line) and "~~" not in line:
+                errors.append(
+                    f"{path}:{lineno}: retired command directive in live narrative "
+                    f"(strike it ~~...~~ or reword): '{line.strip()[:80]}'"
+                )
+
+
 def substantive_section(text: str, heading: str, path: str, errors: list[str]) -> str:
     body = section_body(text, heading)
     if not body:
@@ -854,6 +897,8 @@ def main() -> int:
             errors.append(f"STATUS active_task '{active_task}' is not in active work {active_work}")
     elif active_work:
         errors.append(f"STATUS active_task is none while active work exists: {active_work}")
+
+    validate_instructional_surfaces(snapshot, errors)
 
     claims: list[tuple[str, dict]] = []
     for path in snapshot.list("roadmap/claims", ".md"):

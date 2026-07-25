@@ -23,7 +23,7 @@ review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
 updated: 2026-07-21
-evidence_fingerprint: sha256:63e67f04dd518580e730a1553b241973c8bfd3d5481f0b20cf68c9aae438a558
+evidence_fingerprint: sha256:2f2a3e30a742c83373b6c6c1ef03d96a9d43bd6e5cc0a6465a5977b24ae0da9b
 ---
 
 # W0D — Parallelism prep
@@ -66,7 +66,7 @@ python roadmap/tools/claim.py list
   — stage the claim before committing under it; claim allowed_paths may only narrow (must be
   literal members of the task's list); ~~an expired lease is a commit-blocking doctor error —
   renew or release promptly~~ **RETIRED 2026-07-25 by [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]]
-  (W0H): claims no longer expire and `claim.py renew` no longer exists. A claim stays
+  (W0H): claims no longer expire and the renew subcommand no longer exists. A claim stays
   authoritative until an explicit transition; recover an abandoned lane with
   `claim.py release <agent> --status abandoned`.**; WR researchers must never later implement
   the observed-side acquisition for the same values (D-006 independence rule).

@@ -49,8 +49,10 @@ Three pre-existing texts already draw this line; the decisions just never cross-
    crash recovery safe. W0H did not amend, weaken, or satisfy D-007 requirements 2/5/7; they
    bind the machinery phase (post-W3 build, post-W4 pilot, per D-007's sequencing and [[R-005]]).
 3. When the allocator is designed, its lease semantics start from D-007 req 7, and the designer
-   must read this insight plus [[INS-c80e5b1e-d02d-4d0d-a48f-167aacf2eef7]] (why the cooperative
-   clock failed: silent, deferred, dead-ended) so the allocator's expiry is none of those three —
-   loud, immediate, and with a documented recovery command.
+   must read this insight plus the HISTORICAL failure analysis in
+   [[INS-c80e5b1e-d02d-4d0d-a48f-167aacf2eef7]] (a struck incident record — its operational
+   directives are overtaken; read it only for WHY the cooperative clock failed: silent,
+   deferred, dead-ended) so the allocator's expiry is none of those three — loud, immediate,
+   and with a documented recovery command.
 4. If the owner wants this reconciliation at decision grade rather than insight grade, promote it
    through a phase review (HITL barrier); the text above is written to be promotable verbatim.

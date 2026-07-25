@@ -590,6 +590,47 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # W0H round-4 tooth (Codex finding: a live insight still PRESCRIBED the deleted renew
+    # command). Live surfaces may not carry retired lease/renewal directives: standing
+    # instruction files are held to a phrase set, live roadmap narrative to the dead command
+    # literal, with struck-through (~~) lines exempt as marked-historical.
+    write(status_path, valid + "\nRun claim.py renew synthetic before long sessions.\n")
+    must(git(repo, "add", "roadmap/STATUS.md"), "stage dead directive")
+    write(status_path, valid)
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:dead-directive-rejected",
+        result.returncode == 1 and "retired" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    write(
+        status_path,
+        valid + "\n~~Run claim.py renew synthetic before long sessions.~~ (historical)\n",
+    )
+    must(git(repo, "add", "roadmap/STATUS.md"), "stage struck directive")
+    write(status_path, valid)
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:struck-historical-allowed",
+        result.returncode == 0,
+        output(result),
+    )
+    reset(repo, active)
+
+    rules_path = repo / "roadmap" / "RULES.md"
+    write(rules_path, "# Rules\n\nEvery active item holds an unexpired claim.\n")
+    must(git(repo, "add", "roadmap/RULES.md"), "stage standing violation")
+    rules_path.unlink()
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:standing-surface-clean",
+        result.returncode == 1 and "standing instruction" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
     # A claim whose timestamps are years old is still fully authoritative. Under the retired
     # lease model this exact fixture was refused, which is the failure this item removes: the
     # refusal was silent (doctor stayed green), deferred, and dead-ended at `renew`.

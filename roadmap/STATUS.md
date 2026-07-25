@@ -39,9 +39,23 @@ needs-attention, no P0. Dispositions, each verified at the CURRENT head:
   [[INS-fe09afdb-676b-42f6-9a60-0b1e61fa7978]] (promotable to decision grade at a phase review
   if the owner wants); [[R-005]] annotated to point the future allocator designer there.
 
-[[D-b4ab3c69]]: W0H stays `active`, NOT achieved, until the round-3 scoped re-review returns
-converged-clean against a head containing `190d255`, `1c01aac`, and the reconciliation. On
-clean: mint EV-W0H, owner-ack the achieved stamp, release the claim, unpark W5 at S3.
+**Codex round 3 (pinned `b7a925a`):** all three round-2 findings **CLOSED** — receipts current,
+RULES clean, and the D-007/D-9646 reconciliation ruled adequate at insight grade ("No formal
+decision is required"). One NEW high finding: [[INS-c80e5b1e-d02d-4d0d-a48f-167aacf2eef7]] —
+itself routed to by the W0H handoff and the reconciliation — still PRESCRIBED the deleted renew
+command in its normative Consequence, recreating the round-1 dead end through a referenced
+document; plus stale cockpit text claiming the RULES edit was still outstanding.
+Disposition: the insight is now banner-marked as a historical incident record with every
+operational directive struck and the retiring authority cited (analysis retained verbatim);
+incoming references reframed to historical-only; stale STATUS/W0H text corrected; and per the
+teeth habit, a doctor rule now rejects retired lease/renewal instructions on live surfaces
+(standing-instruction files fully; live roadmap narrative for the dead command literal, with a
+strike-through exemption), selftest-pinned and negative-tested.
+
+[[D-b4ab3c69]]: W0H stays `active`, NOT achieved, until a round-4 scoped re-review returns
+converged-clean. On clean: mint EV-W0H, owner-ack the achieved stamp, release the claim,
+unpark W5 at S3 (S3 recon is already complete — four-mapper read-only workflow, results held
+by the orchestrator for the S3 test matrix).
 
 **Round 1 (completed, verdict needs-attention, no P0) — both findings dispositioned:**
 - **P1** `AGENTS.md:75` + `CLAUDE.md:80` still said "leases expire — renew or release". Fixed in
@@ -78,8 +92,8 @@ CI: Control plane remains red at the SAME pre-existing failure as `0a75f8e`
 (`owner approval requires a positive decimal pull-request number` — a direct push has no PR
 number; [[R-005]]/[[D-007]]). Doctor and selftest jobs PASS remotely with the flags removed.
 
-- **Owner-only follow-up:** `roadmap/RULES.md:9` still reads "exactly one active, unexpired
-  claim". Delete `, unexpired` — the word is now false.
+- **Owner follow-up COMPLETE:** the owner personally landed the `RULES.md:9` one-word edit at
+  `1c01aac`; the standing rules now read "exactly one active claim". No owner residual remains.
 - **Not bundled with [[W0G]] defect 1** (worktree CRLF/control-char snapshot) — the decision
   records why: that edit changes fingerprint semantics, the evidence root.
 
