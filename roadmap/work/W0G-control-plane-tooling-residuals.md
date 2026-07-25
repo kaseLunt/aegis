@@ -52,7 +52,35 @@ Consider also rejecting raw control characters in text files, per that insight's
 product-side tooth (`tests/repo-source-hygiene.test.ts`) only covers `lib/ app/ tests/
 components/`, not `roadmap/**` or `data/**`.
 
-### 2. R-006 is a Windows path-resolution race, NOT a UUID collision
+### 2a. Code-level hypothesis for the R-006 race (2026-07-25, unverified — reproduce first)
+`safe_worktree_path` (`_control_plane.py`) ends with:
+```python
+root = Path(repo).resolve()
+current = root
+for part in normalized.split("/"):
+    current = current / part          # inherits root's already-resolved form
+    ...
+resolved = current.resolve(strict=False)
+resolved.relative_to(root)            # <-- raises => "destination escapes repository root"
+```
+The only way `relative_to` can fail here is if `resolved` and `root` disagree on the SAME
+prefix, since `current` is built from `root`. On Windows `Path.resolve()` takes different code
+paths depending on whether the path EXISTS (it can query the filesystem to expand 8.3 short
+names and reparse points) versus not (string normalization only). The selftest runs inside
+`tempfile.TemporaryDirectory()`, i.e. under `%TEMP%`, which on Windows is frequently an 8.3
+short path — and ten parallel `new.py` invocations mean the target file and its parent
+directory flicker in and out of existence WHILE `resolve()` runs. A call that observes a
+partially-existing prefix can normalize differently from one that does not, which is exactly a
+result that varies run to run on one platform only.
+**Do not fix on this hypothesis alone.** Reproduce first: loop the parallel-capture case until
+it fails, then print `repo`, `root`, `current`, `resolved` at the failure. Candidate fix shape
+once confirmed: compare using `os.path.normcase` on both sides, and/or avoid re-resolving a
+path already built from a resolved root (the containment property is structural — `current` is
+`root / parts` with traversal already rejected by `normalize_repo_path`, so the final
+`resolve()` may be redundant for containment and only needed for the symlink check, which the
+loop above already performs per-component).
+
+### 2b. R-006 is a Windows path-resolution race, NOT a UUID collision
 The risk title says "parallel UUID timing", but the recurrence log records the actual failure
 text every time: `capture: FAIL -- capture target: destination escapes repository root`, from
 one of ten parallel `new.py` invocations. That message comes from `safe_worktree_path`
@@ -85,9 +113,14 @@ python roadmap/tools/selftest.py
 
 ## Handoff
 
-- next: CANDIDATE — not started. Sequencing recommendation: run AFTER W5, because W5's
-  remaining slices touch no protected surface and would otherwise be interleaved with a
-  seven-receipt chain. Kickoff must confirm the seven-item list is still exactly W0..W0F.
+- next: CANDIDATE — **sequencing revised 2026-07-25: do this FIRST, before W5 S2.** The
+  original "after W5" recommendation assumed the retry-once rule covered the flake. It does
+  not: two consecutive reds blocked a push that same hour
+  ([[R-f4c78054-c6fa-4a34-80ea-16b94b323664]] escalation section). Left unfixed, every
+  remaining W5 push is a coin flip that halts an agent and interrupts the owner, which costs
+  more in aggregate than the seven-receipt chain does once.
+  Start by REPRODUCING the race (§2a) — do not fix on hypothesis. Kickoff must confirm the
+  seven-item list is still exactly W0..W0F.
 - read_first: [[INS-5931d8f8-d494-4cb5-b147-c7fd9e6ffaab]] (both the CRLF body and the
   control-character addendum); [[R-f4c78054-c6fa-4a34-80ea-16b94b323664]] recurrence log;
   [[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]] (the re-attestation recipe, and the precedent
