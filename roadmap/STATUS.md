@@ -110,7 +110,18 @@ OP finality vs confirmation-depth (`selection.ts` — owner design decision).
   authoring the Safes as expected owner today would false-alarm. New gaps: timelock
   proposer/executor roles (GAP-3), delegates() unread (GAP-5), OP pre-window single-provider
   (GAP-1). G-14 anchors available (24932629 / 150613167 for mustBeExplicit).
-- **S6/S7 rehearse spikes (rehearsal-master): still in flight.**
+- **S6/S7 rehearse spikes COMPLETE** (spike-s6-s7.md): **S6 GATE-FAIL** — EDR 0.14.2
+  applies mempool nonce validation to deposits, making admission and depositNonce fidelity
+  mutually exclusive; receipts-root reproduction unavailable on OP → **per the ratified
+  rule, the M4 gate case is L1-only, R1 stands** (a weaker disclosed criterion exists as an
+  unexercised owner waiver — EDR hit 34/35 receipts + exact block gas; INS-e14fbbbc).
+  **S7 MEASURED** — 52/52 gas-faithful prefix replay, 912 logical RPC calls, 1.5 s
+  state-resident vs ~24 min cold-remote: CLI-artifact architecture confirmed, and the
+  5.8 MiB pinned-state bundle makes third-party re-execution a first-class artifact-format
+  candidate. Corrections: wr5's "pinning is structural" CANON claim refuted at runtime
+  (INS-4668c697 — blockTag is type-level only); hex-misread strikes 4-5 self-reported
+  (INS-035ae3e4 rule broadened: numerics in deliverables must be produced by executed
+  code). New hard blocker: reproducible timing needs the WR3 paid provider pair (S7-G3).
 
 Kickoff mapped the W1–W4 spine with a four-agent read-only fan-out (run wf_c29e08ca-2a8) and
 established the decisive fact: **there is no packaged pass-to-report composer** — the

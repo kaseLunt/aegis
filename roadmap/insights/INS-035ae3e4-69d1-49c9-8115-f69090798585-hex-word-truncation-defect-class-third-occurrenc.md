@@ -26,6 +26,15 @@ fingerprint may be produced by eye or by substring. Every decode must consume th
 32-byte word** (or full digest width) through a decoder, and every hand-carried hash must be
 length-asserted at the point of use.
 
+**Addendum (S6/S7 spikes, 2026-07-26 — strikes 4 and 5).** The rehearsal-master's spike
+self-reported two further occurrences: hand-converted block-number hex `0x7f51ab7` (=
+133503671, 4,992 blocks off the target 133508663) and `0x151014a` (= 22085962, not
+22099914) — both caught only because fetch scripts computed values programmatically, and
+all downstream evidence from the bad probes was discarded. The rule is hereby BROADENED per
+the spike's recommendation: **any block number, calldata word, or numeric literal appearing
+in a deliverable must be produced by executed code, never by hand** — hand hex conversion
+is empirically the single most reliable source of error in this corpus.
+
 **Teeth (to land with the first calldata-decoding surface, P4/W6).** A decoder test suite that
 includes a **truncated-literal fixture**: a fixture whose value is a truncation of the real
 word, which the full-word decoder MUST reject or decode differently, so the test fails if
