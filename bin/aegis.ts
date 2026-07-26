@@ -35,7 +35,7 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
   let parsed: ReturnType<typeof parseArgs<{
     options: {
       manifest: { type: "string" };
-      heads: { type: "string" };
+      heads: { type: "string"; multiple: true };
       identity: { type: "string"; multiple: true };
       chain: { type: "string"; multiple: true };
       at: { type: "string" };
@@ -51,7 +51,7 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
       args: argv,
       options: {
         manifest: { type: "string" },
-        heads: { type: "string" },
+        heads: { type: "string", multiple: true },
         identity: { type: "string", multiple: true },
         chain: { type: "string", multiple: true },
         at: { type: "string" },
@@ -71,9 +71,10 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
   if (positionals.length !== 1 || positionals[0] !== "verify") {
     return fail(io, USAGE);
   }
-  for (const flag of ["manifest", "heads", "at", "evaluation-time", "profile"] as const) {
+  for (const flag of ["manifest", "at", "evaluation-time", "profile"] as const) {
     if (!values[flag]) return fail(io, `missing required --${flag}\n${USAGE}`);
   }
+  if (!values.heads?.length) return fail(io, `missing required --heads\n${USAGE}`);
   if (!values.chain?.length) return fail(io, `missing required --chain\n${USAGE}`);
   if (values.profile !== "reference") {
     return fail(io, `unknown profile '${values.profile}'; the only M1 profile is 'reference'`);
@@ -85,7 +86,10 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
   try {
     manifestBytes = readFileSync(values.manifest as string);
     recordings = [
-      { role: "heads" as const, bytes: readFileSync(values.heads as string) },
+      ...(values.heads ?? []).map((file) => ({
+        role: "heads" as const,
+        bytes: readFileSync(file),
+      })),
       ...(values.identity ?? []).map((file) => ({
         role: "identity" as const,
         bytes: readFileSync(file),

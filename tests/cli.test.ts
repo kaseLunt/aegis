@@ -314,6 +314,59 @@ describe("W5 S3 — B. exit codes", () => {
     expect(atLatest.stderr).toContain("unsupported_at_selector at /at");
   });
 
+  test("B12: exit 5 (no_observation_boundary) — a run that cannot pin any chain refuses to report", async () => {
+    // Strip every quicknode response from the heads bundle: quorum (min 2) becomes
+    // unsatisfiable on every requested chain, no boundary pins anywhere, and the engine
+    // throws SurfaceError no_observation_boundary rather than emitting a boundary-less
+    // report (surfaces-engine.test.ts:238-247 proves the engine side; here: the CLI maps it
+    // to exit 5 — an operational failure of the run, not an input error). No reseal needed:
+    // removing whole responses leaves every remaining envelope hash intact.
+    const recording = JSON.parse(readFileSync(HEADS, "utf-8")) as {
+      responses: Array<{ providerId: string }>;
+    };
+    recording.responses = recording.responses.filter((r) => r.providerId !== "quicknode");
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b12-"));
+    try {
+      const headsPath = join(dir, "heads.json");
+      writeFileSync(headsPath, JSON.stringify(recording));
+      const args = REFERENCE_ARGS.map((a) => (a === HEADS ? headsPath : a));
+
+      const result = await run(args);
+
+      expect(result.stderr).toContain("no_observation_boundary");
+      expect(result.exit).toBe(5);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("B13: exit 5 (ambiguous_head_provenance) vs exit 4 (duplicate_recording) — the ordering trap", async () => {
+    // Two heads recordings that are byte-DIFFERENT but content-equal (a JSON re-encode)
+    // pass buildRequest's byte-identity dedup and reach the engine's head-attribution
+    // refusal: with more than one heads bundle, per-response provenance attribution would
+    // be a guess, so the engine throws ambiguous_head_provenance -> 5.
+    // THE TRAP, pinned deliberately: the SAME conceptual mistake with byte-IDENTICAL files
+    // fails EARLIER, at buildRequest's duplicate_recording (a RequestError) -> 4. Which
+    // exit fires depends on byte identity, because request validation runs before head
+    // attribution (engine.ts:106-128) — a reader of the exit-code table must see both.
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b13-"));
+    try {
+      const reencodedPath = join(dir, "heads-reencoded.json");
+      // Re-encode: identical content, different bytes (whitespace/key ordering normalize).
+      writeFileSync(reencodedPath, JSON.stringify(JSON.parse(readFileSync(HEADS, "utf-8"))));
+
+      const ambiguous = await run([...REFERENCE_ARGS, "--heads", reencodedPath]);
+      expect(ambiguous.stderr).toContain("ambiguous_head_provenance at /recordings");
+      expect(ambiguous.exit).toBe(5);
+
+      const duplicate = await run([...REFERENCE_ARGS, "--heads", HEADS]);
+      expect(duplicate.stderr).toContain("duplicate_recording");
+      expect(duplicate.exit).toBe(4);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test("B11: exit 4 (corrupt recording bytes) — recording corruption is caller input, not engine failure", async () => {
     // Tamper one recorded response WITHOUT recomputing its hashes: the loader's integrity
     // check must refuse it. The RULING (S3 plan §3): a ChainError at CLI pre-validation is
