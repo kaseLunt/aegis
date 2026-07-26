@@ -5,7 +5,7 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: W0H
+active_task: none
 updated: 2026-07-25
 ---
 
@@ -20,87 +20,20 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W0H — retire claim lease expiry. Code + receipts + both review rounds' dispositions landed;
-round-3 scoped re-review pending before the achieved stamp.**
+**No active task — W0H ACHIEVED; W5 unparks in the next commit.**
 
-**Codex round 2 (after a ~1h backend outage; dispatched on retry, pinned at `fc85b52`):**
-needs-attention, no P0. Dispositions, each verified at the CURRENT head:
-- **P2 (subsumption analysis): CLOSED by Codex** — confirmed `issued > now` is unreachable as a
-  sole cause, equality creates no counterexample, fixtures check distinct diagnostics, and the
-  protected-root-doc scope amendment "does not weaken authority".
-- **P1a (doctor-red / stale R4 receipts): resolved by timing** — the review pinned `fc85b52`
-  while the R5 receipts sat staged awaiting owner ack; `190d255` landed mid-review. Doctor at
-  current HEAD: OK 0 errors, re-verified.
-- **P1b-1 (RULES.md:9 "unexpired"): resolved by timing** — owner landed `1c01aac` mid-review.
-- **P1b-2 (D-007 reqs 2/5/7 still require lease expiry): GENUINE NEW FINDING**, missed by the
-  agent-side sweep. Dispositioned as a reader hazard, not a contradiction: D-007 governs future
-  ALLOCATOR leases (fenced expiry required), D-9646 governs today's cooperative serial claims
-  (no clock). Both decisions are immutable, so the binding reconciliation lives in
-  [[INS-fe09afdb-676b-42f6-9a60-0b1e61fa7978]] (promotable to decision grade at a phase review
-  if the owner wants); [[R-005]] annotated to point the future allocator designer there.
+**W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
+claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
+guard reached its converged design — standing tier complete-by-construction (unbounded
+claim/renew co-occurrence over adjacent-block windows), narrative tier covering exactly the
+session-protocol reading list plus all live capture directories, seventeen red-first selftest
+cases. Codex convergence ([[D-b4ab3c69]]): ELEVEN scoped rounds, findings narrowing
+monotonically, terminal verdict **approve / converged-clean, no material findings**. Residue
+documented in EV-W0H and accepted under the cooperating-executor threat model.
 
-**Codex round 3 (pinned `b7a925a`):** all three round-2 findings **CLOSED** — receipts current,
-RULES clean, and the D-007/D-9646 reconciliation ruled adequate at insight grade ("No formal
-decision is required"). One NEW high finding: [[INS-c80e5b1e-d02d-4d0d-a48f-167aacf2eef7]] —
-itself routed to by the W0H handoff and the reconciliation — still PRESCRIBED the deleted renew
-command in its normative Consequence, recreating the round-1 dead end through a referenced
-document; plus stale cockpit text claiming the RULES edit was still outstanding.
-Disposition: the insight is now banner-marked as a historical incident record with every
-operational directive struck and the retiring authority cited (analysis retained verbatim);
-incoming references reframed to historical-only; stale STATUS/W0H text corrected; and per the
-teeth habit, a doctor rule now rejects retired lease/renewal instructions on live surfaces
-(standing-instruction files fully; live roadmap narrative for the dead command literal, with a
-strike-through exemption), selftest-pinned and negative-tested.
-
-[[D-b4ab3c69]]: W0H stays `active`, NOT achieved, until a round-4 scoped re-review returns
-converged-clean. On clean: mint EV-W0H, owner-ack the achieved stamp, release the claim,
-unpark W5 at S3 (S3 recon is already complete — four-mapper read-only workflow, results held
-by the orchestrator for the S3 test matrix).
-
-**Round 1 (completed, verdict needs-attention, no P0) — both findings dispositioned:**
-- **P1** `AGENTS.md:75` + `CLAUDE.md:80` still said "leases expire — renew or release". Fixed in
-  `fc85b52` under an owner-acknowledged scope expansion; claim rotated to generation 6. This was
-  a genuine miss: only `RULES.md` had been tracked, and `CLAUDE.md` is what every future session
-  reads as authority, so a fresh agent would have been told to run a deleted command.
-- **P2** the future-timestamp selftest case set BOTH stamps to 2999 and would have survived
-  deletion of either half of the check. Fixed in `d17dfd7` with three orthogonal fixtures, each
-  comparison mutation-tested independently.
-
-Owner directive 2026-07-25 ("we need to get rid of the leasing system"), decided in
-[[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]]. Removed the lease *clock* only: `lease_expires`,
-`renew`, `--hours`, `MAX_LEASE_HOURS`, `check_expiry`, `--check-live-lease(s)`,
-`Authority.expired`, and `scope_diff.validate_live_head`. Claims themselves are unchanged —
-scope, `scope_hash`, branch/worktree binding, `rebind --owner-reviewed`, WIP=1, and the
-`active -> released|failed|abandoned` lifecycle. Abandonment recovery is now the explicit
-`release --status abandoned`.
-
-Landed: `724fe40` kickoff -> `6850f1a` code (owner `--no-verify`, deliberately doctor-red
-mid-chain) -> `1290e4d` six receipts (owner acknowledgement). Pushed at `1290e4d`.
-
-Verified fresh: doctor **OK 0 errors** at HEAD · selftest **0 failing** · **384/384** · tsc 0.
-Teeth negative-tested with two mutants — reintroducing ANY time-based refusal kills all three
-stale-claim cases; reintroducing a `lease_expires` write kills the open-writes case.
-
-**SIX receipts, not five** (W0, W0A, W0B, W0D, W0E, W0F). The decision's estimate of five was
-carried over from W0G, whose file set missed W0's narrow `invalidated_by`
-(`roadmap/tools/doctor.py`). Method recorded in
-[[INS-ede05c7a-0d89-49ab-a324-d4ef35d92c6e]]: derive the set from a doctor run, never predict it.
-EV-W0D-R4 and EV-W0E-R4 are explicit scope **reductions** — both items had attested lease
-behaviour by name, and both handoffs are annotated so nobody is told to run `renew`.
-
-CI: Control plane remains red at the SAME pre-existing failure as `0a75f8e`
-(`owner approval requires a positive decimal pull-request number` — a direct push has no PR
-number; [[R-005]]/[[D-007]]). Doctor and selftest jobs PASS remotely with the flags removed.
-
-- **Owner follow-up COMPLETE:** the owner personally landed the `RULES.md:9` one-word edit at
-  `1c01aac`; the standing rules now read "exactly one active claim". No owner residual remains.
-- **Not bundled with [[W0G]] defect 1** (worktree CRLF/control-char snapshot) — the decision
-  records why: that edit changes fingerprint semantics, the evidence root.
-
-**W5 remains PARKED at `committed` after S0/S1/S2, mid-slice-plan** — the lease lapse that
-parked it is the very thing W0H removes. **To resume W5 after W0H lands:** set W5
-`status: active`, STATUS `active_task: W5`, then `claim.py open fable-main W5 --integrator`,
-and start at slice S3.
+**Next commit:** W5 -> active, `claim.py open fable-main W5 --integrator`, STATUS
+`active_task: W5`, and the recon-derived S3 plan lands in the W5 charter. Then S3 TDD begins
+(tests A1-A3 + B4 first, per the plan's sequencing).
 
 Kickoff mapped the W1–W4 spine with a four-agent read-only fan-out (run wf_c29e08ca-2a8) and
 established the decisive fact: **there is no packaged pass-to-report composer** — the

@@ -3,7 +3,7 @@ id: W0H
 type: work
 title: Retire claim lease expiry — claims become task/scope bindings without a clock
 phase: P1
-status: active
+status: achieved
 evidence_target: "Correct + Robust"
 priority: 1
 depends_on: []
@@ -22,11 +22,13 @@ deliverables:
   - roadmap/tools/doctor.py
   - roadmap/tools/selftest.py
   - .github/workflows/control-plane.yml
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W0H.md
 invalidated_by:
   - roadmap/tools/**
 review_when: phase:P1:exit
 updated: 2026-07-25
+evidence_fingerprint: sha256:118f472cdf68b27fae25bd30376d388dbee893dee3d82fe294821ed61fb4b590
 ---
 
 # W0H — Retire claim lease expiry
@@ -141,4 +143,8 @@ npm test
 
 ## Evidence
 
-No attained evidence yet.
+- 2026-07-26: **ACHIEVED.** [[EV-W0H]] at `3bffc19` — doctor 0 errors, selftest 0 failing
+  (seventeen red-first instructional cases), npm 384/384, tsc 0. Codex convergence
+  ([[D-b4ab3c69]]): eleven scoped rounds, terminal verdict **approve / converged-clean**,
+  no material findings, residue documented and accepted. The receipt carries the full
+  round-by-round table and the honesty notes (sandbox selftest limitation disclosed per round).

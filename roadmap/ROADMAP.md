@@ -31,7 +31,7 @@ Dependency-gated: an item can't be certified while anything it depends on is unp
 | W0E | Lane hardening per second review — close cooperative-gate holes before lane commits | P1 | W0D | Correct + Robust | achieved |
 | W0F | Migrate to upgraded control-plane bundle (receipts, snapshot coherence, writer_mode) | P1 | — | Correct + Robust | achieved |
 | W0G | Control-plane tooling residuals — worktree eol/control-char snapshot + R-006 capture race | P1 | W0F | Correct + Robust | candidate |
-| W0H | Retire claim lease expiry — claims become task/scope bindings without a clock | P1 | — | Correct + Robust | active |
+| W0H | Retire claim lease expiry — claims become task/scope bindings without a clock | P1 | — | Correct + Robust | achieved |
 | W1 | Canonical report core — schemas, JCS canonicalization, SHA-256 report identity | P1 | W0 | Correct + Robust | achieved |
 | W2 | Manifest model + trust root (approved-hash policy, content addressing, applicability) | P1 | W1 | Correct + Robust | achieved |
 | W3 | Finalized-block selection + two independent RPC adapters + quorum/conflict semantics | P1 | W1 | Correct + Robust | achieved |
