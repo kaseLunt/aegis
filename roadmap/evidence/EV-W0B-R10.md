@@ -2,7 +2,8 @@
 id: EV-W0B-R10
 type: evidence
 title: W0B re-attested at paragraph-logical instructional scanning (Codex round-7 disposition)
-status: recorded
+status: superseded
+superseded_by: EV-W0B-R11
 work: W0B
 result: pass
 commands:

@@ -20,13 +20,13 @@ deliverables:
   - roadmap/tools/new.py
   - .githooks/pre-commit
 evidence_receipts:
-  - roadmap/evidence/EV-W0A-R10.md
+  - roadmap/evidence/EV-W0A-R11.md
 invalidated_by:
   - roadmap/tools/**
   - .githooks/**
 review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:1f10b786b75e6bab55b2463a6acb77c7c69639d33db6d1649ac82c7254b45108
+evidence_fingerprint: sha256:2c3707afef25c5f5d8fa292f8c47e35598aa2826fa69aa76d5cb00fcdbcfb41c
 ---
 
 # W0A — Adopt the orchestrator directive (right-sized)

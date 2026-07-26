@@ -21,12 +21,12 @@ deliverables:
   - roadmap/tools/_control_plane.py
   - .control-plane/receipt.json
 evidence_receipts:
-  - roadmap/evidence/EV-W0F-R10.md
+  - roadmap/evidence/EV-W0F-R11.md
 invalidated_by:
   - roadmap/tools/**
 review_when: phase:P1:exit
 updated: 2026-07-22
-evidence_fingerprint: sha256:8a8d9ea8f4a69bc7bc86e75807c8f6f2470937cd6cd41cf5311b32d881a85dab
+evidence_fingerprint: sha256:6b15188ac179781e77c2ff848f77ae15a01b6ad479e92dc07cc8214a5dab295b
 ---
 
 # W0F — Migrate to the upgraded control-plane bundle
