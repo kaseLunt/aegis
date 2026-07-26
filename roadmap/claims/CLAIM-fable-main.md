@@ -1,24 +1,26 @@
 ---
-claim_id: 9fa5778f-43e7-4b4e-830d-32678ae3a17f
-generation: 6
+claim_id: da52b288-9a98-4fa6-ba33-3d76a2ede741
+generation: 7
 agent: fable-main
-task: W0H
-status: released
+task: W5
+status: active
 integrator: true
 branch: main
 worktree_id: de0e68c2-2c3a-50b0-8989-ea790058ae41
-base_commit: 487079a2b75e267afba0801f9bc8b502046f8e54
+base_commit: 7616afee04fe175d8bf502089eb943379a7739a0
 allowed_paths:
-  - roadmap/tools/**
-  - .github/workflows/control-plane.yml
-  - CLAUDE.md
-  - AGENTS.md
-scope_hash: sha256:1fdc24cb5bdcc4da99d1743486eb3da3bc5f5f946e98ade9d0fe474276bdb970
-issued_at: 2026-07-25T09:00:25Z
-lease_expires: 2026-07-25T13:44:20Z
-updated_at: 2026-07-26T07:58:36Z
+  - lib/**
+  - tests/**
+  - app/**
+  - bin/**
+  - components/**
+  - package.json
+  - vite.cli.config.ts
+scope_hash: sha256:a58ef081d441156c591946218684b821b845510f223ed0f0069276f79b40f4b7
+issued_at: 2026-07-26T17:43:48Z
+updated_at: 2026-07-26T17:43:48Z
 ---
 
-# Claim: fable-main -> W0H
+# Claim: fable-main -> W5
 
 This is a serial task/scope binding, not a distributed lock.

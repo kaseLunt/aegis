@@ -3,7 +3,7 @@ id: W5
 type: work
 title: aegis verify CLI + report API + CI adapter + web evidence drawer over one engine
 phase: P1
-status: committed
+status: active
 evidence_target: "Correct + Robust + Demonstrated"
 priority: 1
 depends_on: [W4]
@@ -178,6 +178,259 @@ achieved stamp.
 ```text
 npm test
 ```
+
+## S3 plan (recon-derived, 2026-07-25)
+
+> Synthesized from the four-mapper read-only recon (run `wf_d8cdf4b2-e93`: engine-surface,
+> packaging, canon-constraints, test-patterns reports; journal preserved on disk under the
+> session's workflow directory). Every claim cites a report or `path:line`; `W5:` line cites
+> refer to this file AT COMMIT `ec1e85f`, before this section was inserted. OBSERVED = read
+> from the repo by a mapper; RULING = a design choice this plan makes, to be validated by the
+> S3 tests themselves and the Codex loop.
+
+### 0. Ground rules binding this slice
+
+- Surfaces are transports: the CLI calls `runVerification` only, never an evaluator, and can
+  never re-derive or alter a verdict (W5:62-67; D-6bedc848:88-89; ENGINEERING_SPEC:899).
+- A throw is an operational failure of the run, never rendered as a `fail` verdict (W5:83-84).
+- Recorded mode is labeled recorded; the `recorded_inputs` limitation is surfaced verbatim from
+  the payload, never restated (W5:86-87; engine.ts:251).
+- No new files under `data/` — W5 `allowed_paths` has no `data/**`; all non-shipped inputs are
+  synthesized in-test (W5:102-103).
+- Do not stamp W5 mid-slice (W5:196).
+
+### 1. TDD test matrix (write in this order; each observed RED first)
+
+New file `tests/cli.test.ts`, importing `main` from `../bin/aegis` in-process (§4 for why).
+House idioms: `rejects`-style code assertions (tests/surfaces-request.test.ts:53-60), reseal
+helper (tests/engine.test.ts:39-49), byte-tamper (tests/strict-json.test.ts:56-63).
+
+**A. Harness + envelope**
+1. `main returns instead of exiting` — `main(argv, io)` resolves a number; no `process.exit`
+   reachable from the exported path (zero subprocess precedent repo-wide; vitest `include`
+   covers `tests/**` only).
+2. `--json emits canonical bytes + reportHash` — shipped manifest + heads + identity,
+   `--evaluation-time 2026-07-24T00:00:00Z`; stdout parses; payload has exactly the 15
+   mandatory keys (canonical.ts:153-157); `reportHash` matches `/^sha256:[0-9a-f]{64}$/`;
+   serialization is `jcsSerialize`, not `JSON.stringify` (ENGINEERING_SPEC:846).
+3. `determinism` — two runs with identical argv produce byte-identical stdout and equal hashes
+   (ENGINEERING_SPEC:26; injected `--evaluation-time`, no hidden clock).
+
+**B. Exit codes — one test per row, every row**
+4. **exit 3 (unknown), the shipped-fixture reality**: shipped manifest + heads + identity → 3
+   verifications, all `unknown` by construction (tests/surfaces-engine.test.ts:132-140,
+   154-166; W5:200-203) → exit 3. This is also the *documented command's* honest exit — record
+   it as 3 in EV-W5, never tune it to 0.
+5. **exit 0 (in-test only)**: re-sealed manifest targeting the addresses the shipped identity
+   recording actually covers — `address 0xa1a1…`, `expectedImplementation 0xb2b2…`,
+   `expectedRuntimeCodeHash
+   sha256:30c48c422efb56515e475a018747730c0c390352e0035cc389d8a8f2f1e275d3`
+   (= `sha256(bytes("608060405f"))`, the value tests/identity-compare.test.ts:33-42 derives and
+   proves `pass` at :139-141), `contentHash` re-sealed via `manifestContentHash`. Assert exit 0
+   and that the human summary uses only "no blocking failure … within declared coverage"
+   language (THREAT_MODEL:153).
+   *W6 interaction, stated for the record:* exit 0 is **deliberately not reachable from shipped
+   fixture files** — W6's constraint that no shipped fixture produces a `pass` makes the
+   synthesized-manifest recipe the permanent test path. Canon-aligned, not a gap.
+6. **exit 2 (blocking fail)**: same synthesized manifest with `expectedRuntimeCodeHash
+   sha256:${"7".repeat(64)}` → `runtime_code_hash` verification `fail` alongside an
+   `implementation` `pass` (tests/identity-compare.test.ts:230-244) — proves worst-state-wins
+   precedence, not just single-state mapping.
+7. **exit 3 (conflict)**: reseal the identity bundle so providers disagree on one read
+   (compare.ts:490,512-515 sets `conflict` on `observation_conflict`); the reseal must
+   recompute BOTH per-response hashes (tests/engine.test.ts:39-49).
+8. **exit 4 (invalid request, thrown)**: representative `RequestError` recipes — `--chain`
+   absent (`empty_chain_ids`), duplicate chain, `--at latest` (`unsupported_at_selector`) — all
+   10 codes already unit-tested at request level (request.ts:72-128); the CLI test asserts
+   mapping + that `code at path` reaches stderr.
+9. **exit 4 (invalid manifest, NOT thrown)**: `"{ not json"` bytes → payload completes with
+   `policyTrust.state === "invalid"`, `verifications: []` (trust.ts:310-334;
+   tests/surfaces-trust-seam.test.ts:60-69) → exit 4 derived **from payload state**. Also the
+   duplicate-key tamper (tests/strict-json.test.ts:56-63).
+10. **exit 3 (untrusted manifest)**: valid manifest, trust policy that does not approve it →
+    `policyTrust.state === "untrusted"`, `verifications: []` → exit 3, not 0 and not 4
+    (RULING, §3) — kills the dishonest "zero verifications reads as clean" path.
+11. **exit 4 (corrupt recording bytes)**: tampered heads bundle → CLI pre-validation
+    `ChainError integrity_mismatch` → 4 (RULING, §3 — recording corruption is caller input).
+12. **exit 5 (`no_observation_boundary`)**: heads bundle with every quicknode response filtered
+    out — no reseal needed (tests/surfaces-engine.test.ts:230-247, reusable verbatim).
+13. **exit 5 (`ambiguous_head_provenance`)**: two byte-different but content-equal heads
+    recordings (`JSON.stringify(JSON.parse(...))` re-encode); NB two *identical* byte arrays
+    are `duplicate_recording` → 4 — the ordering trap at engine.ts:106-128.
+
+**C. Render language (the canon teeth)**
+14. `boundaries before results` — human output states observation boundaries, manifest
+    identity, `policyTrust.state` + reasonCodes, and coverage before any verification line
+    (PRODUCT_SPEC:213-220, :351).
+15. `state words are text` — `unknown`/`stale`/`conflict` appear as words, never collapsed into
+    an aggregate; `manifestVersion` prints `"unknown"` untouched for refused manifests
+    (PRODUCT_SPEC:354; THREAT_MODEL:98; W5:204-206).
+16. `limitations always printed` — every `limitations[]` entry rendered, `recorded_inputs` text
+    verbatim; reproduce line printed (full-flag form; §6) (PRODUCT_SPEC:303, :426).
+17. `untrusted strings escaped` — a resealed bundle carrying ANSI/control bytes in a provider
+    string renders escaped (THREAT_MODEL:125; ENGINEERING_SPEC:883).
+18. `claim-language lint` — source-level test over `bin/aegis.ts` + `surfaces/render.ts`
+    forbidding `live`, `safe`, `healthy`, `verified` claim tokens (patterned on
+    tests/aegis-engine.test.ts:142-149); **negative-tested** by temporarily inserting a
+    violation.
+19. `hygiene coverage` — add `"bin"` to `SOURCE_DIRS` in tests/repo-source-hygiene.test.ts:15
+    (the scanner currently has a blind spot exactly where S3 adds files); negative-tested with
+    a CR byte.
+
+**D. Diagnostics**
+20. `provider-id sanity warning` — heads bundle stripped of one configured provider's responses
+    → stderr warning naming the missing `providerId`; exit code and verdicts UNCHANGED
+    (misconfig masquerades as outage — W5:233-235; diagnostics may not alter outcomes).
+21. `downgrade visibility` — chain 10 pins with `finality "confirmations"` + downgrade
+    `finality_tag_unsupported` (tests/engine.test.ts:69-75); human render shows the downgrade
+    reason, not just the finality word (needs §5's engine addition — write this test RED
+    against the un-extended diagnostics).
+
+### 2. CLI design
+
+**Command (M1):** `aegis verify` only. `reproduce`/`diff`/`preflight`
+(ENGINEERING_SPEC:888-896) are later slices; `aegis reproduce` needs the S4 store — S3
+*prints* the reproduction command instead (§6).
+
+**argv (node:util parseArgs, strict, no invented defaults):**
+
+```text
+aegis verify
+  --manifest <file>            required  raw bytes -> inputs.manifestBytes
+  --heads <file>               required  role "heads" recording
+  --identity <file>            repeatable, role "identity"
+  --chain <id>                 repeatable, required -> selector.chainIds
+  --at <selector>              required; passed through verbatim — the ENGINE refuses anything
+                               but "finalized" (request.ts:77) -> exit 4
+  --evaluation-time <ISO-UTC>  required -> deployment.evaluationTime (determinism is an
+                               explicit input, never a hidden clock; ENGINEERING_SPEC:26)
+  --profile reference          required (only value at M1) -> builds DeploymentConfig in code
+  --trust-policy <file>        optional {trustPolicyId, approvedHashes[]} JSON
+  --json                       canonical envelope to stdout; human render otherwise
+```
+
+Files only at S3 (stdin is an S4/API concern). Fixture paths resolve from `process.cwd()` —
+never `__dirname`, undefined in the ESM bundle.
+
+**DeploymentConfig sourcing:** `--profile reference` reproduces the reference instantiation
+verbatim from tests/surfaces-engine.test.ts:29-45 (`engineVersion "aegis-core/0.1.0"`,
+`environment "reference"`, `provenanceClass "reference_scenario"`, quorum `pq-reference`
+alchemy+quicknode min 2, `confirmationDepth "12"`, `maxHeadLagBlocks "1000"`,
+`PROVIDERS.alchemy/quicknode`, `fp-reference`), hosted in code (`lib/aegis/surfaces/profiles.ts`
+or `bin/`), since `data/**` is out of scope. Without `--trust-policy`, the profile derives
+`approvedHashes` from the supplied manifest — **self-approval**, legitimate only as reference
+analysis (THREAT_MODEL:136); the human render must show `policyTrust` with its reasonCodes so
+this is visibly non-canonical (W5:73-75). `--trust-policy` is the honest operator mode; the
+self-approval default must be named in `--help`.
+
+**`lib/aegis/surfaces/render.ts`:** pure functions, no I/O — `renderHuman(run): string` (may
+read `diagnostics`; engine.ts:63-64 explicitly licenses this for a CLI renderer) and
+`renderJson(run): string` = `jcsSerialize({ payload, reportHash })`. Every displayed label
+derives from hashed payload fields (ENGINEERING_SPEC:846). Human layout: header (protocol,
+per-chain boundary block+finality, manifest version+hash, trust state, coverage) →
+verifications (state word first, statement, expected/actual, per-item limitations) → top-level
+limitations → reportHash → reproduction line. Friendly labels allowed in human mode only;
+`--json` is canonical states verbatim (PRODUCT_SPEC:333).
+
+**`bin/aegis.ts`:** `export async function main(argv: string[], io): Promise<number>`; a
+guarded entry (`import.meta.url` main-module check) does
+`process.exit(await main(process.argv.slice(2), process))`. No side effects at import —
+required for in-process vitest driving.
+
+### 3. Exit-code mapping (RULING — total, every path accounted)
+
+Precedence: pre-validation throw → engine throw → payload-derived.
+
+| Source | Condition | Exit |
+|---|---|---|
+| CLI argv | parseArgs failure, missing required flag, unreadable file | 4 |
+| CLI pre-validation | `loadRecordingBytes(bytes)` throws `ChainError` on any supplied recording (adapter.ts:101-164) | 4 |
+| engine throw | `RequestError` (all 10 codes, request.ts:72-128) | 4 |
+| engine throw | `SurfaceError` (`ambiguous_head_provenance`, `no_observation_boundary`) — doc comment engine.ts:77-80: "Maps to CLI exit 5" | 5 |
+| engine throw | `ChainError` / `IdentityError` / `CanonicalizationError` escaping AFTER pre-validation passed | 5 |
+| payload | `policyTrust.state === "invalid"` | 4 |
+| payload | any `verifications[].state === "fail"` | 2 |
+| payload | else: `state` in {unknown, stale, conflict} anywhere, OR `policyTrust.state === "untrusted"`, OR `verifications` empty, OR any `target_boundary_unavailable` limitation | 3 |
+| payload | else (trusted, >=1 verification, all `pass`, no unevaluated target) | 0 |
+
+Two deliberate rulings to put in front of the Codex loop explicitly:
+
+- **Attribution over class.** A `ChainError` from quorum/selection *after* valid inputs is not
+  an "invalid request or manifest"; it is a run that could not construct an envelope → 5, per
+  "a throw is an operational failure of the run" (W5:83-84). Caller-input `ChainError`s are
+  caught at pre-validation → 4. Pre-validation is input validation, not evaluation; the engine
+  still re-earns the brand from raw bytes itself (W5:98-100) — the CLI passes bytes, never
+  bundles.
+- **Untrusted → 3, not 0/4.** Exit 0 requires "no … incomplete blocking claim"
+  (ENGINEERING_SPEC:903); an untrusted manifest leaves every declared invariant unevaluated —
+  incomplete, not invalid. `unknown`-shaped uncertainty is exit 3's definition.
+
+At M1 every verification is blocking (`severity` hardcoded `"high"`, compare.ts:112). `stale`
+is currently unreachable through the facade (freshness hardcoded `"current"`,
+engine.ts:233-240) — covered by the mapping, untestable today; note it in the test as such
+rather than faking it.
+
+### 4. Packaging
+
+- **Test-drive decision: import `main()` in-process.** OBSERVED: zero subprocess/execa/spawn
+  usage across `tests/`; vitest `include: ["tests/**/*.test.ts"]`; `lib/` extensionless
+  relative imports mean plain Node cannot resolve the spine anyway (W5:222-223). The built
+  artifact gets one manual smoke use via the documented command in EV-W5.
+- **`vite.cli.config.ts`** (INFERRED shape from OBSERVED constraints — ESM repo, `noEmit` +
+  `moduleResolution: bundler`, vite 8.1.5 already present, `dist/` owned by vinext):
+  standalone `defineConfig` importing only `"vite"` (never the async Workers `vite.config.ts`);
+  `build.ssr: "bin/aegis.ts"`, `target: "node22"`, `outDir: "dist/cli"` (avoids `npm run
+  build` collision), `minify: false`, `sourcemap: true`, `inlineDynamicImports: true` (single
+  file => one spine instance => WeakSet brands hold — D-6bedc848:55-66), `ssr.noExternal: true`
+  with only `node:*` external, `output.banner: "#!/usr/bin/env node"`.
+- **package.json**: `"bin": { "aegis": "dist/cli/aegis.js" }`, scripts
+  `"build:cli": "vite build --config vite.cli.config.ts"`,
+  `"cli": "npm run build:cli && node dist/cli/aegis.js"` (namespacing matches
+  `test:property`; `build` is taken by vinext). `dist/` already git-ignored and lint-excluded;
+  `bin/**` is linted and type-checked with zero config changes (tsconfig `include: ["**/*.ts"]`).
+
+### 5. Known gaps & risks
+
+- **Finality-downgrade propagation (the recon's one real engine gap).** `establishBoundary`
+  returns `downgrades` but `runVerification` drops them — `BoundaryDiagnostic` has no such
+  field (engine.ts:138-143); only `block.finality === "confirmations"` survives. W5 acceptance:
+  "Finality downgrades reach the reader on every surface" (W5:77-78). Options: (a) add
+  `readonly downgrades: readonly FinalityDowngrade[]` to `BoundaryDiagnostic` — diagnostics
+  are explicitly excluded from the hashed payload (engine.ts:63-64), so `reportHash` is
+  untouched and the edit is confined to `lib/aegis/surfaces/engine.ts`; or (b) render
+  `block.finality` only — loses the reasonCode/requested/used record and arguably fails the
+  acceptance line. **RECOMMEND (a)**, TDD'd via matrix test 21; run the doctor after the edit
+  to *derive* (not predict) receipt impact per INS-ede05c7a.
+- **`IdentityError` has no `path`** (resolve.ts:17-26) — the uniform `code at path` stderr
+  renderer must not assume `.path`.
+- **Exit-0 honesty:** the documented single command over shipped fixtures exits **3**, and
+  EV-W5 must record 3. Any pressure to make it 0 is pressure to violate W6's constraint.
+- **`invalid_chain_id` exists in both adapter and selection code sets** — map by error class +
+  phase (pre-validation vs engine), never by code string.
+
+### 6. Byte-identity forward hook (S7)
+
+- The shared artifact is `canonicalBytes(payload)` + `run.reportHash` — hash once, reuse;
+  never re-serialize via `JSON.stringify` (W5:231-232).
+- `renderJson` = `jcsSerialize` of `{ payload, reportHash }` with nothing else — no timestamps,
+  no request ids, no CLI version stamp (delivery metadata is excluded from identity,
+  ENGINEERING_SPEC:846, :879). S7 then asserts CLI/API/CI payload bytes are identical directly.
+- The reproduction line printed by the human render is the *full-flag* `aegis verify` form —
+  every determinism input explicit, so the line alone re-derives the identical hash
+  (PRODUCT_SPEC:303; W5:110-113). `aegis reproduce sha256:<hash>` (stored-input form) lands
+  with the S4 store and must not be advertised before it exists.
+
+### Sequencing
+
+1. Matrix tests A1–A3 + B4 (harness + shipped-fixture reality) RED → minimal `main` + `render`
+   GREEN.
+2. B5–B13 exit codes, one at a time (each RED first; mutation-check the mapping table by
+   inverting one row and watching exactly one test die).
+3. C14–C19 render language + teeth (lint + hygiene token, both negative-tested).
+4. §5(a) engine addition via test 21 (RED against current diagnostics), then D20.
+5. Packaging (§4) last — config + scripts + one manual smoke run of the built artifact; verify
+   `npm test`, `tsc`, lint, doctor, selftest all green; derive receipt impact with a doctor run
+   before committing anything.
 
 ## Handoff
 

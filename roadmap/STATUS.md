@@ -5,7 +5,7 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: none
+active_task: W5
 updated: 2026-07-25
 ---
 
@@ -20,7 +20,13 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**No active task — W0H ACHIEVED; W5 unparks in the next commit.**
+**W5 — one engine, four surfaces. ACTIVE at slice S3 (the CLI), claim generation 7.**
+
+S0/S1/S2 are DONE (384/384). S3 executes against the recon-derived plan now embedded in the
+W5 charter ("S3 plan" section): 21 TDD tests in sequence, the total exit-code mapping, the
+per-tier render rules from canon, and the finality-downgrade diagnostics extension. Start at
+plan step 1 (tests A1-A3 + B4 red first). No re-attestation chains expected in S3-S7 (verified
+in the handoff); do NOT stamp W5 mid-slice.
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
