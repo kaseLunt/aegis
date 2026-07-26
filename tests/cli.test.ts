@@ -291,6 +291,66 @@ describe("W5 S3 — B. exit codes", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  test("B8: exit 4 (invalid request, thrown) — RequestError maps to 4 with code-at-path on stderr", async () => {
+    // Three representative recipes. (a) is CLI arg validation; (b) and (c) reach the engine
+    // and exercise the RequestError -> 4 mapping plus the uniform `code at path` stderr
+    // renderer. All ten RequestError codes are unit-tested at request level
+    // (request.ts:72-128); the CLI's job here is only the mapping and the rendering.
+    const missingChain = await run(
+      REFERENCE_ARGS.filter((a, i, all) => a !== "--chain" && all[i - 1] !== "--chain"),
+    );
+    expect(missingChain.exit).toBe(4);
+    expect(missingChain.stderr).toContain("missing required --chain");
+
+    const duplicateChain = await run([...REFERENCE_ARGS, "--chain", "1"]);
+    expect(duplicateChain.exit).toBe(4);
+    expect(duplicateChain.stderr).toContain("duplicate_chain_id at /chainIds");
+
+    const atLatest = await run(
+      REFERENCE_ARGS.map((a, i, all) => (all[i - 1] === "--at" ? "latest" : a)),
+    );
+    expect(atLatest.exit).toBe(4);
+    expect(atLatest.stderr).toContain("unsupported_at_selector at /at");
+  });
+
+  test("B9: exit 4 (invalid manifest, NOT thrown) — the payload completes and carries the refusal", async () => {
+    // An unparseable or tampered manifest is caller input the engine refuses WITHOUT
+    // throwing: the run completes with policyTrust.state "invalid" and zero verifications,
+    // and exit 4 derives from the payload state (trust.ts:310-334). Two byte-level recipes:
+    // plain garbage, and the duplicate-key tamper that R-003's strict parser exists to catch
+    // (a document must not be hashable under one meaning and readable under another).
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b9-"));
+    try {
+      const garbagePath = join(dir, "garbage.json");
+      writeFileSync(garbagePath, "{ not json");
+      const dupPath = join(dir, "dup-key.json");
+      const manifestText = readFileSync(MANIFEST, "utf-8");
+      // Duplicate the schemaVersion key at the top level: identical text parses either way,
+      // so only a duplicate-key-rejecting parser refuses it.
+      const tampered = manifestText.replace(
+        '"schemaVersion": "1",',
+        '"schemaVersion": "1", "schemaVersion": "1",',
+      );
+      if (tampered === manifestText) throw new Error("fixture drift: schemaVersion anchor missing");
+      writeFileSync(dupPath, tampered);
+
+      for (const manifestPath of [garbagePath, dupPath]) {
+        const args = REFERENCE_ARGS.map((a) => (a === MANIFEST ? manifestPath : a));
+        const result = await run([...args, "--json"]);
+
+        const payload = JSON.parse(result.stdout).payload as {
+          policyTrust: { state: string };
+          verifications: readonly unknown[];
+        };
+        expect(payload.policyTrust.state).toBe("invalid");
+        expect(payload.verifications).toEqual([]);
+        expect(result.exit).toBe(4);
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 // Read the fixture bytes once here so a future refactor of the helper cannot silently point
