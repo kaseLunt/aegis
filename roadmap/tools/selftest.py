@@ -805,6 +805,21 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # Codex round-10 bypass: roadmap/ROADMAP.md -- session-protocol-MANDATED reading -- was in
+    # neither scan tier. The narrative set now covers the full session-protocol reading list.
+    ladder_path = repo / "roadmap" / "ROADMAP.md"
+    ladder = read(ladder_path)
+    write(ladder_path, ladder + "\nActive claims must be renewed before the next slice.\n")
+    must(git(repo, "add", "roadmap/ROADMAP.md"), "stage ladder directive")
+    write(ladder_path, ladder)
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:roadmap-ladder-scanned",
+        result.returncode == 1 and "retired" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
     # A claim whose timestamps are years old is still fully authoritative. Under the retired
     # lease model this exact fixture was refused, which is the failure this item removes: the
     # refusal was silent (doctor stayed green), deferred, and dead-ended at `renew`.

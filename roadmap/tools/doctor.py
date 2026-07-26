@@ -549,7 +549,11 @@ def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> No
                     f"{path}:{lineno}: retired lease/renewal language on a standing "
                     f"instruction surface: '{window[:80]}'"
                 )
-    narrative = ["roadmap/STATUS.md"]
+    # The narrative set covers the FULL session-protocol reading list (STATUS -> ROADMAP ->
+    # the active work item; SYSTEM/RULES/VISION are standing-tier) plus every live capture
+    # directory. ROADMAP.md is narrative-tier, not standing: future work-item rows may
+    # legitimately DESCRIBE allocator-lease machinery (D-007) in their titles.
+    narrative = ["roadmap/STATUS.md", "roadmap/ROADMAP.md"]
     for directory in LIVE_NARRATIVE_DIRS:
         narrative.extend(snapshot.list(directory, ".md"))
     for path in narrative:
