@@ -345,13 +345,16 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
      urgent unknown per the wave-2 blueprint), OP pre-window dual-provider completeness
      sweep. Persist to `roadmap/research/route-manifest/`; then a wave-3 blueprint patch pass
      folds the results into the S7 control-plane rows + G-08 re-pose.
-  2. **Codex verification of the EDR fix-site scout** (codex-reviewer): adversarially checks
-     every file:line in `edr-fix-site-scout.md` §d against a pinned EDR clone
-     (`C:\Users\kasel\AppData\Local\Temp\edr-verify-20260726161239b\edr` @ c66cd68a). Verdict
-     is SAFE-TO-POST / NEEDS-CORRECTIONS / DO-NOT-POST. **OWNER ACTION PENDING on its
-     result:** apply any corrections, then present the final #1578 follow-up comment + a
-     one-line issue-BODY edit (the receipt-half was already implemented upstream — refine the
-     Expected-behavior clause, never delete/repost) for the owner's go/no-go; post both via
-     `gh issue comment` + `gh issue edit` only on explicit approval.
+  2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
+     NEEDS-CORRECTIONS** — persisted verbatim in
+     `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis
+     CONFIRMED (placeholder nonce → mempool rejection; receipt-half already correct); two
+     conclusions REFUTED ("mempool is sole blocker", "small guard unblocks replay") — automine
+     fee validation, mint-unaware balance check, and miner-fee overflow are additional
+     blockers. All 8 corrections applied to the scout doc supersede-in-place; postable
+     comment is now §(d′); §(e) re-estimated S–M → M. **OWNER ACTION PENDING:** go/no-go on
+     posting §(d′) via `gh issue comment 1578`. NOTE: the one-line issue-BODY edit was NOT in
+     the Codex brief and remains unverified — needs a separate quick check or explicit owner
+     judgment before any `gh issue edit`.
 - **Prior lanes this session (all landed):** wave-1 wr4 loop CONVERGED (round 7 approve);
   G-01 8/8 hashes derived; G-02/03/04 closed; S6/S7 spikes; wave-2 blueprint revision (fa3e26d).
