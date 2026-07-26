@@ -733,6 +733,45 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # Codex round-7 bypass: ordinary Markdown hard-wrapping split a directive across two lines
+    # and both tiers scanned per-line. The matchers now run over blank-line-separated logical
+    # paragraphs, so wrapping is formatting, not camouflage.
+    agents_path3 = repo / "AGENTS.md"
+    write(agents_path3, "# Agents\n\nActive claims require\nrenewal before committing.\n")
+    must(git(repo, "add", "AGENTS.md"), "stage wrapped standing directive")
+    agents_path3.unlink()
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:wrapped-standing-rejected",
+        result.returncode == 1 and "standing instruction" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    write(status_path, valid + "\nActive claims require\nrenewal before committing.\n")
+    must(git(repo, "add", "roadmap/STATUS.md"), "stage wrapped narrative directive")
+    write(status_path, valid)
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:wrapped-narrative-rejected",
+        result.returncode == 1 and "retired" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    # Standing proximity reaches phrasing the narrative matcher deliberately does not -- pinned
+    # with a wrapped fixture that only proximity can see.
+    write(agents_path3, "# Agents\n\nRenew often; a stale\nclaim blocks commits.\n")
+    must(git(repo, "add", "AGENTS.md"), "stage wrapped proximity-only directive")
+    agents_path3.unlink()
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:wrapped-proximity-standing-only",
+        result.returncode == 1 and "standing instruction" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
     # A claim whose timestamps are years old is still fully authoritative. Under the retired
     # lease model this exact fixture was refused, which is the failure this item removes: the
     # refusal was silent (doctor stayed green), deferred, and dead-ended at `renew`.

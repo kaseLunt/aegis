@@ -497,18 +497,41 @@ def _match_is_struck(line: str, start: int, end: int) -> bool:
     )
 
 
+def _paragraphs(text: str):
+    """Yield (start_lineno, joined_text) for blank-line-separated blocks.
+
+    Hard-wrapped lines within a block are joined with a single space so ordinary Markdown
+    wrapping cannot split a directive across the matchers' line boundary (W0H Codex round 7).
+    Joining also lets a ~~strike~~ that spans a wrap remain one enclosing span.
+    """
+    block: list[str] = []
+    start = 0
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if line.strip():
+            if not block:
+                start = lineno
+            block.append(line.strip())
+        elif block:
+            yield start, " ".join(block)
+            block = []
+    if block:
+        yield start, " ".join(block)
+
+
 def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> None:
     for path in STANDING_INSTRUCTION_FILES:
         if not snapshot.exists(path):
             continue
-        for lineno, line in enumerate(snapshot.read_text(path).splitlines(), 1):
+        for lineno, paragraph in _paragraphs(snapshot.read_text(path)):
             # Standing surfaces get the phrase set plus full proximity, with no strike
             # exemption: pure-instruction files carry no historical narrative, so any renewal
             # language there is wrong regardless of markup or voice.
-            if RETIRED_STANDING_RE.search(line) or RETIRED_RENEWAL_PROXIMITY_RE.search(line):
+            if RETIRED_STANDING_RE.search(paragraph) or RETIRED_RENEWAL_PROXIMITY_RE.search(
+                paragraph
+            ):
                 errors.append(
                     f"{path}:{lineno}: retired lease/renewal language on a standing "
-                    f"instruction surface: '{line.strip()[:80]}'"
+                    f"instruction surface: '{paragraph[:80]}'"
                 )
     narrative = ["roadmap/STATUS.md"]
     for directory in LIVE_NARRATIVE_DIRS:
@@ -516,14 +539,14 @@ def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> No
     for path in narrative:
         if not snapshot.exists(path):
             continue
-        for lineno, line in enumerate(snapshot.read_text(path).splitlines(), 1):
-            for match in RETIRED_RENEWAL_RE.finditer(line):
+        for lineno, paragraph in _paragraphs(snapshot.read_text(path)):
+            for match in RETIRED_RENEWAL_RE.finditer(paragraph):
                 # Only a strike span ENCLOSING the match marks it historical; an unrelated
-                # strike elsewhere on the line exempts nothing.
-                if not _match_is_struck(line, match.start(), match.end()):
+                # strike elsewhere in the paragraph exempts nothing.
+                if not _match_is_struck(paragraph, match.start(), match.end()):
                     errors.append(
                         f"{path}:{lineno}: retired renewal directive in live narrative "
-                        f"(strike it ~~...~~ or reword): '{line.strip()[:80]}'"
+                        f"(strike it ~~...~~ or reword): '{paragraph[:80]}'"
                     )
 
 
