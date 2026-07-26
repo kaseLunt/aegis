@@ -91,10 +91,26 @@ OP finality vs confirmation-depth (`selection.ts` — owner design decision).
   protection) stays, documented and honest; wire the PR-based trusted gate when a second
   contributor or a demo reason exists.
 
-**Research lanes opened 2026-07-26:** G-01 build-derivation dossier (route-cartographer);
-G-02/G-03/G-04 execution-order + provenance dossier (chain-historian); Rehearse de-risk
-spikes S6/S7 (rehearsal-master, authorized above). All background; dossiers persist to
-roadmap/research/route-manifest/ on return.
+**Research lanes 2026-07-26 — results:**
+- **wr4 review loop CONVERGED at round 7** (approve, no material findings;
+  codex-review-wave1-round7.md) — wr4 PROMOTABLE (loop-converged), promotion itself a
+  phase-review action. Findings narrowed 9→3→2→line-level→2→1→0 across seven rounds.
+- **G-01 COMPLETE through execution** (g01-build-derivation.md + g01-derivation-execution.md):
+  all EIGHT expectedRuntimeCodeHash candidates DERIVED with committed-before-execution
+  provenance; vendor builds reproduced byte-identically incl. ipfs metadata tails; blueprint
+  recipe amended to deploy-vintage (round 7). Remaining before manifest grade: M2 owner
+  review + disclosed caveats G-01.B/G-01.D.
+- **G-02/G-03/G-04 CLOSED** (g02-04-execution-order.md): rate limit = 3,000 weETH/4h
+  (WR1's 10k inference REFUTED by execution order — 10k lived 11 days then was reverted
+  twice); peers decoded on-chain incl. one OP supersession + a real 8-day one-sided-peer
+  interval; library pins exist (2026-04-22, defaults were byte-identical — the pin changed
+  authority, not the library). **Blueprint-invalidating finding: both OApps are now
+  TIMELOCK-owned** (ETH 2-day timelock 0xcd425f44… NOT in WR2's map, since blk 25296945;
+  OP L2 timelock since blk 154486119) — E7 "zero latency" and G-08 "Safe = owner" are stale;
+  authoring the Safes as expected owner today would false-alarm. New gaps: timelock
+  proposer/executor roles (GAP-3), delegates() unread (GAP-5), OP pre-window single-provider
+  (GAP-1). G-14 anchors available (24932629 / 150613167 for mustBeExplicit).
+- **S6/S7 rehearse spikes (rehearsal-master): still in flight.**
 
 Kickoff mapped the W1–W4 spine with a four-agent read-only fan-out (run wf_c29e08ca-2a8) and
 established the decisive fact: **there is no packaged pass-to-report composer** — the
