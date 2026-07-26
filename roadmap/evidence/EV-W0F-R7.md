@@ -2,7 +2,8 @@
 id: EV-W0F-R7
 type: evidence
 title: W0F re-attested at the hardened instructional guard (Codex round-4 disposition)
-status: recorded
+status: superseded
+superseded_by: EV-W0F-R8
 work: W0F
 result: pass
 commands:
