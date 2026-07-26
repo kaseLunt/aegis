@@ -77,8 +77,24 @@ text (`engine.ts:250-251` — a trust-me attestation in prose; pairs with the
 bundleContentHash slice); quorum sourceMode mixing (`quorum.ts:29-31` — pre-live gate);
 OP finality vs confirmation-depth (`selection.ts` — owner design decision).
 
-**Owner decision queue:** blueprint G-05 (executor pinning), G-08 (owner/delegate
-promotion), G-11 (lifecycle sign-off), [[D-74472e1d]] fork-engine ratification.
+**Owner decisions resolved 2026-07-26** (decision-queue session, all four items):
+- [[D-74472e1d]] fork-engine pair **RATIFIED** (EthereumJS L1 + EDR OP/cross-check;
+  CLI-produces-artifact) **with early spikes authorized** — S6 EDR OP-deposit replay gate and
+  S7 RPC budget probe run as research in scratch environments now; dependencies enter the
+  repo only at P4.
+- G-05 executor pinning: **PIN the canonical executor** as the expected value, sourced from
+  the executed config batches (G-02/G-04 evidence lane) — not default-resolution-declared.
+- G-08 + G-11: **one owner review ritual at M2 authoring** — the owner/delegate derivation
+  sign-off and the manifest lifecycle review batch into a single structured session once the
+  evidence lanes have corroborated the derivations.
+- D-007 enforcement wiring: **DEFERRED** — bootstrap mode (advisory checks + branch
+  protection) stays, documented and honest; wire the PR-based trusted gate when a second
+  contributor or a demo reason exists.
+
+**Research lanes opened 2026-07-26:** G-01 build-derivation dossier (route-cartographer);
+G-02/G-03/G-04 execution-order + provenance dossier (chain-historian); Rehearse de-risk
+spikes S6/S7 (rehearsal-master, authorized above). All background; dossiers persist to
+roadmap/research/route-manifest/ on return.
 
 Kickoff mapped the W1–W4 spine with a four-agent read-only fan-out (run wf_c29e08ca-2a8) and
 established the decisive fact: **there is no packaged pass-to-report composer** — the

@@ -2,7 +2,8 @@
 id: D-74472e1d-1338-4676-becf-2c4a407c8e99
 type: decision
 title: "Fork-engine pair (EthereumJS primary, EDR cross-check) and CLI-produces-artifact rehearsal architecture"
-status: proposed
+status: accepted
+approved_by: klunt (2026-07-26, decision-queue session ratification)
 date: 2026-07-26
 supersedes: []
 updated: 2026-07-26
@@ -10,7 +11,13 @@ updated: 2026-07-26
 
 # D-74472e1d-1338-4676-becf-2c4a407c8e99 — Fork-engine pair (EthereumJS primary, EDR cross-check) and CLI-produces-artifact rehearsal architecture
 
-**Status: PROPOSED — owner ratification required** (introduces new dependencies; architectural
+**Status: ACCEPTED — owner-ratified 2026-07-26** (decision-queue session; the owner selected
+"Ratify + early spikes": the direction below is approved, AND the two de-risking spikes (S6
+EDR OP-deposit-block replay gate; S7 RPC budget probe) are authorized to run early as
+research, in scratch environments outside the repo — dependencies still enter the repo only
+at P4.)
+
+Originally proposed as: (introduces new dependencies; architectural
 direction for P4/M4). Sourced from the rehearsal-master wave-1 ruling
 (`roadmap/research/rehearse-selection/wr5-ruling.md` §3, header verdict PROMOTABLE), which
 survived Codex adversarial review + confirmation (codex-review-wave1-confirmation.md).
