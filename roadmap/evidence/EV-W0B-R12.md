@@ -2,7 +2,8 @@
 id: EV-W0B-R12
 type: evidence
 title: W0B re-attested at unbounded standing co-occurrence (Codex round-9 disposition)
-status: recorded
+status: superseded
+superseded_by: EV-W0B-R13
 work: W0B
 result: pass
 commands:
