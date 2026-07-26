@@ -12,7 +12,8 @@ interface PayloadView {
     readonly verificationId?: string;
     readonly statement?: string;
   }[];
-  readonly limitations?: readonly { readonly kind?: string; readonly detail?: string }[];
+  // Canonical limitation fields are (code, text) — canonical.ts limitationKey.
+  readonly limitations?: readonly { readonly code?: string; readonly text?: string }[];
 }
 
 function view(payload: unknown): PayloadView {
@@ -33,7 +34,7 @@ export function exitCodeForPayload(payload: unknown): number {
     verifications.some((v) => v.state !== "pass") ||
     trust !== "trusted" ||
     verifications.length === 0 ||
-    (p.limitations ?? []).some((l) => l.kind === "target_boundary_unavailable");
+    (p.limitations ?? []).some((l) => l.code === "target_boundary_unavailable");
   return uncertain ? 3 : 0;
 }
 
@@ -51,7 +52,11 @@ export function renderHuman(run: VerificationRun): string {
     lines.push(`${v.state ?? "unknown"}  ${v.verificationId ?? ""} ${v.statement ?? ""}`.trimEnd());
   }
   for (const l of p.limitations ?? []) {
-    lines.push(`limitation: ${l.kind ?? ""} ${l.detail ?? ""}`.trimEnd());
+    lines.push(`limitation: ${l.code ?? ""} ${l.text ?? ""}`.trimEnd());
+  }
+  if (exitCodeForPayload(run.payload) === 0) {
+    // THREAT_MODEL:153 — the strongest claim a clean run may make. Never a health verdict.
+    lines.push("no blocking failure across the evaluated verifications, within declared coverage");
   }
   lines.push(`reportHash: ${run.reportHash}`);
   return lines.join("\n");

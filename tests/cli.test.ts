@@ -4,10 +4,13 @@
 //
 // Matrix tests A1-A3 + B4: harness + envelope + the shipped-fixture reality. Every later
 // exit-code and render test builds on the `run` helper here.
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { main } from "../bin/aegis";
+import { manifestContentHash } from "../lib/aegis/manifest/trust";
 import { jcsSerialize, reportHash } from "../lib/aegis/report/canonical";
 
 const DATA = join(__dirname, "..", "data");
@@ -89,6 +92,130 @@ describe("W5 S3 — B4. the shipped-fixture reality", () => {
     expect(payload.verifications.length).toBeGreaterThan(0);
     for (const v of payload.verifications) {
       expect(v.state).toBe("unknown");
+    }
+  });
+});
+
+describe("W5 S3 — B. exit codes", () => {
+  test("B5: a re-sealed manifest covering the shipped identity reads earns exit 0 — in-test only", async () => {
+    // Exit 0 is deliberately unreachable from shipped fixture files (W6's constraint: no
+    // shipped fixture may produce a pass). The only honest route to the clean-exit row is
+    // synthesizing a manifest whose expectations match what the shipped identity recording
+    // actually observed, then re-sealing its content hash.
+    const manifest = JSON.parse(readFileSync(MANIFEST, "utf-8")) as Record<string, unknown>;
+    manifest.targets = [
+      {
+        targetId: "reference-eip1967-proxy",
+        chainId: 1,
+        address: `0x${"a1".repeat(20)}`,
+        identityStrategy: "eip1967",
+        expectedImplementation: `0x${"b2".repeat(20)}`,
+        // Derived, never hand-typed (INS-035ae3e4): sha256 over bytes(0x608060405f), the
+        // impl code the shipped recording observes — proven `pass` in
+        // tests/identity-compare.test.ts.
+        expectedRuntimeCodeHash: `sha256:${createHash("sha256")
+          .update(Buffer.from("608060405f", "hex"))
+          .digest("hex")}`,
+      },
+    ];
+    manifest.contentHash = manifestContentHash(manifest);
+
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b5-"));
+    try {
+      const sealedPath = join(dir, "manifest.json");
+      writeFileSync(sealedPath, jcsSerialize(manifest));
+      const args = REFERENCE_ARGS.map((a) => (a === MANIFEST ? sealedPath : a));
+
+      const human = await run(args);
+      expect(human.exit).toBe(0);
+      // THREAT_MODEL:153 — the clean exit may claim exactly "no blocking failure ... within
+      // declared coverage", never a general health verdict.
+      expect(human.stdout).toContain("no blocking failure");
+      expect(human.stdout).toContain("within declared coverage");
+
+      const json = await run([...args, "--json"]);
+      expect(json.exit).toBe(0);
+      const payload = JSON.parse(json.stdout).payload as {
+        policyTrust: { state: string };
+        verifications: readonly { state: string }[];
+      };
+      expect(payload.policyTrust.state).toBe("trusted");
+      expect(payload.verifications.length).toBeGreaterThan(0);
+      for (const v of payload.verifications) {
+        expect(v.state).toBe("pass");
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("exit 3 (unevaluated target): a target_boundary_unavailable limitation forces uncertainty", async () => {
+    // Mapping-table row: "any target_boundary_unavailable limitation -> 3". A run whose every
+    // evaluated verification passes must STILL exit 3 when a declared target went
+    // unevaluated — the covered proxy target passes, but the chain-10 target has no boundary
+    // because the run requests --chain 1 only (engine.ts emits the limitation instead of
+    // silently dropping the target).
+    const manifest = JSON.parse(readFileSync(MANIFEST, "utf-8")) as {
+      targets: unknown[];
+      contentHash: string;
+    };
+    manifest.targets = [
+      {
+        targetId: "reference-eip1967-proxy",
+        chainId: 1,
+        address: `0x${"a1".repeat(20)}`,
+        identityStrategy: "eip1967",
+        expectedImplementation: `0x${"b2".repeat(20)}`,
+        expectedRuntimeCodeHash: `sha256:${createHash("sha256")
+          .update(Buffer.from("608060405f", "hex"))
+          .digest("hex")}`,
+      },
+      {
+        targetId: "reference-direct",
+        chainId: 10,
+        address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        identityStrategy: "direct",
+        expectedRuntimeCodeHash: `sha256:${"4".repeat(64)}`,
+      },
+    ];
+    manifest.contentHash = manifestContentHash(manifest);
+
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b5b-"));
+    try {
+      const sealedPath = join(dir, "manifest.json");
+      writeFileSync(sealedPath, jcsSerialize(manifest));
+
+      const result = await run([
+        "verify",
+        "--manifest", sealedPath,
+        "--heads", HEADS,
+        "--identity", IDENTITY,
+        "--chain", "1",
+        "--at", "finalized",
+        "--evaluation-time", "2026-07-24T00:00:00Z",
+        "--profile", "reference",
+        "--json",
+      ]);
+
+      const payload = JSON.parse(result.stdout).payload as {
+        policyTrust: { state: string };
+        verifications: readonly { state: string }[];
+        limitations: readonly { code: string }[];
+      };
+      // Preconditions that isolate the clause under test: everything evaluated passed…
+      expect(payload.policyTrust.state).toBe("trusted");
+      expect(payload.verifications.length).toBeGreaterThan(0);
+      for (const v of payload.verifications) {
+        expect(v.state).toBe("pass");
+      }
+      // …and the unevaluated target surfaced as the canonical limitation (code/text fields,
+      // canonical.ts limitationKey) — so ONLY the limitation row can force the exit code.
+      expect(
+        payload.limitations.some((l) => l.code === "target_boundary_unavailable"),
+      ).toBe(true);
+      expect(result.exit).toBe(3);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });
