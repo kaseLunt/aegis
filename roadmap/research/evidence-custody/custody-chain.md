@@ -1,7 +1,7 @@
 <!-- DRAFT - evidence-warden persona ruling, 2026-07-26. PRE-CODEX-REVIEW.
 Provenance: fable persona agent (latent space: Sigstore / in-toto+SLSA / Certificate
 Transparency / Reproducible Builds / forensic chain of custody), first standing assignment
-on R-b4e2e152 §1+§2. Status: CODEX-REVIEWED 2026-07-26 (review-ms25esga) -- NOT-PROMOTABLE pending corrections; ALL CODEX CORRECTIONS APPLIED 2026-07-26 by the originating persona instances (diff patches), awaiting scoped confirmation pass. CUSTODY-SOUND overclaims (limitation text unconditional); quorum raw-mismatch semantics misquoted. See codex-review-wave1.md. -->
+on R-b4e2e152 §1+§2. Status: CODEX-REVIEWED 2026-07-26 (review-ms25esga) -- NOT-PROMOTABLE pending corrections; ALL CODEX CORRECTIONS APPLIED 2026-07-26 by the originating persona instances (diff patches), CONFIRMATION (review-ms26cg2y): PROMOTABLE. Research input only; INFERRED content quarantined from manifest-grade use. CUSTODY-SOUND overclaims (limitation text unconditional); quorum raw-mismatch semantics misquoted. See codex-review-wave1.md. -->
 
 # Evidence Warden Report — Recorded-Mode Custody Chain, §1/§2 Designs, Migration Rule, Verdict
 

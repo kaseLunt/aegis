@@ -1,7 +1,7 @@
 <!-- DRAFT - chain-historian persona ruling, 2026-07-26. PRE-CODEX-REVIEW.
 Provenance: opus persona agent (latent space: TrueBlocks / The Graph / Index Supply /
 Flashbots / NTSB flight-recorder ethos), first standing assignment on WR4 + W6 supersession
-design. Status: CODEX-REVIEWED 2026-07-26 (review-ms25esga) -- NOT-PROMOTABLE pending corrections; ALL CODEX CORRECTIONS APPLIED 2026-07-26 by the originating persona instances (diff patches), awaiting scoped confirmation pass. GUID join wrong vs EndpointV2 events; supersession hash-retention impossible; Candidate 5 disqualifier contradicts sibling blueprint S7. See codex-review-wave1.md. Two INFERRED claims flagged by the
+design. Status: CODEX-REVIEWED 2026-07-26 (review-ms25esga) -- NOT-PROMOTABLE pending corrections; ALL CODEX CORRECTIONS APPLIED 2026-07-26 by the originating persona instances (diff patches), CONFIRMATION (review-ms26cg2y): NOT-PROMOTABLE -- channel-tuple join CLOSED (provisional on G12), but the SupersessionRecord needs a complete anchored identity model, and Candidate 5's temporal disqualifier cited a chain-1 window against a chain-10 block (see codex-review-wave1-confirmation.md). GUID join wrong vs EndpointV2 events; supersession hash-retention impossible; Candidate 5 disqualifier contradicts sibling blueprint S7. See codex-review-wave1.md. Two INFERRED claims flagged by the
 author for hardest scrutiny: the LayerZero-packet-GUID causal-edge reframing, and the
 selection.ts OP confirmation-depth defect. -->
 
