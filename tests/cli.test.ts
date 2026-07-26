@@ -96,34 +96,38 @@ describe("W5 S3 — B4. the shipped-fixture reality", () => {
   });
 });
 
+// The one target the shipped identity recording actually covers: eip1967 proxy 0xa1a1…,
+// impl 0xb2b2…, impl runtime code 0x608060405f. Hash derived, never hand-typed
+// (INS-035ae3e4) — proven `pass` in tests/identity-compare.test.ts.
+const COVERED_PROXY_TARGET = {
+  targetId: "reference-eip1967-proxy",
+  chainId: 1,
+  address: `0x${"a1".repeat(20)}`,
+  identityStrategy: "eip1967",
+  expectedImplementation: `0x${"b2".repeat(20)}`,
+  expectedRuntimeCodeHash: `sha256:${createHash("sha256")
+    .update(Buffer.from("608060405f", "hex"))
+    .digest("hex")}`,
+};
+
+// Re-seal the shipped manifest with substitute targets: same schema, recomputed contentHash.
+function sealedManifestBytes(targets: unknown[]): string {
+  const manifest = JSON.parse(readFileSync(MANIFEST, "utf-8")) as Record<string, unknown>;
+  manifest.targets = targets;
+  manifest.contentHash = manifestContentHash(manifest);
+  return jcsSerialize(manifest);
+}
+
 describe("W5 S3 — B. exit codes", () => {
   test("B5: a re-sealed manifest covering the shipped identity reads earns exit 0 — in-test only", async () => {
     // Exit 0 is deliberately unreachable from shipped fixture files (W6's constraint: no
     // shipped fixture may produce a pass). The only honest route to the clean-exit row is
     // synthesizing a manifest whose expectations match what the shipped identity recording
     // actually observed, then re-sealing its content hash.
-    const manifest = JSON.parse(readFileSync(MANIFEST, "utf-8")) as Record<string, unknown>;
-    manifest.targets = [
-      {
-        targetId: "reference-eip1967-proxy",
-        chainId: 1,
-        address: `0x${"a1".repeat(20)}`,
-        identityStrategy: "eip1967",
-        expectedImplementation: `0x${"b2".repeat(20)}`,
-        // Derived, never hand-typed (INS-035ae3e4): sha256 over bytes(0x608060405f), the
-        // impl code the shipped recording observes — proven `pass` in
-        // tests/identity-compare.test.ts.
-        expectedRuntimeCodeHash: `sha256:${createHash("sha256")
-          .update(Buffer.from("608060405f", "hex"))
-          .digest("hex")}`,
-      },
-    ];
-    manifest.contentHash = manifestContentHash(manifest);
-
     const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b5-"));
     try {
       const sealedPath = join(dir, "manifest.json");
-      writeFileSync(sealedPath, jcsSerialize(manifest));
+      writeFileSync(sealedPath, sealedManifestBytes([COVERED_PROXY_TARGET]));
       const args = REFERENCE_ARGS.map((a) => (a === MANIFEST ? sealedPath : a));
 
       const human = await run(args);
@@ -149,41 +153,58 @@ describe("W5 S3 — B. exit codes", () => {
     }
   });
 
+  test("B6: exit 2 (blocking fail) — one fail outranks a sibling pass, worst state wins", async () => {
+    // COVERED_PROXY_TARGET with a deliberately wrong runtime-code-hash expectation: the
+    // implementation slot still matches (pass) while the terminal hash comparison fails.
+    // Exit 2 must win over the sibling pass — precedence, not just single-state mapping
+    // (tests/identity-compare.test.ts:230-244 proves the engine side of this split).
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b6-"));
+    try {
+      const sealedPath = join(dir, "manifest.json");
+      writeFileSync(
+        sealedPath,
+        sealedManifestBytes([
+          { ...COVERED_PROXY_TARGET, expectedRuntimeCodeHash: `sha256:${"7".repeat(64)}` },
+        ]),
+      );
+      const args = REFERENCE_ARGS.map((a) => (a === MANIFEST ? sealedPath : a));
+
+      const result = await run([...args, "--json"]);
+
+      const payload = JSON.parse(result.stdout).payload as {
+        verifications: readonly { state: string; verificationId?: string }[];
+      };
+      const states = payload.verifications.map((v) => v.state).sort();
+      expect(states).toContain("fail");
+      expect(states).toContain("pass");
+      expect(result.exit).toBe(2);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test("exit 3 (unevaluated target): a target_boundary_unavailable limitation forces uncertainty", async () => {
     // Mapping-table row: "any target_boundary_unavailable limitation -> 3". A run whose every
     // evaluated verification passes must STILL exit 3 when a declared target went
     // unevaluated — the covered proxy target passes, but the chain-10 target has no boundary
     // because the run requests --chain 1 only (engine.ts emits the limitation instead of
     // silently dropping the target).
-    const manifest = JSON.parse(readFileSync(MANIFEST, "utf-8")) as {
-      targets: unknown[];
-      contentHash: string;
-    };
-    manifest.targets = [
-      {
-        targetId: "reference-eip1967-proxy",
-        chainId: 1,
-        address: `0x${"a1".repeat(20)}`,
-        identityStrategy: "eip1967",
-        expectedImplementation: `0x${"b2".repeat(20)}`,
-        expectedRuntimeCodeHash: `sha256:${createHash("sha256")
-          .update(Buffer.from("608060405f", "hex"))
-          .digest("hex")}`,
-      },
-      {
-        targetId: "reference-direct",
-        chainId: 10,
-        address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-        identityStrategy: "direct",
-        expectedRuntimeCodeHash: `sha256:${"4".repeat(64)}`,
-      },
-    ];
-    manifest.contentHash = manifestContentHash(manifest);
-
     const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b5b-"));
     try {
       const sealedPath = join(dir, "manifest.json");
-      writeFileSync(sealedPath, jcsSerialize(manifest));
+      writeFileSync(
+        sealedPath,
+        sealedManifestBytes([
+          COVERED_PROXY_TARGET,
+          {
+            targetId: "reference-direct",
+            chainId: 10,
+            address: "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+            identityStrategy: "direct",
+            expectedRuntimeCodeHash: `sha256:${"4".repeat(64)}`,
+          },
+        ]),
+      );
 
       const result = await run([
         "verify",
