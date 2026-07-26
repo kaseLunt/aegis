@@ -25,13 +25,19 @@ the migrated workflows after push. main protected; residuals in [[R-005]] under 
 S0/S1/S2 are DONE (384/384). S3 executes against the recon-derived plan now embedded in the
 W5 charter ("S3 plan" section): 21 TDD tests in sequence, the total exit-code mapping, the
 per-tier render rules from canon, and the finality-downgrade diagnostics extension.
-**Plan step 1 is DONE** (86f8f5f, 389/389): `bin/aegis.ts` `main(argv, io)` in-process
-harness, strict parseArgs, `renderJson`/`exitCodeForPayload` in `lib/aegis/surfaces/render.ts`,
-tests A1-A3 + B4 (B4 pins exit 3 — all-unknown on shipped fixtures; exit 0 deliberately
-unreachable from them). **Resume at plan step 2:** tests B5-B13 exit codes, one at a time,
-each RED first; then mutation-check the mapping table by inverting one row and watching
-exactly one test die. No re-attestation chains expected in S3-S7 (verified in the handoff);
-do NOT stamp W5 mid-slice.
+**Plan steps 1-2 DONE** (through e5d19ce, 399/399): step 1 = `bin/aegis.ts` `main(argv,io)`
+harness + strict parseArgs + `renderJson`/`exitCodeForPayload`; step 2 = the FULL B-series
+exit-code matrix (A1-A3 + B4-B13, all ten rows). Every exit value has a guardian test with a
+verified mutation bite: 0←B5, 2←B6, 3←B4/B7/B10, 4←B8/B9/B11/B13-dup, 5←B12/B13-ambiguous;
+six per-row mutation checks each isolated exactly one row (no dead/redundant branch). Two
+red-first CLI additions landed under the series: recording pre-validation (B11, corruption =
+caller input exit 4, bundle discarded so the engine re-earns the brand) and repeatable
+`--heads` (B13, the ambiguous-vs-duplicate ordering trap, both exits pinned).
+**Resume at plan step 3:** tests C14-C19 render language + teeth (boundaries-before-results,
+state-words-as-text, limitations-always-printed, untrusted-strings-escaped, claim-language
+lint negative-tested, hygiene coverage +bin negative-tested). Then §5(a) engine addition via
+test 21 (finality-downgrade visibility, RED against current diagnostics), D20, packaging
+last. No re-attestation chains expected in S3-S7; do NOT stamp W5 mid-slice.
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
