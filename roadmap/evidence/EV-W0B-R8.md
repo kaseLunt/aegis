@@ -2,7 +2,8 @@
 id: EV-W0B-R8
 type: evidence
 title: W0B re-attested at the two-tier renewal matcher (Codex round-5 disposition)
-status: recorded
+status: superseded
+superseded_by: EV-W0B-R9
 work: W0B
 result: pass
 commands:

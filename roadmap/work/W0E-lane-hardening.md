@@ -19,12 +19,12 @@ deliverables:
   - roadmap/tools/selftest.py
   - roadmap/tools/scope_diff.py
 evidence_receipts:
-  - roadmap/evidence/EV-W0E-R8.md
+  - roadmap/evidence/EV-W0E-R9.md
 review_when: phase:P2:entry
 invalidated_by:
   - roadmap/tools/**
 updated: 2026-07-22
-evidence_fingerprint: sha256:d69e8c38e63b4ec0658ad67de1aeb53889e5e6ecb489228f89673b027c74816f
+evidence_fingerprint: sha256:96226999364179366c8778c8aeb54aad3a51053d40a55cbdeccb8b2060b3c620
 ---
 
 # W0E — Lane hardening (second external review)
