@@ -33,6 +33,14 @@ Candidate 5 (conditional until a reviewed chain-10 historical window exists); (c
 schema change — either `validity` becomes per-chain structurally, or `checkApplicability`
 learns to refuse a covered chain that has no same-chain bound.
 
+**Addendum (round-3 Codex re-confirmation, review-ms280w41).** The property is worse than a
+missing authoring convention: `validity` structurally holds exactly ONE `fromBlock`/`toBlock`
+pair (trust.ts:196-206), so the fix of "author a bound per covered chain" **cannot be
+represented by the current schema** — authoring chain 10's bound necessarily strips chain 1's
+and fails open there instead. Closing this class requires a schema change (per-chain validity
+map, or single-chain manifests + a reviewed composition rule) AND a loader/applicability rule
+that refuses any covered chain lacking its own bound, negative-tested.
+
 **Teeth (when the applicability surface is next touched, or at W6 fixture design).** A
 red-first test: a manifest covering chains [1, 10] with only a chain-1 window, evaluated at a
 chain-10 boundary, must NOT evaluate as silently applicable once the rule lands — and until
