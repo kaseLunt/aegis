@@ -314,6 +314,31 @@ describe("W5 S3 — B. exit codes", () => {
     expect(atLatest.stderr).toContain("unsupported_at_selector at /at");
   });
 
+  test("B11: exit 4 (corrupt recording bytes) — recording corruption is caller input, not engine failure", async () => {
+    // Tamper one recorded response WITHOUT recomputing its hashes: the loader's integrity
+    // check must refuse it. The RULING (S3 plan §3): a ChainError at CLI pre-validation is
+    // an invalid-input 4, reserved-for-operational-failure 5 stays honest. The CLI
+    // pre-validates by loading and DISCARDING the bundle — the engine still re-earns the
+    // provenance brand from raw bytes itself (the CLI passes bytes, never bundles).
+    const recording = JSON.parse(readFileSync(HEADS, "utf-8")) as {
+      responses: Array<{ result: unknown }>;
+    };
+    recording.responses[0].result = "0xdeadbeef"; // hashes now stale -> integrity_mismatch
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b11-"));
+    try {
+      const headsPath = join(dir, "heads.json");
+      writeFileSync(headsPath, JSON.stringify(recording));
+      const args = REFERENCE_ARGS.map((a) => (a === HEADS ? headsPath : a));
+
+      const result = await run(args);
+
+      expect(result.stderr).toContain("integrity_mismatch");
+      expect(result.exit).toBe(4);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test("B10: exit 3 (untrusted manifest) — zero verifications must never read as clean", async () => {
     // A valid manifest under a trust policy that does not approve it: every declared
     // invariant goes unevaluated. That is INCOMPLETE, not invalid (no exit 4) and

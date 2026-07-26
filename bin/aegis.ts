@@ -7,6 +7,8 @@
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
+import { loadRecordingBytes } from "../lib/aegis/chain/adapter";
+import { ChainError } from "../lib/aegis/chain/quorum";
 import { runVerification, SurfaceError } from "../lib/aegis/surfaces/engine";
 import { referenceDeployment } from "../lib/aegis/surfaces/profiles";
 import { RequestError } from "../lib/aegis/surfaces/request";
@@ -94,6 +96,23 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
     }
   } catch (error) {
     return fail(io, `cannot read input: ${(error as Error).message}`);
+  }
+
+  // Pre-validation: recording corruption is CALLER INPUT (exit 4), not an engine failure.
+  // The bundle is loaded and DISCARDED — the engine re-earns the provenance brand from raw
+  // bytes itself (WeakSet brands survive no boundary); the CLI passes bytes, never bundles.
+  // A ChainError escaping AFTER this point is an operational failure of the run (exit 5).
+  for (const recording of recordings) {
+    try {
+      loadRecordingBytes(recording.bytes);
+    } catch (error) {
+      if (error instanceof ChainError) {
+        io.stderr.write(`${error.code} at ${error.path}\n`);
+        return 4;
+      }
+      io.stderr.write(`cannot load ${recording.role} recording: ${(error as Error).message}\n`);
+      return 4;
+    }
   }
 
   // The at-selector is passed through VERBATIM: the ENGINE refuses anything but "finalized"
