@@ -2,7 +2,8 @@
 id: EV-W0F-R11
 type: evidence
 title: W0F re-attested at adjacent-pair standing windows (Codex round-8 disposition)
-status: recorded
+status: superseded
+superseded_by: EV-W0F-R12
 work: W0F
 result: pass
 commands:
