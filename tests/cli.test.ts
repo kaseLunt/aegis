@@ -314,6 +314,36 @@ describe("W5 S3 — B. exit codes", () => {
     expect(atLatest.stderr).toContain("unsupported_at_selector at /at");
   });
 
+  test("B10: exit 3 (untrusted manifest) — zero verifications must never read as clean", async () => {
+    // A valid manifest under a trust policy that does not approve it: every declared
+    // invariant goes unevaluated. That is INCOMPLETE, not invalid (no exit 4) and
+    // emphatically not clean (no exit 0) — the ruling that kills the dishonest
+    // "nothing failed because nothing ran" path. Exit 3, with the refusal visible in
+    // policyTrust and an empty verifications array.
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b10-"));
+    try {
+      const policyPath = join(dir, "trust-policy.json");
+      writeFileSync(
+        policyPath,
+        JSON.stringify({
+          trustPolicyId: "tp-cli-b10",
+          approvedHashes: [`sha256:${"a".repeat(64)}`],
+        }),
+      );
+      const result = await run([...REFERENCE_ARGS, "--trust-policy", policyPath, "--json"]);
+
+      const payload = JSON.parse(result.stdout).payload as {
+        policyTrust: { state: string };
+        verifications: readonly unknown[];
+      };
+      expect(payload.policyTrust.state).toBe("untrusted");
+      expect(payload.verifications).toEqual([]);
+      expect(result.exit).toBe(3);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test("B9: exit 4 (invalid manifest, NOT thrown) — the payload completes and carries the refusal", async () => {
     // An unparseable or tampered manifest is caller input the engine refuses WITHOUT
     // throwing: the run completes with policyTrust.state "invalid" and zero verifications,
