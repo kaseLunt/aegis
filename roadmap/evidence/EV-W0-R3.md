@@ -2,7 +2,8 @@
 id: EV-W0-R3
 type: evidence
 title: W0 verification re-attested at the lease-expiry retirement
-status: recorded
+status: superseded
+superseded_by: EV-W0-R4
 work: W0
 result: pass
 commands:

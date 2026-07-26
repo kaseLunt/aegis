@@ -2,7 +2,8 @@
 id: EV-W0F-R5
 type: evidence
 title: W0F re-attested at the Codex P1/P2 dispositions for W0H
-status: recorded
+status: superseded
+superseded_by: EV-W0F-R6
 work: W0F
 result: pass
 commands:
