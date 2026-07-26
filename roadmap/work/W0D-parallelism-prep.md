@@ -33,17 +33,25 @@ plane that can represent multiple accountable lanes without losing WIP disciplin
 enforcement — the IDEA-001 trigger has fired.
 
 ## Hypothesis / objective
-Per-agent claims (lease, base commit, narrowable scope) + doctor accountability (every
-active item claimed, one claim per agent, expiry flagged) + claim-aware scope gate
+
+> **Charter note 2026-07-25:** the lease elements below are the AS-DELIVERED 2026-07-21 record.
+> [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]] (W0H) later retired the claim clock; the current
+> attestation is [[EV-W0D-R6]], which records the scope reduction precisely. Struck text is
+> historical, not instruction.
+
+Per-agent claims (~~lease~~, base commit, narrowable scope) + doctor accountability (every
+active item claimed, one claim per agent, ~~expiry flagged~~) + claim-aware scope gate
 (AEGIS_AGENT, staged index, fail closed) + six chartered research lanes (WR1–WR6) let
 independent lanes run now and committing writers later, without weakening any W0B guarantee.
 
 ## Acceptance
-- Correct: claim.py open/renew/release/list works; doctor enforces claim accountability;
-  scope gate resolves AEGIS_AGENT claims from the staged index.
+- Correct: claim.py open/~~renew~~/release/list works (~~renew~~ retired by
+  [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]]; `rescope`/`rebind` added post-charter); doctor
+  enforces claim accountability; scope gate resolves AEGIS_AGENT claims from the staged index.
 - Robust: selftest extended with claims mutations (unclaimed active item, double claim,
-  expired lease) and claim-scope gate tests (narrowed scope blocks, unknown agent fails
-  closed) — all passing locally and in CI.
+  ~~expired lease~~ — replaced by the stale-claim-authorizes family at W0H) and claim-scope
+  gate tests (narrowed scope blocks, unknown agent fails closed) — all passing locally and in
+  CI.
 
 ## Non-goals
 - Provisioning per-writer worktrees/branches (needed only when concurrent committing

@@ -458,8 +458,25 @@ STANDING_INSTRUCTION_FILES = (
 RETIRED_STANDING_RE = re.compile(
     r"claim\.py renew|\bunexpired\b|leases? expire\b|lease renewal", re.I
 )
-RETIRED_NARRATIVE_RE = re.compile(r"claim\.py renew")
+# Narrative forms: the bare command, slash command lists ("claim.py open/renew/release/list"),
+# and adjacent natural phrasing ("renew the claim", "lease renewal"). A future allocator work
+# item that legitimately discusses allocator-lease renewal in live narrative must strike-quote
+# the phrase or revisit this rule alongside that machinery (INS-fe09afdb).
+RETIRED_NARRATIVE_RE = re.compile(
+    r"claim\.py\s+(?:[a-z]+/)*renew\b"
+    r"|\brenew(?:al|ing)?\s+(?:of\s+)?(?:a\s+|an\s+|the\s+|your\s+)?(?:claim|lease)s?\b"
+    r"|\b(?:claim|lease)s?[-\s]renewal\b",
+    re.I,
+)
+STRIKE_SPAN_RE = re.compile(r"~~.*?~~")
 LIVE_NARRATIVE_DIRS = ("roadmap/work", "roadmap/insights", "roadmap/risks", "roadmap/ideas")
+
+
+def _match_is_struck(line: str, start: int, end: int) -> bool:
+    return any(
+        span.start() <= start and end <= span.end()
+        for span in STRIKE_SPAN_RE.finditer(line)
+    )
 
 
 def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> None:
@@ -479,12 +496,14 @@ def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> No
         if not snapshot.exists(path):
             continue
         for lineno, line in enumerate(snapshot.read_text(path).splitlines(), 1):
-            # A struck-through (~~) line is marked-historical and exempt.
-            if RETIRED_NARRATIVE_RE.search(line) and "~~" not in line:
-                errors.append(
-                    f"{path}:{lineno}: retired command directive in live narrative "
-                    f"(strike it ~~...~~ or reword): '{line.strip()[:80]}'"
-                )
+            for match in RETIRED_NARRATIVE_RE.finditer(line):
+                # Only a strike span ENCLOSING the match marks it historical; an unrelated
+                # strike elsewhere on the line exempts nothing.
+                if not _match_is_struck(line, match.start(), match.end()):
+                    errors.append(
+                        f"{path}:{lineno}: retired renewal directive in live narrative "
+                        f"(strike it ~~...~~ or reword): '{line.strip()[:80]}'"
+                    )
 
 
 def substantive_section(text: str, heading: str, path: str, errors: list[str]) -> str:

@@ -631,6 +631,45 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # Codex round-4 bypasses: a slash command list, natural renewal phrasing, and a line where
+    # an UNRELATED strike exempted a live directive. Each must be caught; the exemption must
+    # require the MATCHED span itself to be enclosed by strike markers.
+    write(status_path, valid + "\nclaim.py open/renew/release/list works.\n")
+    must(git(repo, "add", "roadmap/STATUS.md"), "stage command-list directive")
+    write(status_path, valid)
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:command-list-renew-rejected",
+        result.returncode == 1 and "retired" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    write(status_path, valid + "\nRemember to renew the claim at natural breakpoints.\n")
+    must(git(repo, "add", "roadmap/STATUS.md"), "stage natural-language directive")
+    write(status_path, valid)
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:natural-renewal-rejected",
+        result.returncode == 1 and "retired" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    write(
+        status_path,
+        valid + "\n~~old text~~ but still run claim.py renew synthetic today.\n",
+    )
+    must(git(repo, "add", "roadmap/STATUS.md"), "stage strike-adjacent directive")
+    write(status_path, valid)
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:strike-must-enclose-match",
+        result.returncode == 1 and "retired" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
     # A claim whose timestamps are years old is still fully authoritative. Under the retired
     # lease model this exact fixture was refused, which is the failure this item removes: the
     # refusal was silent (doctor stayed green), deferred, and dead-ended at `renew`.

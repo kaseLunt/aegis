@@ -65,7 +65,7 @@ python roadmap/tools/doctor.py && python roadmap/tools/selftest.py
 - hazards: 7 active claims exist in the index — after this lands, EVERY commit needs
   AEGIS_AGENT set (fable-main for integration); lane capture is narrowed to
   ideas/insights/risks — lanes cannot edit charters, claims (beyond ~~lease renewal~~ **their own
-  lifecycle transitions; lease renewal was retired 2026-07-25 by
+  lifecycle transitions; that carve-out was retired 2026-07-25 by
   [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]] (W0H), which makes this permission set strictly
   smaller**), STATUS, or other lanes' outputs.
 
