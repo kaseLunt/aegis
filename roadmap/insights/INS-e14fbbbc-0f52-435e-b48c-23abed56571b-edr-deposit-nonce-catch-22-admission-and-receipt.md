@@ -29,7 +29,8 @@ permanent depositNonce divergence — EDR hit 34/35 receipts + exact block gas) 
 **owner waiver, deliberately not exercised** by the spike.
 
 **Expiry.** This verdict dies on: (a) any EDR release changing deposit admission (the fix is
-narrow; upstream issue should be filed — S6-G1); (b) OP deposit-receipt encoding changes at
+narrow; upstream issue FILED 2026-07-26: https://github.com/NomicFoundation/edr/issues/1578 —
+S6-G1 discharged); (b) OP deposit-receipt encoding changes at
 a future hardfork; (c) loss of canonicality of the tested block. Measured on ONE block at
 Holocene; generalization is INFERRED from a structural mechanism.
 

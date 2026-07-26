@@ -1,6 +1,11 @@
-# DRAFT — upstream issue for NomicFoundation/edr (owner posts or approves posting)
+# POSTED — upstream issue for NomicFoundation/edr
 
-Status: DRAFT for owner review. Repro facts from spike-s6-s7.md §1 (all OBSERVED on EDR
+**Status: POSTED 2026-07-26 as https://github.com/NomicFoundation/edr/issues/1578**
+(owner-authorized, filed via gh from the owner's account). Text below is what was submitted.
+Watch condition: any EDR release referencing this issue re-triggers the S6 gate harness
+(INS-e14fbbbc teeth) before any OP rehearsal claim strengthens.
+
+Originally: DRAFT for owner review. Repro facts from spike-s6-s7.md §1 (all OBSERVED on EDR
 0.14.2, win32-x64, node 22.20.0). Post to: https://github.com/NomicFoundation/edr/issues
 
 ---
