@@ -183,6 +183,58 @@ describe("W5 S3 — B. exit codes", () => {
     }
   });
 
+  test("B7: exit 3 (conflict) — providers disagreeing on one read is uncertainty, not failure", async () => {
+    // Baseline: B5 proves the covered manifest + shipped recordings earn exit 0. The ONLY
+    // delta here is one provider's account of the impl bytecode — quicknode reports one
+    // byte differently than alchemy for the same pinned read. Disagreement between
+    // administratively independent providers must surface as `conflict` (exit 3), never a
+    // pass (no quorum) and never a fail (nobody proved the expectation violated).
+    const recording = JSON.parse(readFileSync(IDENTITY, "utf-8")) as {
+      responses: Array<Record<string, unknown> & { providerId: string; params: unknown[]; result: unknown }>;
+    };
+    const impl = `0x${"b2".repeat(20)}`;
+    const target = recording.responses.find(
+      (r) => r.providerId === "quicknode" && r.method === "eth_getCode" && r.params[0] === impl,
+    );
+    if (!target) throw new Error("fixture drift: quicknode impl eth_getCode read not found");
+    target.result = "0x608060405e"; // one byte off alchemy's 0x608060405f
+    // Reseal: BOTH per-response hashes recomputed (the tests/engine.test.ts:39-49 idiom) so
+    // the loader's integrity checks pass and the divergence is genuinely observational.
+    const shaOf = (v: unknown) =>
+      `sha256:${createHash("sha256").update(Buffer.from(jcsSerialize(v), "utf-8")).digest("hex")}`;
+    for (const r of recording.responses) {
+      r.rawResponseSha256 = shaOf(r.result);
+      const envelope: Record<string, unknown> = { ...r };
+      delete envelope.envelopeSha256;
+      r.envelopeSha256 = shaOf(envelope);
+    }
+
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b7-"));
+    try {
+      const manifestPath = join(dir, "manifest.json");
+      writeFileSync(manifestPath, sealedManifestBytes([COVERED_PROXY_TARGET]));
+      const identityPath = join(dir, "identity.json");
+      writeFileSync(identityPath, JSON.stringify(recording));
+      const args = REFERENCE_ARGS.map((a) =>
+        a === MANIFEST ? manifestPath : a === IDENTITY ? identityPath : a,
+      );
+
+      const result = await run([...args, "--json"]);
+
+      const payload = JSON.parse(result.stdout).payload as {
+        policyTrust: { state: string };
+        verifications: readonly { state: string }[];
+      };
+      expect(payload.policyTrust.state).toBe("trusted");
+      const states = payload.verifications.map((v) => v.state);
+      expect(states).toContain("conflict");
+      expect(states).not.toContain("fail");
+      expect(result.exit).toBe(3);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test("exit 3 (unevaluated target): a target_boundary_unavailable limitation forces uncertainty", async () => {
     // Mapping-table row: "any target_boundary_unavailable limitation -> 3". A run whose every
     // evaluated verification passes must STILL exit 3 when a declared target went
