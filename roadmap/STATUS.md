@@ -6,7 +6,7 @@ enforcement_evidence: []
 project_state: active
 active_phase: P1
 active_task: W5
-updated: 2026-07-25
+updated: 2026-07-26
 ---
 
 # STATUS — where we are right now
@@ -24,9 +24,14 @@ the migrated workflows after push. main protected; residuals in [[R-005]] under 
 
 S0/S1/S2 are DONE (384/384). S3 executes against the recon-derived plan now embedded in the
 W5 charter ("S3 plan" section): 21 TDD tests in sequence, the total exit-code mapping, the
-per-tier render rules from canon, and the finality-downgrade diagnostics extension. Start at
-plan step 1 (tests A1-A3 + B4 red first). No re-attestation chains expected in S3-S7 (verified
-in the handoff); do NOT stamp W5 mid-slice.
+per-tier render rules from canon, and the finality-downgrade diagnostics extension.
+**Plan step 1 is DONE** (86f8f5f, 389/389): `bin/aegis.ts` `main(argv, io)` in-process
+harness, strict parseArgs, `renderJson`/`exitCodeForPayload` in `lib/aegis/surfaces/render.ts`,
+tests A1-A3 + B4 (B4 pins exit 3 — all-unknown on shipped fixtures; exit 0 deliberately
+unreachable from them). **Resume at plan step 2:** tests B5-B13 exit codes, one at a time,
+each RED first; then mutation-check the mapping table by inverting one row and watching
+exactly one test die. No re-attestation chains expected in S3-S7 (verified in the handoff);
+do NOT stamp W5 mid-slice.
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
@@ -37,9 +42,43 @@ cases. Codex convergence ([[D-b4ab3c69]]): ELEVEN scoped rounds, findings narrow
 monotonically, terminal verdict **approve / converged-clean, no material findings**. Residue
 documented in EV-W0H and accepted under the cooperating-executor threat model.
 
-**Next commit:** W5 -> active, `claim.py open fable-main W5 --integrator`, STATUS
-`active_task: W5`, and the recon-derived S3 plan lands in the W5 charter. Then S3 TDD begins
-(tests A1-A3 + B4 first, per the plan's sequencing).
+## Research program (persona bench) — session handoff 2026-07-26
+
+**Note:** commit `0aa42dc`'s message claimed this section already existed in STATUS; it did
+not — the handoff lived only in `codex-review-wave1-confirmation.md` and wr5-ruling §5 until
+this commit landed it here. Recorded for the honesty ledger.
+
+Four persona agents are registered and re-invocable by type: `route-cartographer`,
+`chain-historian`, `rehearsal-master`, `evidence-warden`. Wave 1 ran the full loop —
+persona rulings → Codex adversarial review (`codex-review-wave1.md`) → diff-only corrections
+by the originating instances → scoped Codex confirmation
+(`codex-review-wave1-confirmation.md`, review-ms26cg2y: 6/9 CLOSED, 3 OPEN). Per-document
+verdicts stamped on every draft header: blueprint PROMOTABLE-WITH-CORRECTIONS; custody-chain
+PROMOTABLE; wr4 NOT-PROMOTABLE; wr5 PROMOTABLE. All four remain research inputs only;
+INFERRED/probe material stays quarantined from manifest-grade use.
+
+**Round 3 (next research action)** — the three open findings, fixes named by the reviewer:
+1. blueprint G-01: remove the unenforced `first_observation_baseline` fallback from
+   manifest-grade (identity stays unknown, ABI cells blocked, when build provenance is
+   unavailable).
+2. wr4: complete the SupersessionRecord schema (`affectedArtifacts`, domain-separated
+   canonical bytes + content hash), anchor in an append-only register, split the tests.
+3. wr4 Candidate 5: reframe the temporal disqualifier on the absent chain-10 window, not the
+   chain-1 window. Then scoped re-confirmation → promotion.
+
+**Captures filed 2026-07-26** (were queued in wr5-ruling §5): [[INS-ce3c634f]]
+(discovery-query recall teeth), [[INS-035ae3e4]] (hex/word truncation class, 3rd strike),
+[[D-74472e1d]] (fork-engine pair + CLI-artifact architecture — **PROPOSED, owner
+ratification required**), [[R-85f86c4d]] (ROUTE-ETH-OP-v1 absence blocks M4 — derived
+independently by three wave-1 documents).
+
+**Engine findings awaiting triage into work items:** unconditional "reviewed" limitation
+text (`engine.ts:250-251` — a trust-me attestation in prose; pairs with the
+bundleContentHash slice); quorum sourceMode mixing (`quorum.ts:29-31` — pre-live gate);
+OP finality vs confirmation-depth (`selection.ts` — owner design decision).
+
+**Owner decision queue:** blueprint G-05 (executor pinning), G-08 (owner/delegate
+promotion), G-11 (lifecycle sign-off), [[D-74472e1d]] fork-engine ratification.
 
 Kickoff mapped the W1–W4 spine with a four-agent read-only fan-out (run wf_c29e08ca-2a8) and
 established the decisive fact: **there is no packaged pass-to-report composer** — the
