@@ -35,8 +35,10 @@ enforcement — the IDEA-001 trigger has fired.
 ## Hypothesis / objective
 
 > **Charter note 2026-07-25:** the lease elements below are the AS-DELIVERED 2026-07-21 record.
-> [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]] (W0H) later retired the claim clock; the current
-> attestation is [[EV-W0D-R6]], which records the scope reduction precisely. Struck text is
+> [[D-9646fc3c-2c19-4ff2-99e6-f9fa8408725c]] (W0H) later retired the claim clock. The scope
+> reduction is recorded in this item's receipt chain from [[EV-W0D-R4]] onward; the CURRENT
+> attestation is always the receipt named in this file's `evidence_receipts` frontmatter —
+> deliberately not repeated here, where it would rot on each supersession. Struck text is
 > historical, not instruction.
 
 Per-agent claims (~~lease~~, base commit, narrowable scope) + doctor accountability (every

@@ -458,14 +458,16 @@ STANDING_INSTRUCTION_FILES = (
 RETIRED_STANDING_RE = re.compile(
     r"claim\.py renew|\bunexpired\b|leases? expire\b|lease renewal", re.I
 )
-# Narrative forms: the bare command, slash command lists ("claim.py open/renew/release/list"),
-# and adjacent natural phrasing ("renew the claim", "lease renewal"). A future allocator work
+# Renewal forms, applied to BOTH tiers: the bare command, slash command lists
+# ("claim.py open/renew/release/list"), adjacent active phrasing ("renew the claim",
+# "lease renewal"), and passive phrasing ("claims must be renewed"). A future allocator work
 # item that legitimately discusses allocator-lease renewal in live narrative must strike-quote
 # the phrase or revisit this rule alongside that machinery (INS-fe09afdb).
-RETIRED_NARRATIVE_RE = re.compile(
+RETIRED_RENEWAL_RE = re.compile(
     r"claim\.py\s+(?:[a-z]+/)*renew\b"
     r"|\brenew(?:al|ing)?\s+(?:of\s+)?(?:a\s+|an\s+|the\s+|your\s+)?(?:claim|lease)s?\b"
-    r"|\b(?:claim|lease)s?[-\s]renewal\b",
+    r"|\b(?:claim|lease)s?[-\s]renewal\b"
+    r"|\b(?:claim|lease)s?\s+(?:\w+\s+){0,3}?be\s+renewed\b",
     re.I,
 )
 STRIKE_SPAN_RE = re.compile(r"~~.*?~~")
@@ -484,7 +486,10 @@ def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> No
         if not snapshot.exists(path):
             continue
         for lineno, line in enumerate(snapshot.read_text(path).splitlines(), 1):
-            if RETIRED_STANDING_RE.search(line):
+            # Standing surfaces get BOTH the phrase set and the semantic renewal matcher, with
+            # no strike exemption: pure-instruction files carry no historical narrative, so any
+            # renewal language there is wrong regardless of markup.
+            if RETIRED_STANDING_RE.search(line) or RETIRED_RENEWAL_RE.search(line):
                 errors.append(
                     f"{path}:{lineno}: retired lease/renewal language on a standing "
                     f"instruction surface: '{line.strip()[:80]}'"
@@ -496,7 +501,7 @@ def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> No
         if not snapshot.exists(path):
             continue
         for lineno, line in enumerate(snapshot.read_text(path).splitlines(), 1):
-            for match in RETIRED_NARRATIVE_RE.finditer(line):
+            for match in RETIRED_RENEWAL_RE.finditer(line):
                 # Only a strike span ENCLOSING the match marks it historical; an unrelated
                 # strike elsewhere on the line exempts nothing.
                 if not _match_is_struck(line, match.start(), match.end()):

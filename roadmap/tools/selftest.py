@@ -670,6 +670,43 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # Codex round-5 bypasses: the semantic renewal matcher must run on STANDING surfaces too
+    # (they are the first thing executors read), and passive phrasing must match on both tiers.
+    agents_path = repo / "AGENTS.md"
+    write(agents_path, "# Agents\n\nRemember to renew the claim at natural breakpoints.\n")
+    must(git(repo, "add", "AGENTS.md"), "stage standing active-renewal")
+    agents_path.unlink()
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:standing-natural-renewal-rejected",
+        result.returncode == 1 and "standing instruction" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    claude_path = repo / "CLAUDE.md"
+    write(claude_path, "# Claude\n\nActive claims must be renewed before committing.\n")
+    must(git(repo, "add", "CLAUDE.md"), "stage standing passive-renewal")
+    claude_path.unlink()
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:standing-passive-renewal-rejected",
+        result.returncode == 1 and "standing instruction" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    write(status_path, valid + "\nActive claims must be renewed before committing.\n")
+    must(git(repo, "add", "roadmap/STATUS.md"), "stage narrative passive-renewal")
+    write(status_path, valid)
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:passive-renewal-rejected",
+        result.returncode == 1 and "retired" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
     # A claim whose timestamps are years old is still fully authoritative. Under the retired
     # lease model this exact fixture was refused, which is the failure this item removes: the
     # refusal was silent (doctor stayed green), deferred, and dead-ended at `renew`.
