@@ -707,6 +707,32 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # Codex round-6 bypass: obligation constructions ("claims require renewal"). The matcher is
+    # a bounded EITHER-ORDER proximity between a claim/lease token and a renew stem -- phrase
+    # enumeration does not terminate against natural language; proximity does.
+    agents_path2 = repo / "AGENTS.md"
+    write(agents_path2, "# Agents\n\nActive claims require renewal before committing.\n")
+    must(git(repo, "add", "AGENTS.md"), "stage standing renewal-obligation")
+    agents_path2.unlink()
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:renewal-obligation-standing-rejected",
+        result.returncode == 1 and "standing instruction" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
+    write(status_path, valid + "\nStale claims need renewal before further commits.\n")
+    must(git(repo, "add", "roadmap/STATUS.md"), "stage narrative renewal-obligation")
+    write(status_path, valid)
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:renewal-obligation-narrative-rejected",
+        result.returncode == 1 and "retired" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
     # A claim whose timestamps are years old is still fully authoritative. Under the retired
     # lease model this exact fixture was refused, which is the failure this item removes: the
     # refusal was silent (doctor stayed green), deferred, and dead-ended at `renew`.

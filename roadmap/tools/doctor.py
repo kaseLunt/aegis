@@ -458,16 +458,32 @@ STANDING_INSTRUCTION_FILES = (
 RETIRED_STANDING_RE = re.compile(
     r"claim\.py renew|\bunexpired\b|leases? expire\b|lease renewal", re.I
 )
-# Renewal forms, applied to BOTH tiers: the bare command, slash command lists
-# ("claim.py open/renew/release/list"), adjacent active phrasing ("renew the claim",
-# "lease renewal"), and passive phrasing ("claims must be renewed"). A future allocator work
-# item that legitimately discusses allocator-lease renewal in live narrative must strike-quote
-# the phrase or revisit this rule alongside that machinery (INS-fe09afdb).
+# Two renewal matchers with deliberately different reach, one per tier.
+#
+# STANDING surfaces get bounded EITHER-ORDER PROXIMITY between a claim/lease token and a renew
+# stem: pure-instruction files have no business mentioning renewal in ANY voice -- description
+# belongs in narrative -- so maximal strictness costs nothing there and terminates the phrase-
+# enumeration game (W0H Codex rounds 4-6 each found another construction: slash lists, passive
+# voice, obligation forms).
+#
+# NARRATIVE surfaces get PRESCRIPTIVE-FORM matching only, because live narrative legitimately
+# DESCRIBES the retired mechanism (incident records, disposition history, charter annotations)
+# and a proximity rule cannot tell voice. The demonstrated-realistic prescriptive forms are
+# enumerated; the standing-tier proximity net backstops the surfaces executors read first, and
+# review covers exotic prescriptive phrasings in narrative. A future allocator work item that
+# legitimately needs renewal language on a live surface must strike-quote it or revisit this
+# rule alongside that machinery (INS-fe09afdb).
+RETIRED_RENEWAL_PROXIMITY_RE = re.compile(
+    r"\b(?:claim|lease)(?:s|\.py)?\b[^\n]{0,40}?renew"
+    r"|\brenew\w*[^\n]{0,40}?\b(?:claim|lease)s?\b",
+    re.I,
+)
 RETIRED_RENEWAL_RE = re.compile(
     r"claim\.py\s+(?:[a-z]+/)*renew\b"
     r"|\brenew(?:al|ing)?\s+(?:of\s+)?(?:a\s+|an\s+|the\s+|your\s+)?(?:claim|lease)s?\b"
     r"|\b(?:claim|lease)s?[-\s]renewal\b"
-    r"|\b(?:claim|lease)s?\s+(?:\w+\s+){0,3}?be\s+renewed\b",
+    r"|\b(?:claim|lease)s?\s+(?:\w+\s+){0,3}?be\s+renewed\b"
+    r"|\b(?:claim|lease)s?\s+(?:\w+\s+){0,2}?(?:require|requires|need|needs)\s+renewal\b",
     re.I,
 )
 STRIKE_SPAN_RE = re.compile(r"~~.*?~~")
@@ -486,10 +502,10 @@ def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> No
         if not snapshot.exists(path):
             continue
         for lineno, line in enumerate(snapshot.read_text(path).splitlines(), 1):
-            # Standing surfaces get BOTH the phrase set and the semantic renewal matcher, with
-            # no strike exemption: pure-instruction files carry no historical narrative, so any
-            # renewal language there is wrong regardless of markup.
-            if RETIRED_STANDING_RE.search(line) or RETIRED_RENEWAL_RE.search(line):
+            # Standing surfaces get the phrase set plus full proximity, with no strike
+            # exemption: pure-instruction files carry no historical narrative, so any renewal
+            # language there is wrong regardless of markup or voice.
+            if RETIRED_STANDING_RE.search(line) or RETIRED_RENEWAL_PROXIMITY_RE.search(line):
                 errors.append(
                     f"{path}:{lineno}: retired lease/renewal language on a standing "
                     f"instruction surface: '{line.strip()[:80]}'"
