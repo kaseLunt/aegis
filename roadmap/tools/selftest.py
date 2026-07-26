@@ -786,6 +786,25 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # Codex round-9 bypass: a >40-char qualifying clause between the claim token and the renew
+    # stem defeated the bounded proximity cap. Standing windows now use UNBOUNDED co-occurrence
+    # -- justified by the same invariant as the windowing itself: standing files carry zero
+    # legitimate renewal language, so no gap length can make the pairing innocent.
+    write(
+        agents_path3,
+        "# Agents\n\nActive claims require:\n\n- after reviewing all protected governance "
+        "changes, renewal before committing.\n",
+    )
+    must(git(repo, "add", "AGENTS.md"), "stage long-clause standing directive")
+    agents_path3.unlink()
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:long-clause-standing-rejected",
+        result.returncode == 1 and "standing instruction" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
     # A claim whose timestamps are years old is still fully authoritative. Under the retired
     # lease model this exact fixture was refused, which is the failure this item removes: the
     # refusal was silent (doctor stayed green), deferred, and dead-ended at `renew`.

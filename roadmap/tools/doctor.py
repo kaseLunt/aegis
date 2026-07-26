@@ -473,9 +473,14 @@ RETIRED_STANDING_RE = re.compile(
 # review covers exotic prescriptive phrasings in narrative. A future allocator work item that
 # legitimately needs renewal language on a live surface must strike-quote it or revisit this
 # rule alongside that machinery (INS-fe09afdb).
+# UNBOUNDED co-occurrence, either order, within a standing window (W0H Codex round 9): the
+# earlier {0,40} gap cap let an ordinary qualifying clause separate the tokens. Standing files
+# carry zero legitimate renewal language in any voice -- the same invariant that justifies the
+# adjacent-pair windowing -- so no gap length makes the pairing innocent and dropping the cap
+# cannot introduce a false positive on this tier. (Single call site: the standing loop.)
 RETIRED_RENEWAL_PROXIMITY_RE = re.compile(
-    r"\b(?:claim|lease)(?:s|\.py)?\b[^\n]{0,40}?renew"
-    r"|\brenew\w*[^\n]{0,40}?\b(?:claim|lease)s?\b",
+    r"\b(?:claim|lease)(?:s|\.py)?\b[^\n]*?renew"
+    r"|\brenew\w*[^\n]*?\b(?:claim|lease)s?\b",
     re.I,
 )
 RETIRED_RENEWAL_RE = re.compile(
