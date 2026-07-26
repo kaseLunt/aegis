@@ -337,6 +337,21 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
   every spike-derived precondition, asset (incl. the evidence archive at
   `C:\Users\kasel\aegis-evidence-archive\2026-07-26-scratchpad`), and tripwire; phase
   review dispositions every line.
-- Lanes in flight 2026-07-26 evening: EDR fix-site scout (comment draft for #1578);
-  route-cartographer wave-2 blueprint revision (timelock ownership, G-02/03/04 closures,
-  G-14 anchors, G-01 execution status).
+- **IN FLIGHT across a compaction boundary (2026-07-26 late) — results arrive as task
+  notifications, persist verbatim + doctor + commit + push when they land:**
+  1. **GAP-3/5/1 control-plane evidence lane** (chain-historian, opus): timelock
+     proposer/executor role enumeration (converts "presumed" → decoded or refutes it),
+     delegate provenance via setDelegate/DelegateSet event history (the control plane's most
+     urgent unknown per the wave-2 blueprint), OP pre-window dual-provider completeness
+     sweep. Persist to `roadmap/research/route-manifest/`; then a wave-3 blueprint patch pass
+     folds the results into the S7 control-plane rows + G-08 re-pose.
+  2. **Codex verification of the EDR fix-site scout** (codex-reviewer): adversarially checks
+     every file:line in `edr-fix-site-scout.md` §d against a pinned EDR clone
+     (`C:\Users\kasel\AppData\Local\Temp\edr-verify-20260726161239b\edr` @ c66cd68a). Verdict
+     is SAFE-TO-POST / NEEDS-CORRECTIONS / DO-NOT-POST. **OWNER ACTION PENDING on its
+     result:** apply any corrections, then present the final #1578 follow-up comment + a
+     one-line issue-BODY edit (the receipt-half was already implemented upstream — refine the
+     Expected-behavior clause, never delete/repost) for the owner's go/no-go; post both via
+     `gh issue comment` + `gh issue edit` only on explicit approval.
+- **Prior lanes this session (all landed):** wave-1 wr4 loop CONVERGED (round 7 approve);
+  G-01 8/8 hashes derived; G-02/03/04 closed; S6/S7 spikes; wave-2 blueprint revision (fa3e26d).
