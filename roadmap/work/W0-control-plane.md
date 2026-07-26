@@ -20,13 +20,13 @@ deliverables:
   - roadmap/tools/doctor.py
   - roadmap/SYSTEM.md
 evidence_receipts:
-  - roadmap/evidence/EV-W0-R4.md
+  - roadmap/evidence/EV-W0-R5.md
 invalidated_by:
   - roadmap/tools/doctor.py
   - .githooks/**
 review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:0bf372b698a0b7aaadaa958e55e1fdf87b5087352965f45232ebb84e330cf2c3
+evidence_fingerprint: sha256:d51ebd34244a1967b58d1a97458f74f0164d6bacf0dac48def0320a3178f1240
 ---
 
 # W0 — Stand up the control plane

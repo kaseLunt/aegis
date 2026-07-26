@@ -2,7 +2,8 @@
 id: EV-W0B-R6
 type: evidence
 title: W0B re-attested at the instructional-integrity guard (Codex round-3 disposition)
-status: recorded
+status: superseded
+superseded_by: EV-W0B-R7
 work: W0B
 result: pass
 commands:

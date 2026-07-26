@@ -20,13 +20,13 @@ deliverables:
   - roadmap/tools/scope_gate.py
   - .github/workflows/control-plane.yml
 evidence_receipts:
-  - roadmap/evidence/EV-W0B-R6.md
+  - roadmap/evidence/EV-W0B-R7.md
 invalidated_by:
   - roadmap/tools/**
   - .githooks/**
 review_when: phase:P2:entry
 updated: 2026-07-21
-evidence_fingerprint: sha256:35afbec6e01e4e0c837d294f1e6bc5fa4450fa5abd93b0082413c7d4d241ecde
+evidence_fingerprint: sha256:ad36cd4fb9afd7621c5312ad87a002978bd12d28f17a082ddda4ecbadc8a4b57
 ---
 
 # W0B — Control-plane hardening (external review response)
