@@ -522,16 +522,27 @@ def validate_instructional_surfaces(snapshot: Snapshot, errors: list[str]) -> No
     for path in STANDING_INSTRUCTION_FILES:
         if not snapshot.exists(path):
             continue
-        for lineno, paragraph in _paragraphs(snapshot.read_text(path)):
+        blocks = list(_paragraphs(snapshot.read_text(path)))
+        # Standing surfaces scan single paragraphs AND adjacent pairs: a colon-introduced list
+        # puts a blank line mid-directive (W0H Codex round 8), and pure-instruction files have
+        # no legitimate renewal language, so cross-block windows cannot false-positive here.
+        windows = blocks + [
+            (blocks[i][0], blocks[i][1] + " " + blocks[i + 1][1])
+            for i in range(len(blocks) - 1)
+        ]
+        flagged: set[int] = set()
+        for lineno, window in windows:
             # Standing surfaces get the phrase set plus full proximity, with no strike
             # exemption: pure-instruction files carry no historical narrative, so any renewal
             # language there is wrong regardless of markup or voice.
-            if RETIRED_STANDING_RE.search(paragraph) or RETIRED_RENEWAL_PROXIMITY_RE.search(
-                paragraph
+            if lineno not in flagged and (
+                RETIRED_STANDING_RE.search(window)
+                or RETIRED_RENEWAL_PROXIMITY_RE.search(window)
             ):
+                flagged.add(lineno)
                 errors.append(
                     f"{path}:{lineno}: retired lease/renewal language on a standing "
-                    f"instruction surface: '{paragraph[:80]}'"
+                    f"instruction surface: '{window[:80]}'"
                 )
     narrative = ["roadmap/STATUS.md"]
     for directory in LIVE_NARRATIVE_DIRS:

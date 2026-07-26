@@ -772,6 +772,20 @@ def test_doctor_and_gate(root: Path) -> None:
     )
     reset(repo, active)
 
+    # Codex round-8 bypass: a colon-introduced Markdown list puts a blank line between the
+    # directive's subject and verb. Standing surfaces therefore scan ADJACENT PARAGRAPH PAIRS,
+    # closing the whole split-across-one-blank-line family where instruction files are read.
+    write(agents_path3, "# Agents\n\nActive claims require:\n\n- renewal before committing.\n")
+    must(git(repo, "add", "AGENTS.md"), "stage list-intro standing directive")
+    agents_path3.unlink()
+    result = tool(repo, "doctor.py", "--snapshot", "index")
+    check(
+        "instructional:list-intro-standing-rejected",
+        result.returncode == 1 and "standing instruction" in output(result),
+        output(result),
+    )
+    reset(repo, active)
+
     # A claim whose timestamps are years old is still fully authoritative. Under the retired
     # lease model this exact fixture was refused, which is the failure this item removes: the
     # refusal was silent (doctor stayed green), deferred, and dead-ended at `renew`.
