@@ -352,9 +352,12 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
      conclusions REFUTED ("mempool is sole blocker", "small guard unblocks replay") — automine
      fee validation, mint-unaware balance check, and miner-fee overflow are additional
      blockers. All 8 corrections applied to the scout doc supersede-in-place; postable
-     comment is now §(d′); §(e) re-estimated S–M → M. **OWNER ACTION PENDING:** go/no-go on
-     posting §(d′) via `gh issue comment 1578`. NOTE: the one-line issue-BODY edit was NOT in
-     the Codex brief and remains unverified — needs a separate quick check or explicit owner
-     judgment before any `gh issue edit`.
+     comment is now §(d′); §(e) re-estimated S–M → M. **OWNER ACTION EXECUTED 2026-07-26:**
+     owner approved posting §(d′) (posted:
+     <https://github.com/NomicFoundation/edr/issues/1578#issuecomment-5085997048>) and chose
+     the pointer-style body edit (append-only `Edit (2026-07-26)` paragraph, Codex-CONFIRMED
+     claim only, verified by re-fetch). Upstream lane is now WATCH-ONLY per
+     [[IDEA-94b7ef88]] line 10 (EDR release referencing #1578 → re-run S6 gate; silent
+     ~1 month + OP matters → revisit PR).
 - **Prior lanes this session (all landed):** wave-1 wr4 loop CONVERGED (round 7 approve);
   G-01 8/8 hashes derived; G-02/03/04 closed; S6/S7 spikes; wave-2 blueprint revision (fa3e26d).

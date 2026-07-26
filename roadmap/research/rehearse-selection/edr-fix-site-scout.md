@@ -162,10 +162,15 @@ is (d′). Do NOT post this version.**
 >
 > If the minimal direction is acceptable, I'm happy to submit a PR — guard plus a mempool unit test and an `eth_sendRawTransaction` deposit-admission test under `crates/edr_op/tests/integration/`, with a changeset. (`crates/test/mem_pool/src/lib.rs:13-18` is currently hardcoded to `L1SignedTransaction`, so that fixture would need to be generic or get an OP sibling.) And equally happy to leave it with you if the deeper restructuring is the right call — just let me know either way.
 
-## (d′) CORRECTED follow-up comment for issue #1578 — Codex NEEDS-CORRECTIONS applied — AWAITING OWNER GO/NO-GO
+## (d′) CORRECTED follow-up comment for issue #1578 — POSTED 2026-07-26 on owner approval
 
-All eight Codex corrections applied (see `edr-scout-codex-verdict.md` §2). Post only on
-explicit owner approval, via `gh issue comment 1578`.
+All eight Codex corrections applied (see `edr-scout-codex-verdict.md` §2). Owner approved
+both actions 2026-07-26 (AskUserQuestion, this session):
+- **Comment posted:** <https://github.com/NomicFoundation/edr/issues/1578#issuecomment-5085997048>
+- **Body edit (append-only pointer):** one `**Edit (2026-07-26):**` paragraph appended to the
+  issue body noting the receipt-side `depositNonce` derivation is already implemented
+  (Codex-CONFIRMED claim only, no new technical assertions); nothing deleted or reworded.
+  Verified by re-fetching the body after the edit.
 
 > **Follow-up: I read the source to try to locate the check, in case it's useful.**
 >
