@@ -319,3 +319,18 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
 ## Queued / awaiting decision
 - Route research blockers (`docs/SOURCE_REGISTER.md` §Hiring-ready route research blockers) —
   needed before P2 can produce live verdicts; can start during P1 as research capture.
+- **OWNER (money, small): funded archive provider pair** (WR3 pair 1 — Alchemy + QuickNode).
+  Graduated to hard blocker 2026-07-26 in two independent lanes: reproducible rehearsal
+  timing (spike S7-G3) and OP pre-window dual-provider completeness (g02-04 GAP-1); also
+  prerequisite plumbing for the M2 observed-side lane. Needs owner accounts/keys.
+- **Tripwire — EDR upstream issue #1578** (filed 2026-07-26 from the owner's account): on
+  any EDR release referencing it, re-run the S6 gate harness before any OP claim
+  strengthens; if silent ~1 month AND OP rehearsal has become important, revisit writing
+  the PR ourselves (fix-site scout results in roadmap/research/rehearse-selection/).
+- **Anti-residual object:** [[IDEA-94b7ef88]] is the P4/M4 chartering checklist sweeping
+  every spike-derived precondition, asset (incl. the evidence archive at
+  `C:\Users\kasel\aegis-evidence-archive\2026-07-26-scratchpad`), and tripwire; phase
+  review dispositions every line.
+- Lanes in flight 2026-07-26 evening: EDR fix-site scout (comment draft for #1578);
+  route-cartographer wave-2 blueprint revision (timelock ownership, G-02/03/04 closures,
+  G-14 anchors, G-01 execution status).
