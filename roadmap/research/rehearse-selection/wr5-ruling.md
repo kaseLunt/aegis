@@ -2,7 +2,7 @@
 Provenance: opus persona agent (latent space: Tenderly / Foundry / Safe / OZ Defender /
 retrospective-replay forensics), first standing assignment on WR5 + fork tooling. The agent
 ran LIVE discovery-grade probes (Safe transaction service, public RPC endpoints) labeled
-OBSERVED with exact calls; none are deployment evidence. Status: awaiting adversarial
+OBSERVED with exact calls; none are deployment evidence. Status: CODEX-REVIEWED 2026-07-26 (review-ms25esga) -- NOT-PROMOTABLE pending corrections. The 8->1 headline is not faithful to WR5's text (WR5:434-443 disclosed and set aside); R1 'clean isolation' uses the method this doc itself refutes. MultiSendCallOnly + Tenderly findings CONFIRMED. See codex-review-wave1.md. Original status: awaiting adversarial
 review; not promoted. Headline finding: WR5's discovery query returned 8 results and the
 deliverable reported 1 -- the gate-case selection below is drawn from the unreported four. -->
 

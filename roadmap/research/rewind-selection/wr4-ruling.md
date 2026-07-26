@@ -1,7 +1,7 @@
 <!-- DRAFT - chain-historian persona ruling, 2026-07-26. PRE-CODEX-REVIEW.
 Provenance: opus persona agent (latent space: TrueBlocks / The Graph / Index Supply /
 Flashbots / NTSB flight-recorder ethos), first standing assignment on WR4 + W6 supersession
-design. Status: awaiting adversarial review; not promoted. Two INFERRED claims flagged by the
+design. Status: CODEX-REVIEWED 2026-07-26 (review-ms25esga) -- NOT-PROMOTABLE pending corrections. GUID join wrong vs EndpointV2 events; supersession hash-retention impossible; Candidate 5 disqualifier contradicts sibling blueprint S7. See codex-review-wave1.md. Two INFERRED claims flagged by the
 author for hardest scrutiny: the LayerZero-packet-GUID causal-edge reframing, and the
 selection.ts OP confirmation-depth defect. -->
 

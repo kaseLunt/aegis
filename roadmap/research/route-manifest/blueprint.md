@@ -1,7 +1,7 @@
 <!-- DRAFT - route-cartographer persona ruling, 2026-07-26. PRE-CODEX-REVIEW.
 Provenance: fable persona agent (latent space: L2BEAT / OP Labs / LayerZero / Trail of
 Bits / OpenZeppelin), first standing assignment; evidence base WR1/WR2 at pinned commit
-e30c859c. Status: awaiting adversarial review; not promoted. D-006: this document sources
+e30c859c. Status: CODEX-REVIEWED 2026-07-26 (review-ms25esga) -- PROMOTABLE-WITH-CORRECTIONS. Two P1s: target census 6->8 (Endpoint x2 missing); G-01 recipe crosses the expected/observed boundary. See codex-review-wave1.md. D-006: this document sources
 EXPECTED values only; its authors may not implement or certify observed-side checks. -->
 
 # ROUTE-ETH-OP-v1 Directed-Route Manifest — BLUEPRINT
