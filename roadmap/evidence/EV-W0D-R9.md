@@ -2,7 +2,8 @@
 id: EV-W0D-R9
 type: evidence
 title: W0D re-attested at the per-tier renewal matchers (Codex round-6 disposition)
-status: recorded
+status: superseded
+superseded_by: EV-W0D-R10
 work: W0D
 result: pass
 commands:
