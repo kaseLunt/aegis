@@ -1,7 +1,7 @@
 <!-- DRAFT - chain-historian persona ruling, 2026-07-26. PRE-CODEX-REVIEW.
 Provenance: opus persona agent (latent space: TrueBlocks / The Graph / Index Supply /
 Flashbots / NTSB flight-recorder ethos), first standing assignment on WR4 + W6 supersession
-design. Status: CODEX-REVIEWED 2026-07-26 (review-ms25esga) -- NOT-PROMOTABLE pending corrections; ALL CODEX CORRECTIONS APPLIED 2026-07-26 by the originating persona instances (diff patches), CONFIRMATION (review-ms26cg2y): NOT-PROMOTABLE -- channel-tuple join CLOSED (provisional on G12), but the SupersessionRecord needs a complete anchored identity model, and Candidate 5's temporal disqualifier cited a chain-1 window against a chain-10 block (see codex-review-wave1-confirmation.md). GUID join wrong vs EndpointV2 events; supersession hash-retention impossible; Candidate 5 disqualifier contradicts sibling blueprint S7. See codex-review-wave1.md. Two INFERRED claims flagged by the
+design. Status: CODEX-REVIEWED 2026-07-26 (review-ms25esga) -- NOT-PROMOTABLE pending corrections; ALL CODEX CORRECTIONS APPLIED 2026-07-26 by the originating persona instances (diff patches), CONFIRMATION (review-ms26cg2y): NOT-PROMOTABLE -- channel-tuple join CLOSED (provisional on G12), but the SupersessionRecord needs a complete anchored identity model, and Candidate 5's temporal disqualifier cited a chain-1 window against a chain-10 block (see codex-review-wave1-confirmation.md). ROUND-3 CORRECTIONS APPLIED 2026-07-26 by a fresh chain-historian instance (both open findings): SupersessionRecord schema completed (affectedArtifacts by artifactKind+content hash, domain-separated canonical bytes aegis/supersession-record/v1, append-only hash-chained register with approved head, R7 self-declared ordering key withdrawn for register position, four single-purpose tests, no-backdating claim explicitly bounded to tamper-evident relative order); Candidate-5 disqualifier reframed on the verified absence of any reviewed chain-10 applicability window (checkApplicability bounds are same-chain only, trust.ts:388-402) -- C5 now CONDITIONAL. AWAITING round-3 Codex re-confirmation. Superseded round-1 findings retained for the record: GUID join wrong vs EndpointV2 events; supersession hash-retention impossible; Candidate 5 disqualifier contradicts sibling blueprint S7. See codex-review-wave1.md. Two INFERRED claims flagged by the
 author for hardest scrutiny: the LayerZero-packet-GUID causal-edge reframing, and the
 selection.ts OP confirmation-depth defect. -->
 
@@ -21,7 +21,7 @@ Test applied: does the candidate, **as posed in `rewind-candidates.md`**, suppor
 | 2 | OP `MINTER_ROLE` grant, 2026-04-03 | **RECONSTRUCTABLE** |
 | 3 | L1 Sync Pool receive-lib + DVN `setConfig`, 2026-06-02 | **NOT RECONSTRUCTABLE AS POSED** |
 | 4 | L1 `setInboundRateLimits`, 2026-05-20 | **RECONSTRUCTABLE** |
-| 5 | OP ProxyAdmin `transferOwnership`, 2025-08-12 | **NOT RECONSTRUCTABLE AS POSED** |
+| 5 | OP ProxyAdmin `transferOwnership`, 2025-08-12 | **NOT RECONSTRUCTABLE AS POSED — CONDITIONAL** (unblocks when a reviewed chain-10 applicability window covering the block is authored) |
 
 ### Candidate 1 — paired outbound rate limits
 
@@ -55,8 +55,8 @@ Test applied: does the candidate, **as posed in `rewind-candidates.md`**, suppor
 
 - **Withdrawn disqualifier (my error).** I claimed proxy-admin ownership is "not established anywhere in the repo" as a manifest-pinned authority. **That is false.** `roadmap/research/route-manifest/blueprint.md:29` defines section **S7 `controlPlane`** as including "proxy admin + its owner," and `:82` gives the E8 shape explicitly: `proxyAdmin` + `proxyAdminOwner`. WR2's authority map supplies the OP relationship (OFT proxy admin `0x632304Ed…`, owner = L2 timelock `0x851Dd540…`). Candidate 5's changed value therefore **does** map to a planned Control-plane assertion. I missed a sibling research lane; the disqualifier is retracted.
 - **Reassessment against S7/E8.** `transferOwnership(ProxyAdmin) → L2 timelock` moves `controlPlane.optimism.proxyAdminOwner` from the controller Safe to the timelock — a clean, single-field, before/after Control-plane diff, and precisely the kind of upgrade-latency change the blueprint says S7 exists to capture (`:29`: S7 "supplies the change-latency metadata every other cell's freshness policy consumes"). Candidate 5 is meaningfully stronger than I ruled.
-- **Operative remaining blockers.** (a) **Historical-manifest applicability — now the binding one.** S7 is a *blueprint*, not a shipped manifest, and every planned/shipped manifest validity window opens in 2026 (`data/manifests/reference-code-identity.json:11-14`, `fromBlock` chain-1 25,000,000). A 2025-08 change predates any expected-state window, so there is no manifest-declared expected value *in force at that block* to diff against; asserting one is retro-fitting policy onto history. Closing recipe: give the route manifest an explicit applicability window that covers the target block, or scope Candidate 5 as a **neutral fact** (`available`, `claimKind:"observed"`) rather than a pass/fail verification. (b) **Archive depth:** OP block 139,705,022 is a full year deeper than any other candidate; Alchemy's OP archive depth is undocumented (`WR3:75`) — operational, closable by G9 extended to this block. (c) **Critique D7 uncorrected:** the named ABI dependency is wrong (the ProxyAdmin ABI decodes the call; OFT topology explains impact).
-- **Verdict unchanged, grounds substituted:** still **NOT RECONSTRUCTABLE AS POSED** — but on *manifest applicability at the target block*, not on absence of an assertion target. Rank moves up: with (a) resolved as a neutral fact, Candidate 5 becomes a legitimate third case ahead of nothing, though still behind the runner-up on depth risk.
+- **Operative remaining blockers.** (a) **No reviewed chain-10 route-manifest applicability window exists — the binding one.** ~~Every planned/shipped manifest validity window opens in 2026 (`reference-code-identity.json:11-14`, `fromBlock` chain-1 25,000,000), so a 2025-08 change predates any expected-state window.~~ **Withdrawn (round 3): that asserted a mechanism the code does not implement.** `checkApplicability` applies validity bounds **same-chain only** — `manifest_not_yet_valid` fires only when `fromBlock.chainId === boundary.block.chainId`, `manifest_expired` only when `toBlock.chainId === boundary.block.chainId` (OBSERVED `lib/aegis/manifest/trust.ts:388-402`; coverage is a separate check at `:384-385`). `reference-code-identity.json` covers `chainIds:[1,10]` but bounds only chain 1 (`:10-14`, `toBlock: null`), so that window neither excludes nor admits OP block 139,705,022 — **it is silent on chain 10.** The correct ground is that **no reviewed chain-10 route-manifest window exists at all**: there is no route manifest of any kind (G10), and the only shipped file naming chain 10 declares itself not a live approval (`:7` `reviewers:["reference-scenario-not-a-live-approval"]`), carries a placeholder target `0xeeee…` (`:38-44`), and binds `deployment.code_identity` (`:46`) rather than a route control plane. **Sharper, and worse (INFERRED):** because a missing same-chain bound reads as *silence* rather than refusal, a chain-10 route manifest shipped with only an L1 window would evaluate `applicable: true` at a 2025-08 OP block and silently apply a 2026-authored expectation to it — retro-fitting policy onto history with no mechanical guard. Closing recipe therefore: **author an explicit, reviewed `fromBlock.chainId: 10` applicability window covering the target block** — widening the chain-1 window does nothing for OP — or scope Candidate 5 as a **neutral fact** (`available`, `claimKind:"observed"`) rather than a pass/fail verification. Until that window exists, **Candidate 5 stays conditional.** (b) **Archive depth:** OP block 139,705,022 is a full year deeper than any other candidate; Alchemy's OP archive depth is undocumented (`WR3:75`) — operational, closable by G9 extended to this block. (c) **Critique D7 uncorrected:** the named ABI dependency is wrong (the ProxyAdmin ABI decodes the call; OFT topology explains impact).
+- **Verdict unchanged, grounds substituted twice:** still **NOT RECONSTRUCTABLE AS POSED** — ~~on *manifest applicability at the target block*~~ (round-3 correction) on **the absence of any reviewed chain-10 route-manifest applicability window**; not on absence of an assertion target, and not on a chain-1 window excluding an OP block, which `checkApplicability` can never mean (`trust.ts:388-402`). **Status: CONDITIONAL** — Candidate 5 becomes reconstructable *as a pass/fail verification* the moment a reviewed historical OP window is authored, and is reconstructable *today* only as a neutral fact (`claimKind:"observed"`). Rank moves up: as a neutral fact it is a legitimate third case ahead of nothing, though still behind the runner-up on depth risk.
 
 ### 1.6 Common acceptance-evidence shape
 
@@ -95,7 +95,7 @@ Rationale:
 
 **Disqualifying findings, rejected candidates:**
 - **C3:** OApp is outside the canonical matrix → affected-assertion set is empty. Secondary: before-state ambiguous by protocol design (effective vs. explicit vs. inherited); MultiSend decode undocumented.
-- **C5:** assertion-linkage disqualifier **withdrawn** — `route-manifest/blueprint.md:29,82` (S7/E8) pins `proxyAdmin` + `proxyAdminOwner`. Operative blockers are now: no expected-state manifest applicable at a 2025-08 block (scope it as a neutral fact or widen the validity window); deepest archive risk in the set; D7 uncorrected.
+- **C5: CONDITIONAL.** Assertion-linkage disqualifier **withdrawn** — `route-manifest/blueprint.md:29,82` (S7/E8) pins `proxyAdmin` + `proxyAdminOwner`. Three separate, still-standing blockers: (i) **no reviewed chain-10 route-manifest applicability window exists** — *not* "the chain-1 window excludes the OP block," which `checkApplicability` could never mean, since bounds are same-chain only (OBSERVED `trust.ts:388-402`); close it by authoring a reviewed `fromBlock.chainId: 10` window covering block 139,705,022, or scope C5 as a neutral fact; (ii) deepest archive risk in the set (OP 139,705,022; G9); (iii) critique D7 uncorrected (ABI dependency misnamed).
 - **C4:** not disqualified; demoted for adding zero new coverage over the winner and being non-independent as a fallback.
 - **C1 as posed:** the causal-edge claim is unreconstructable from public data — no linking artifact exists. Split, and it wins.
 
@@ -189,7 +189,7 @@ W6's acceptance requires "a reorged block is superseded, not silently replaced, 
 
    **Design chosen: (i) the branch-A report stays byte-immutable; supersession is an EXTERNAL additive record that points at it.** Rationale, and why not (ii): after a reorg the branch-A reads are absent under `requireCanonical:true`, so the observation yields `timeout` (`engine.ts:71-75`) and **there may be no successor report at all** — a design that expresses supersession only through a new report cannot annotate the common case. The external record works whether or not a successor exists.
 
-   Shape: `SupersessionRecord` (§4.4) gains `affectedArtifacts: Array<{ reportHash: sha256, citedObservationIds: sha256[] }>`. Resolution rule: any surface rendering a report **must** query the supersession index by that report's hash and display the superseding record alongside it. The annotation lives at the *presentation and index* layer, never inside the sealed payload.
+   Shape: `SupersessionRecord` (§4.4) gains `affectedArtifacts` — ~~`Array<{ reportHash: sha256, citedObservationIds: sha256[] }>`~~ **superseded by the normative schema in §4.4** (artifacts are identified by `artifactKind` + content hash, never by a bare field name that could be re-aimed at a mutable pointer). Resolution rule: any surface rendering a report **must** query the supersession index by that report's hash and display the superseding record alongside it. The annotation lives at the *presentation and index* layer, never inside the sealed payload.
 
    When a successor report **does** exist, it additionally carries the house's back-reference (`supersedes:`, as in `roadmap/evidence/EV-W4-R3.md:15`) — a subordinate convention layered on (i), not an alternative to it.
 
@@ -210,6 +210,8 @@ OP finality is three-class, derived from L1: `unsafe` (sequencer-published) → 
 
 ```ts
 interface SupersessionRecord {
+  schemaVersion: "1";                                // frozen encoding version
+  contentHash: `sha256:${string}`;                   // excluded from its own preimage
   superseded:   { observationId: `sha256:${string}`; chainId: number;
                   block: { number: string; hash: string; parentHash: string } };
   supersededBy: { /* same shape */ };
@@ -217,9 +219,54 @@ interface SupersessionRecord {
   depth: string;                                    // canonical decimal
   reasonCode: "reorg_block_hash_changed" | "reorg_lineage_diverged";
   finalityAtObservation: "unconfirmed" | "confirmations" | "safe";  // never "finalized"
-  detectedAt: { number: string; hash: string };
+  detectedAt: { number: string; hash: string };      // a CHAIN position, not a clock;
+                                                     // display metadata, never a sort key
+  affectedArtifacts: Array<{
+    artifactKind: "assurance_report" | "recording_bundle" | "evidence_ref";
+    artifactHash: `sha256:${string}`;                // content hash ONLY — never a path,
+                                                     // filename, id, or mutable pointer
+    citedObservationIds: Array<`sha256:${string}`>;  // sorted, deduped set
+  }>;                                                // sorted by (artifactKind, artifactHash)
 }
 ```
+
+No new identifier class is invented: `observationId` / `citedObservationIds` are the existing content-addressed ids — `EvidenceRef.id` (OBSERVED `ENGINEERING_SPEC:212-213`) for report-cited observations, `envelopeSha256` (OBSERVED `adapter.ts:23,149-152`) for recorded-response identity. `recording_bundle` refers to the `bundleContentHash` proposed in `custody-chain.md:53-55` — **not yet shipped**; until it lands, that `artifactKind` is unusable and must be rejected rather than defaulted.
+
+**Canonical bytes — domain-separated, and why.**
+
+```
+supersessionCanonicalBytes(r) =
+    utf8("aegis/supersession-record/v1")            // domain tag
+  ‖ 0x00                                             // separator: JCS output can never
+                                                     // contain a raw NUL byte
+  ‖ utf8( jcsSerialize( normalizeSupersessionRecord(r) ) )
+
+supersessionRecordHash(r) = "sha256:" + hex( sha256( supersessionCanonicalBytes(r) ) )
+```
+
+`normalizeSupersessionRecord`: delete `contentHash`; sort `affectedArtifacts` by `(artifactKind, artifactHash)`; sort and dedupe each `citedObservationIds`; reject a duplicate `artifactHash` within one kind. This is `normalizeManifest`'s exact pattern (OBSERVED `trust.ts:90-110`), reused rather than reinvented.
+
+Why the tag, stated honestly. OBSERVED: every shipped hash surface in this repo digests **untagged** JCS bytes — `reportHash` (`canonical.ts:652-660`), `manifestContentHash` (`trust.ts:112-118`), `rawResponseSha256`/`envelopeSha256` (`adapter.ts:91-92,143,150`), and `ENGINEERING_SPEC:846` states the report formula unprefixed. The `sha256:` token is appended **after** the digest (`adapter.ts:91-92`) — an output label, not a preimage tag. So four artifact classes already share one unprefixed sha256 space. The tag does **not** retro-fix them: those hashes are frozen identity (`custody-chain.md:92`) and re-basing them is an owner decision with a migration cost this ruling does not propose. What the tag buys is narrow and real — **a fifth class cannot join that space**, so a SupersessionRecord's bytes can never be presented as a report's bytes under the same hash function. (CANON: EIP-712 `domainSeparator`; TLS 1.3 signature context strings; NIST SP 800-185 cSHAKE function-name/customization strings. Domain separation is the boring, settled answer to cross-type preimage confusion.)
+
+**Anchoring — ordering and no-backdating come from the register, never from the record.**
+
+Every field inside a SupersessionRecord is self-declared, so nothing inside it can order it. Anchor each record in an append-only, hash-chained register:
+
+```
+entry_n     = { seq: "<canonical decimal>", recordHash: "sha256:…",
+                prevEntryHash: "sha256:…" | null }
+entryHash_n = "sha256:" + hex( sha256( utf8("aegis/supersession-register/v1") ‖ 0x00
+                                       ‖ utf8( jcsSerialize(entry_n) ) ) )
+```
+
+- `data/supersessions/REGISTER`, committed; head `entryHash_N` mirrored into deployment trust policy as `approvedSupersessionRegisterHead` — an exact mirror of `ManifestTrustPolicy.approvedHashes` (OBSERVED `trust.ts:78-81`) and of the digest register at `custody-chain.md:63-64`.
+- A record not reachable from the approved head yields **`unknown` with a typed reason**, never an asserted supersession — the untrusted-manifest path reused (`trust.ts:214-219`).
+- **Ordering is register position** — `seq` plus the `prevEntryHash` chain. Deleting, reordering, or inserting an entry breaks the chain at that point and at every entry after it.
+
+**What this proves and what it does not (NTSB discipline — the correction the reviewer demanded).**
+- PROVES: tamper-evident **relative order**. Record R was appended after every entry reachable through its `prevEntryHash`.
+- DOES NOT PROVE: absolute wall-clock time. A hash chain has no clock. An owner who rewrites the register and the approved head in one commit produces a self-consistent forgery — **detectable in git history, not prevented** (the same bound drawn at `custody-chain.md:56`).
+- ⇒ The honest claim at this design's strength is **"tamper-evident relative order," not "no-backdating."** No-backdating against the owner needs the external anchor already ranked at `custody-chain.md:59-60`: minimally a fast-forward-only ref mirrored to two remotes, properly an independent timestamp anchor (OpenTimestamps/Rekor). **Until that anchor lands, no surface, test name, or acceptance sentence may say a supersession "could not have been backdated."** ANTI-CANON: a bare content hash asserted as chronology.
 
 Rules, each one a test:
 
@@ -229,7 +276,11 @@ Rules, each one a test:
 - **R4** no deletion — superseded observations stay resolvable; the record is purely additive.
 - **R5** acyclic and totally ordered per chain: A←B←C; asserting C←A throws `supersession_cycle`.
 - **R6** a reorg *back* to an earlier branch is a **new** observation with a new envelope hash superseding the current head. "Un-supersede by deletion" is forbidden.
-- **R7** ordering key is `(chainId, blockNumber, capturedAt-of-superseding)` — **never block number alone**, because two branches share a number. This is W6's "property tests over supersession ordering."
+- ~~**R7** ordering key is `(chainId, blockNumber, capturedAt-of-superseding)`~~ — **withdrawn (round 3, my error): `capturedAt` is declared by the very artifact being ordered, so it cannot establish chronology any more than a bare hash can.** Replaced by **R7′**: the ordering key for every supersession comparison is **register position** — `(seq, prevEntryHash-chain)`. `blockNumber` alone remains forbidden (two branches share a number), and `detectedAt`/`capturedAt` are display metadata that MUST NOT be used as a sort key. This is W6's "property tests over supersession ordering."
+- **R8** `contentHash` must equal `supersessionRecordHash(record)` recomputed at load with the field excluded from its own preimage — the shipped self-hash pattern (`adapter.ts:149-152`, `trust.ts:97,112-118`). Mismatch → `integrity_mismatch`, fail closed.
+- **R9** `affectedArtifacts` entries identify artifacts **by content hash only**. A path, filename, report id, or any other mutable pointer in that position is a typed schema failure (`invalid_artifact_reference`): a pointer can be re-aimed after the fact, which is precisely the tampering this record exists to make impossible.
+- **R10** normalization before hashing is mandatory — `affectedArtifacts` sorted by `(artifactKind, artifactHash)`, `citedObservationIds` sorted and deduped. JCS does not normalize arrays (OBSERVED `trust.ts:90-92`), so an unsorted set would let two logically-equal records carry different hashes, which would let an author *choose* a hash.
+- **R11** a record is quotable as an asserted supersession only when its register entry is reachable from `approvedSupersessionRegisterHead`; otherwise the outcome is `unknown` with a typed reason. Never a silent apply.
 
 ### 4.5 Proposed files (shapes rhyme with `data/recordings/*.json`)
 
@@ -241,11 +292,14 @@ Rules, each one a test:
 
 **README obligation.** `data/recordings/README.md:3-10` already disclaims live capture; W6 must extend it to say explicitly that the reorg pair is a **constructed branch pair demonstrating engine supersession behaviour, and is not evidence that this reorg occurred on OP.**
 
-**Teeth (D-004).** Tamper-evidence already exists free — mutating a recorded `result` trips `integrity_mismatch` at load (`adapter.ts:143-153`). W6 adds *retention* teeth: neutralize the supersession linkage and exactly the supersession tests must fail, nothing else. Plus **two identity assertions, both tested**:
-- **Immutability:** the branch-A report's payload re-canonicalizes to a **byte-identical** `reportHash` after the supersession record is added — proving the record is genuinely external. Negative test: inserting a `supersededEvidence` entry into that report's `limitations` **must** change its hash, demonstrating why in-payload annotation was rejected.
-- **Mutation:** the `SupersessionRecord`'s own content hash **must** change when `affectedArtifacts` is populated, so the supersession event is itself tamper-evident and cannot be back-dated.
+**Teeth (D-004).** Tamper-evidence already exists free — mutating a recorded `result` trips `integrity_mismatch` at load (`adapter.ts:143-153`). W6 adds *retention* teeth: neutralize the supersession linkage and exactly the supersession tests must fail, nothing else. ~~Plus **two identity assertions, both tested**~~ — **superseded (round 3): a single "the record's hash changes when `affectedArtifacts` is populated" assertion proves neither chronology nor no-backdating, and the wave-1 text claimed both. Withdrawn.** Four separately-named tests, each with exactly one job:
 
-Together these encode the rule: the record moves, the report never does.
+1. **`supersession/original-report-immutability`** — capture the branch-A report's `reportHash`; build the SupersessionRecord, hash it, append it to the register, approve the new head; re-canonicalize the branch-A payload → **byte-identical** `canonicalBytes` and identical `reportHash` (`canonical.ts:652-660`). Proves the record is genuinely external. Fails the moment any code path writes annotation into the sealed payload.
+2. **`supersession/in-payload-mutation-detected`** — both directions required. (a) *Report side*, the negative control that justifies the whole design: inserting a `supersededEvidence` entry into that report's `limitations` **must** change `reportHash`, because `sortLimitations` runs inside `normalizeReport` upstream of the hash (OBSERVED `canonical.ts:568`, consumed at `:652-659`). (b) *Record side*, parameterized over every field: mutate `superseded`, `supersededBy`, `commonAncestor`, `depth`, `reasonCode`, `finalityAtObservation`, `detectedAt`, each `affectedArtifacts[i].{artifactKind,artifactHash}`, and each `citedObservationIds` member → recomputed `supersessionRecordHash` differs → `integrity_mismatch`. Includes the domain-separation case: the identical JSON body hashed **without** the `aegis/supersession-record/v1` tag must NOT equal the record's `contentHash`.
+3. **`supersession/anchored-record-tamper-rejected`** — three refusals, each typed, each fail-closed: (a) embedded `contentHash` ≠ recomputed → `integrity_mismatch` (mirrors `trust.ts:214-216`); (b) a record whose entry is unreachable from `approvedSupersessionRegisterHead` → `unknown` + typed reason, never an asserted supersession (mirrors `trust.ts:214-219`); (c) an entry whose `prevEntryHash` ≠ the recomputed hash of its predecessor → register-chain break; refuse the whole tail from that point, never just the one entry.
+4. **`supersession/ordering-from-register-position`** — the chronology test, and the only one entitled to that word. (a) A record whose `detectedAt` block number is **lower** than its predecessor's still sorts **after** it, because ordering reads register position, not the record's account of itself (R7′). (b) Two records on branches sharing the same `(chainId, blockNumber)` order deterministically. (c) Swapping two entries' `seq` values without re-chaining is caught by test 3(c) — the ordering property is *enforced by the chain*, not merely asserted by a comparator. (d) **Limitation test, mandatory:** the fixture asserts that the register establishes **relative order only**; the acceptance text must contain no no-backdating claim while the external timestamp anchor (`custody-chain.md:59-60`) is unlanded, and this test fails if such language appears.
+
+Together these encode the rule: **the record moves, the report never does — and what orders the record is the register, not the record's own account of itself.**
 
 ---
 
@@ -264,7 +318,7 @@ Ordered by what blocks first.
 | **G7** | **No log-retrieval capability probe anywhere** (critique C6) | Add WR3 §6.8: per provider per chain, record max accepted block range, max result count, overflow error taxonomy, and behaviour of the `blockHash`-qualified `eth_getLogs` filter form. Then implement adaptive range-splitting **with an explicit gap ledger** — M3's "adaptive ranges and gap detection" and the exit-gate clause "an injected missing range is detected." |
 | **G8** | OP finality vs confirmation-depth policy (critique C5; §4.3) | Blocks the OP companion leg and the OP reorg fixture, **not** the L1 gate case. Recipe: run WR3 §6.1 step 4 (`provider-matrix.md:245-247`) — compare the OP block's L1 origin against the L1 finalized head; design an L1-derived OP boundary rather than an L2 block-depth count. Owner-level design decision. |
 | **G9** | Archive depth unproven **at the exact blocks** | L1 25,194,943-44: both declare archive; Alchemy free tier carves out "archival beyond 30M CU" `[P-A1]`. OP 152,192,875-76: QuickNode "no pruning" `[P-Q3]`; Alchemy = probe. Run WR3 §6.3 **at these blocks**, not a generic old block. |
-| **G10** | **No route manifest exists** (critique D1) — the deepest blocker | `data/manifests/` holds exactly two files: `reference-code-identity.json` (placeholder targets at `0xcccc…`/`0xeeee…`) and `etherfi-reference-v1.json` (an M0 contract-address list — grep for `rate`/`peer`/`eid`/`route` returns nothing). **A design does exist** — `roadmap/research/route-manifest/blueprint.md` specifies sections S1-S7 including the Rate-limit and Control-plane bindings, and carries its own gap ledger (G-06 L1 proxy-admin owner, G-08 owner/delegate expected values, `:169-172,199`). G10 therefore narrows from "no design" to **"designed, not shipped, and its own G-08 blocks the Control-plane row above inference strength"** — the recipe is to land S1-S7 as a reviewed manifest with an applicability window covering the selected case's block, not to author one from scratch. **⇒ M3's gate clause "traces to affected route assertions" cannot be satisfied before M2 ships the `ROUTE-ETH-OP-v1` manifest.** Recipe: M2 must give the Rate-limit row a machine-readable binding `{direction, peerEid, mode, cap, window, lifecycle}`. Until then "affected assertions" has no denominator. **Sequencing finding — raise before scheduling M3.** |
+| **G10** | **No route manifest exists** (critique D1) — the deepest blocker | `data/manifests/` holds exactly two files: `reference-code-identity.json` (placeholder targets at `0xcccc…`/`0xeeee…`) and `etherfi-reference-v1.json` (an M0 contract-address list — grep for `rate`/`peer`/`eid`/`route` returns nothing). **A design does exist** — `roadmap/research/route-manifest/blueprint.md` specifies sections S1-S7 including the Rate-limit and Control-plane bindings, and carries its own gap ledger (G-06 L1 proxy-admin owner, G-08 owner/delegate expected values, `:169-172,199`). G10 therefore narrows from "no design" to **"designed, not shipped, and its own G-08 blocks the Control-plane row above inference strength"** — the recipe is to land S1-S7 as a reviewed manifest with an applicability window covering the selected case's block, not to author one from scratch. **⇒ M3's gate clause "traces to affected route assertions" cannot be satisfied before M2 ships the `ROUTE-ETH-OP-v1` manifest.** Recipe: M2 must give the Rate-limit row a machine-readable binding `{direction, peerEid, mode, cap, window, lifecycle}`. Until then "affected assertions" has no denominator. **Sequencing finding — raise before scheduling M3.** **Per-chain window addendum (round 3):** the manifest's `validity` carries exactly one `fromBlock`/`toBlock` pair, each bound to a single `chainId` (OBSERVED `trust.ts:196-206`), and `checkApplicability` ignores a bound whose `chainId` differs from the boundary's (`:388-402`). A multi-chain route manifest must therefore declare a bound **per chain it covers**, and a missing same-chain bound must be treated as a **gap**, not as applicability — today it silently reads as applicable. |
 | **G11** | Safe actor decomposition (critique C4) | Three evidence records: receipt `from` (EOA relayer), the Safe as `msg.sender` on the target log, and the Safe's own `ExecutionSuccess`/`SafeMultiSigTransaction` log. Signer recovery from the `signatures` blob is a **derivation**, not an observation; per WR2 §4 the threshold is unknown, so any "N-of-M authorized" statement stays `unknown`. |
 | **G12** | LayerZero-v2 signatures read at unpinned `main` HEAD (`:370-373`) | Pin the commit SHA (`SOURCE_REGISTER` checklist item 1). Blocks the library/DVN work and the **channel-tuple causal-edge path** (P1-A) — **not** the selected case. Elevated from documentation hygiene to a **precondition**: the join key, header encoding, GUID derivation, and payloadHash composition are all unverified against pinned source, so G12 now gates any causal-edge claim, not merely its provenance quality. |
 
