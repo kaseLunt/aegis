@@ -20,7 +20,7 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W5 — one engine, four surfaces. ACTIVE at slice S3 (the CLI), claim generation 7.**
+**W5 — one engine, four surfaces. ACTIVE at slice S4 (the report API), claim generation 7.**
 
 S0/S1/S2 are DONE (384/384). S3 executes against the recon-derived plan now embedded in the
 W5 charter ("S3 plan" section): 21 TDD tests in sequence, the total exit-code mapping, the
@@ -46,11 +46,20 @@ inserted violations; C15 double-mutation-checked (state-word collapse, version p
 (diagnostics stay unhashed); doctor-derived receipt impact: none. D20 red-first added the
 transport diagnostic: a configured provider with zero responses in a recording draws a
 stderr warning naming it per role (misconfig vs outage), outcome pinned unchanged against
-B12/B4. **Resume at plan step 5 (LAST): packaging (§4)** — config + scripts + one manual
-smoke run of the built artifact recorded in EV-W5 (documented command exits 3, honestly);
-verify npm test, tsc, lint, doctor, selftest all green. Then the S3→S7 sequence continues
-(S4 API, S5 CI, S6 web drawer, S7 byte-identity gate) and the Codex convergence loop before
-any stamp. Do NOT stamp W5 mid-slice.
+B12/B4. **Plan step 5 DONE (e43d21b) — SLICE S3 COMPLETE:** `vite.cli.config.ts` per charter
+§4 (standalone config, single-file SSR bundle so the WeakSet provenance brands hold),
+`package.json` bin + `build:cli`/`cli` scripts; manual smoke run of the BUILT artifact
+executed and recorded — documented command over shipped fixtures exits 3 honestly, and the
+built artifact's canonical envelope is BYTE-IDENTICAL to the in-process run (`cmp` clean).
+406/406, tsc clean, lint 0 errors, doctor 0/0, selftest 0 failing.
+**S4 ACTIVE (started 2026-07-26 late): the report API** — `app/api/v1/verify` (POST) +
+`app/api/v1/reports/<hash>` (GET, content-addressed), envelope
+`{requestId, generatedAt, payload, reportHash}`, provider allowlist (never an SSRF
+primitive), size/shape limits deferred from S2. Following the S3 precedent: a four-mapper
+read-only recon workflow (`wf_3f608169-b43`: http-surface, store, canon-constraints,
+test-patterns) is IN FLIGHT; its synthesis lands as an "S4 plan" section in the W5 charter
+BEFORE any TDD test is written. Then S5 CI, S6 web drawer, S7 byte-identity gate, and the
+Codex convergence loop before any stamp. Do NOT stamp W5 mid-slice.
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
@@ -376,6 +385,11 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
      wave-3-derived row is manifest-grade until it lands (D-006). Verdict is
      CONFIRMED-SOUND / NEEDS-CORRECTIONS / DO-NOT-USE; on return, disposition findings,
      patch the dossier + blueprint if needed, then the re-posed G-08 lane is next.
+     *2026-07-26 late: first dispatch (`task-ms2nossx-hnnne2`) self-halted per D-004 on the
+     untracked `.serena/` tooling cache — no verdict, nothing touched. Owner-side fix: cache
+     classified into `.git/info/exclude` (local, no tracked-file change), tree clean,
+     review RE-DISPATCHED (Codex session `019fa193-bbd6…` resumed). Finding captured as
+     [[INS-8ae8601e]].*
   2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
      NEEDS-CORRECTIONS** — persisted verbatim in
      `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis
