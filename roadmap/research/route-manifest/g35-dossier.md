@@ -6,8 +6,9 @@ head — those observed-side reads belong to a different role under D-006.
 No repo file was read-modified by this lane; no block explorer was used for any purpose. -->
 
 <!-- Integrator provenance note (fable-main, 2026-07-26): persisted VERBATIM from the lane's
-scratch output. Durable evidence copy (ledger.jsonl, raw/ 146 bodies, 13 content-addressed
-sweep artifacts, all scripts): C:\Users\kasel\aegis-evidence-archive\2026-07-26-scratchpad\g35\
+scratch output. Durable evidence copy (ledger.jsonl, raw/ 146 files, ~~13 content-addressed
+sweep artifacts~~ 13 sweep ledger entries = 10 unique sweep digests, 8 retained sweep files
+(§9.1 as corrected per Codex review), all scripts): C:\Users\kasel\aegis-evidence-archive\2026-07-26-scratchpad\g35\
 — the temp scratchpad path cited below will not outlive the machine's temp cleanup.
 Claim strength: the lane's own report, dual/three-provider where stated, NOT yet
 independently reviewed; manifest-grade use requires the wave-3 blueprint patch pass +
@@ -46,6 +47,9 @@ signatures.
   **Blueprint S7 / E2's "proposer/executor = OP controller Safe" is stale as of that block.**
 - **EXECUTOR_ROLE is NOT open on either timelock.** Zero `RoleGranted`/`RoleRevoked` events with
   `account == address(0)` across both contracts' entire histories. Execution is permissioned.
+  *(per Codex review, [[g35-codex-verdict.md]] claim 5: the zero-`address(0)` observation is
+  OBSERVED-dual/triple; "not open"/"permissioned" is an inference conditional on the deployed
+  code obeying the sourced AccessControl write/emission model.)*
 - **Neither timelock has an external admin.** Exactly one admin-role grant each, to `address(this)`
   — which per the OZ constructor source means the deploy-time `admin` argument was `address(0)`.
   Role changes must therefore pass through the timelock's own delay (ETH 172,800 s / OP 259,200 s),
@@ -54,6 +58,9 @@ signatures.
   (`TIMELOCK_ADMIN_ROLE`), OP is OZ 5.x (`DEFAULT_ADMIN_ROLE = bytes32(0)`). Established two ways:
   event shape at construction, and presence/absence of the `TIMELOCK_ADMIN_ROLE` literal in
   block-pinned runtime bytecode. **This is a direct input to blueprint GAP G-10.**
+  *(per Codex review, [[g35-codex-verdict.md]] claim 8: read as OZ-4-style / OZ-5-style — the
+  exact lineage is INFERRED; literals and event shapes corroborate the model but are not an
+  exact deployed-bytecode/source build match.)*
 
 ### GAP-5 — **ANSWERED, and it REFUTES the blueprint's most urgent unknown. The delegate is the timelock, on both chains.**
 
@@ -127,6 +134,7 @@ Transfer/Approval/OwnershipTransferred topics, MINTER_ROLE)
 | `OutboundRateLimitsChanged((uint32,uint256,uint256)[])` | `0x55254e344b7fc8e2e038c1f7f20a1c7afe659c1a3bbfc4e35dd1ca9bba0ca0a0` |
 | `InboundRateLimitsChanged((uint32,uint256,uint256)[])` | `0x983af742b0b5ca79aa5c0be76cea126e1baf3139ecd04624deac13853c4bebde` |
 | `PeerSet(uint32,bytes32)` | `0x238399d427b947898edb290f5ff0f9109849b1c3ba196a42e35f00c50a54b98b` |
+| `OwnershipTransferred(address,address)` *(added per Codex review)* | `0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0` |
 
 The two rate-limit topic0s were **re-derived in this lane and asserted equal** to the g02-04
 dossier §2.2 values by executed code (`MATCH g02-04 dossier §2.2: True` for both) — a cross-lane
@@ -290,9 +298,13 @@ Coverage is complete, not merely "mostly complete".
 
 ### 3.2 ETH timelock `0xcd425f44…` — full role ledger
 
-All nine events are in **one transaction**, `0x39b68979e40d786a6688601aa747b34aabf3d48c0246068d052790ae373a8624`
+~~All nine events are in **one transaction**,~~ Eight of the nine role events are in **one
+transaction**, `0x39b68979e40d786a6688601aa747b34aabf3d48c0246068d052790ae373a8624`
 (a direct contract-creation tx, `to = null`, `from = 0x8d5aac5d3d5cda4c404fa7ee31b0822b648bb150`,
-status `0x1`, 9 logs, dual-provider receipt agreement **True**), plus one later grant.
+status `0x1`, 9 logs, dual-provider receipt agreement **True**)~~, plus one later grant~~ — the
+transaction's ninth log is a `MinDelayChange`, not a role event; the ninth role event is the
+later canceller grant (row 9, blk 25533314). *(superseded 2026-07-26 per Codex review,
+[[g35-codex-verdict.md]])*
 
 | # | Block | ts (UTC) | logIdx | Event | Role | Account |
 |---|---|---|---|---|---|---|
@@ -413,9 +425,14 @@ by `(blockNumber, transactionIndex, logIndex)`, never by Safe nonce.
    sources (`occurrences of '_roles[…] =' : 2` in each). `renounceRole` routes through `_revokeRole`
    and therefore also emits. **The event stream IS the role state.**
 2. **Range completeness.** Both primary sweeps ran `fromBlock: 0x0`. Nothing predates them.
-3. **No silent code swap.** `Upgraded(address)` history is **empty (0 events)** on
-   `0xcd425f44…`, `0x9f26d4c9…`, `0xa9e9bbf0…`, `0x851dd540…` and `0x632304ed…`. None is an
-   upgradeable proxy, so the emitting code path was constant across the whole history.
+3. ~~**No silent code swap.**~~ **No standard `Upgraded(address)` event.** `Upgraded(address)`
+   history is **empty (0 events)** on
+   `0xcd425f44…`, `0x9f26d4c9…`, `0xa9e9bbf0…`, `0x851dd540…` and `0x632304ed…`.
+   ~~None is an upgradeable proxy, so the emitting code path was constant across the whole history.~~
+   Absence of this one event signature proves neither that none of the five is a proxy nor that
+   no code replacement occurred by a path that does not emit it; it establishes only that no
+   standard `Upgraded(address)` was emitted. *(superseded 2026-07-26 per Codex review,
+   [[g35-codex-verdict.md]])*
    *(Disclosure: those five empty-result bodies share a digest — `46ab8616d277a8ac…` on ETH,
    `5458704bd0a3e61a…` on OP — because the response bytes are literally identical
    `{"jsonrpc":"2.0","id":1,"result":[]}`. Content-addressing collides on empty results by design;
@@ -440,12 +457,18 @@ out of scope and no competence or independence judgment is made.**
 | `0x055a8B2B65d0aB4E0C17a0168d032464B7E97bdF` (canceller) | ETH **and** OP, same address | 1.4.1 / 1.4.1+L2 | 4 | 6 | **0** on both | `d0a599e3e44e57c34152e3150239806e34ae92bc31fa266da5efa059f6a917f3` (ETH), `0c4b5e52ae3b11d669f6f317dcb2cd183f4c3c737d1c9027931590a018cd8a17` (OP) |
 
 **Signer-set delta, outgoing → incoming OP role holder: IDENTICAL — 7 of 7 shared, 0 added,
-0 removed, same 4-of-7 threshold.** So the OP rotation is a Safe **re-deployment**, not a change of
-signing body. Reported as a fact; the *reason* is not established by any public artifact and this
+0 removed, same 4-of-7 threshold.**
+~~So the OP rotation is a Safe **re-deployment**, not a change of signing body.~~
+These are current (acquisition-time) snapshots: they do not prove the signer sets were identical
+at the rotation block 154619344, and they do not prove the role change was a Safe
+"re-deployment". *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])*
+Reported as a fact; the *reason* is not established by any public artifact and this
 lane does not speculate.
 
 The canceller Safe `0x055a8B2B…` has a **disjoint** 6-owner set from both controller Safes and
-nonce 0 on both chains — it has never executed a transaction. Its proxy runtime code hash is
+nonce 0 on both chains — ~~it has never executed a transaction~~ it has never executed a
+nonce-consuming Safe transaction (Safe nonce zero does not exclude module or fallback-handler
+execution). *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* Its proxy runtime code hash is
 identical across ETH and OP (`a8a0fbd3cdf49e751346664e01b529a58322a814cf8df8d85deb20e63bd6415e`),
 consistent with a deterministic same-address deployment.
 
@@ -464,6 +487,9 @@ Deployment senders, for the record: ETH timelock created by EOA
 
 `PROPOSER_ROLE`, `EXECUTOR_ROLE` and `CANCELLER_ROLE` literals are present in **both**. The two
 legs (bytecode literal scan, event shape) agree.
+*(added per Codex review, [[g35-codex-verdict.md]] claim 8: the exact "OZ 4.x"/"OZ 5.x" lineage
+is INFERRED — read as "OZ-4-style"/"OZ-5-style role model"; runtime literals and construction
+event shapes corroborate the model but are not an exact deployed-bytecode/source build match.)*
 **Manifest consequence:** a control-plane row cannot use one role-id vocabulary for both chains —
 the ETH timelock's role admin is `TIMELOCK_ADMIN_ROLE`, the OP timelock's is `bytes32(0)`.
 *(These two code hashes are entity characterisation and must never seed `expectedRuntimeCodeHash`
@@ -509,10 +535,13 @@ non-indexed** (`ILayerZeroEndpointV2.sol` L56). Two consequences the method had 
 **ETH dual-provider agreement on all 6,368 events: True**, basis
 `(blockNumber, blockHash, transactionHash, logIndex, data)`.
 
-**ETH step-size invariance (leg B): the same 6,368 events at 100k, 250k AND 1M steps, on both
-providers.** A 10x step-size range yielding an identical event set rules out the
-provider-result-cap class — the failure mode where a chunked sweep silently under-reports
-because a provider truncates per-request results.
+~~**ETH step-size invariance (leg B): the same 6,368 events at 100k, 250k AND 1M steps, on both providers.** A 10x step-size range yielding an identical event set rules out the provider-result-cap class — the failure mode where a chunked sweep silently under-reports because a provider truncates per-request results.~~
+Retained bytes prove exact equality between mevblocker's 100k and 250k sweeps and exact
+250k cross-provider equality with Tenderly. The ledger records 6,368 results for both 1M
+sweeps, but their overwritten bodies prevent exact-set verification. The core delegate
+conclusion does not depend on those lost bodies; the former 10× exact-set claim is
+withdrawn. *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]] — replacement
+text verbatim)*
 
 **OP dual-provider agreement (leg A): True.** Tenderly's full-range set restricted to
 `[120917167, head]` is **1,756 events**; OP Labs' independent 3,384-chunk sweep of the same
@@ -601,7 +630,7 @@ CallExecuted idx 7  target 0x1a4407…  sel 0x6dbd9f90 setConfig(…)
 successful call. **Therefore at blk 25418960, `delegates[0xcd2eb13d…]` was the timelock** — proved
 without reading the mapping, from a completely different evidence surface than §4.3.
 
-### 4.7 Completeness — the delegate write path is closed
+### 4.7 Completeness — ~~the delegate write path is closed~~ delegate write-path corroboration *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])*
 
 `delegates[oapp]` has exactly **two** possible writers, both established from source:
 1. `OAppCore.setDelegate` — `onlyOwner`. Owner is the timelock on both chains since
@@ -620,8 +649,17 @@ without reading the mapping, from a completely different evidence surface than �
    byte-identical to those the g02-04 lane recorded for the same queries.)*
 
 Also of note: **`EndpointV2.setDelegate` has no access control of its own** — it writes
-`delegates[msg.sender]`. The access control lives entirely in the OApp. That is why the write-path
-enumeration above is exhaustive.
+`delegates[msg.sender]`. The access control lives entirely in the OApp.
+~~That is why the write-path enumeration above is exhaustive.~~
+
+What this section establishes, corrected: Full Endpoint `DelegateSet` history through the pinned heads contains no later event for
+either OApp. The retained 555-call timelock operation histories contain no direct
+`setDelegate` selector, and no standard `Upgraded(address)` event post-dates either
+assignment. The 555-call scan is single-provider per chain; `Upgraded` coverage is
+dual-provider on ETH and single-provider on OP. These checks corroborate the last-event
+delegate result but do not independently prove exhaustive OApp reinitialization or every
+alternate code-replacement path. *(superseded 2026-07-26 per Codex review,
+[[g35-codex-verdict.md]] — replacement text verbatim)*
 
 ---
 
@@ -659,6 +697,12 @@ PRIOR LANE Tenderly full-lifetime, restricted to the same window                
 
 Prior-lane artifacts compared against: `43c8ff7452492040…` (outbound) / `dc653748f1b2a55d…`
 (inbound), read from the archived `op_ratelimit_logs.json`.
+
+*(added per Codex review, [[g35-codex-verdict.md]]: the g35 package is not self-contained for
+the Tenderly half of this comparison — `gap1_compare.py` hardcodes the adjacent parent archive's
+`op_ratelimit_logs.json`, and the two Tenderly raw bodies and their ledger rows live outside
+`g35/` in that adjacent parent archive. The reviewer verified the 18/18 comparison against
+those adjacent bodies.)*
 
 ### 5.3 The 18 events, independently decoded
 
@@ -766,7 +810,9 @@ Digests `83d5338a817e8c509f892327902f865f50cb017b577248deb1ae3712514dcb02` /
 | **25533308** | RoleGranted | CANCELLER_ROLE | `0x055a8b2b65d0ab4e0c17a0168d032464b7e97bdf` |
 
 Matches blueprint S7's "L1 timelock proposer Safe `0xcdd57D11476c22d265722F68390b036f3DA48c21`"
-(SOURCED WR2 §1a) — **upgraded from declaration to decoded event**, never revoked. OZ 4.x epoch,
+(SOURCED WR2 §1a) — **upgraded from declaration to decoded event**, never revoked. ~~OZ 4.x epoch~~
+OZ-4-style epoch (INFERRED lineage — §8 claim 8 as corrected) *(superseded 2026-07-26 per Codex
+review, [[g35-codex-verdict.md]])*,
 `admin = address(0)`, EXECUTOR_ROLE **not** open.
 
 **Cross-chain pattern worth flagging:** `0x055a8B2B…` received CANCELLER on the L1 timelock at ETH
@@ -794,8 +840,11 @@ OP OFT CODE (proxy upgrade)
   0x5a7facb9… --proxyAdmin--> 0x632304Ed… --owner--> 0x851dd540… (259,200 s) --> 0x7a00657a…
 ```
 
-Every hop above is a decoded on-chain event with a block anchor. **No hop has zero latency any
-more.**
+Every hop above is a decoded on-chain event with a block anchor. ~~**No hop has zero latency any
+more.**~~ **Within the enumerated OApp configuration and upgrade routes above, no hop has zero
+latency any more.** Safe-internal signer changes, cancellation, pause, DVN key rotation, and
+vendor-side control remain outside that conclusion. *(superseded 2026-07-26 per Codex review,
+[[g35-codex-verdict.md]])*
 
 ---
 
@@ -835,23 +884,23 @@ agreeing on `(blockNumber, blockHash, txHash, logIndex, data[, topics, address])
 |---|---|---|
 | 1 | ETH timelock: `0x2aCA7102…` holds PROPOSER+EXECUTOR+CANCELLER since blk 22089226, never revoked | **OBSERVED-dual** |
 | 2 | ETH timelock: `0x055a8B2B…` holds CANCELLER since blk 25533314 | **OBSERVED-dual** |
-| 3 | OP timelock: `0x764682c7…` P/E/C **revoked** at blk 154619344 | **OBSERVED-triple** (Tenderly + OP Labs + OnFinality) |
-| 4 | OP timelock: `0x7a00657a…` holds P/E/C since blk 154619344 | **OBSERVED-triple** |
-| 5 | EXECUTOR_ROLE is **not** open (no `address(0)` grant) on either timelock | **OBSERVED-dual/triple** + **SOURCED** (OZ: event stream = role state) |
+| 3 | OP timelock: `0x764682c7…` P/E/C **revoked** at blk 154619344 | **OBSERVED-triple** (Tenderly + OP Labs + OnFinality) *(caveat added per Codex review: the "Safe" characterization of the holders remains separately single-provider — see claim 18)* |
+| 4 | OP timelock: `0x7a00657a…` holds P/E/C since blk 154619344 | **OBSERVED-triple** *(caveat added per Codex review: the "Safe" characterization of the holders remains separately single-provider — see claim 18)* |
+| 5 | EXECUTOR_ROLE is **not** open (no `address(0)` grant) on either timelock | ~~**OBSERVED-dual/triple** + **SOURCED** (OZ: event stream = role state)~~ Zero `address(0)`-account role events: **OBSERVED-dual/triple**; "EXECUTOR_ROLE is not open" itself: **INFERRED**, conditional on the deployed code obeying the **SOURCED** AccessControl write/emission model *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* |
 | 6 | Neither timelock has an external admin (`admin = address(0)` at construction) | **INFERRED** from OBSERVED event count + **SOURCED** OZ constructor |
-| 7 | Role changes were themselves timelocked ops with delay 172,800 / 259,200 s | **OBSERVED-single** per chain (schedule+execute pair), delays cross-checked against `MinDelayChange` (**OBSERVED-dual** on ETH) |
-| 8 | ETH timelock is OZ 4.x, OP timelock is OZ 5.x | **OBSERVED-single** (pinned `eth_getCode` literal scan) + **OBSERVED** event shape + **SOURCED** OZ constructors — two independent legs |
+| 7 | Role changes were themselves timelocked ops with delay 172,800 / 259,200 s | ~~**OBSERVED-single** per chain (schedule+execute pair), delays cross-checked against `MinDelayChange` (**OBSERVED-dual** on ETH)~~ Cited schedule/execute receipts: **OBSERVED-dual** on both chains; the complete operation-history scan: **OBSERVED-single**; the `0xcd425f44…` `MinDelayChange` history is **OBSERVED-single** in this archive, not dual *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* |
+| 8 | ~~ETH timelock is OZ 4.x, OP timelock is OZ 5.x~~ ETH timelock runs an OZ-4-style role model, OP timelock an OZ-5-style role model | ~~**OBSERVED-single** (pinned `eth_getCode` literal scan) + **OBSERVED** event shape + **SOURCED** OZ constructors — two independent legs~~ **INFERRED** — runtime literals and construction event shapes confirmed (single-provider pinned `eth_getCode` literal scan + event shape + **SOURCED** OZ constructors), but the exact "OZ 4.x/OZ 5.x" lineage is inferred without an exact deployed-bytecode/source build match *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* |
 | 9 | `DelegateSet` is on the Endpoint with both params non-indexed; the OApp emits nothing | **SOURCED** (`ILayerZeroEndpointV2.sol` L56; `OAppCoreUpgradeable.sol` L101-103) |
 | 10 | ETH adapter delegate = `0xcd425f44…` by last event, since blk 25296945 | **OBSERVED-dual** |
 | 11 | OP OFT delegate = `0x851dd540…` by last event, since blk 154486119 | **OBSERVED-dual** (Tenderly + OP Labs, 1,756/1,756 agreement) |
 | 12 | The ETH timelock has actually exercised delegate authority at blk 25418960 | **OBSERVED-dual** (receipt) + **SOURCED** (`_assertAuthorized`) |
-| 13 | The delegate write path is closed (no scheduled `setDelegate`; no post-assignment `Upgraded`) | Delegate history **OBSERVED-dual** on both chains; `Upgraded` history OBSERVED-dual (ETH) / OBSERVED-single (OP); write-path enumeration **SOURCED** |
-| 14 | GAP-1: OP pre-window event set agrees with the prior lane, 18/18 | **OBSERVED-dual** (OP Labs vs Tenderly) |
-| 15 | No post-2026-04-21 write touches EID 30111/30101 | **OBSERVED-dual** on ETH via two surfaces; **OBSERVED-single** on OP post-window |
-| 16 | G-06: L1 proxy admin owner `0x9f26d4C9…`, one event, never changed | **OBSERVED-dual** |
-| 17 | G-07: L1 timelock minDelay = 864,000 s since blk 24982415 | **OBSERVED-dual** |
-| 18 | Safe versions / thresholds / owner sets (§3.6) | **OBSERVED-single**, Safe transaction service — **EvidenceFacts only, never a predicate** |
-| 19 | The OP Safe rotation preserved an identical 7-of-7 signer set | **OBSERVED-single** (facts class) |
+| 13 | ~~The delegate write path is closed (no scheduled `setDelegate`; no post-assignment `Upgraded`)~~ Delegate write-path negatives (no scheduled `setDelegate`; no post-assignment standard `Upgraded`) — corroboration, not independent proof of closure: see the §4.7 replacement text | ~~Delegate history **OBSERVED-dual** on both chains; `Upgraded` history OBSERVED-dual (ETH) / OBSERVED-single (OP); write-path enumeration **SOURCED**~~ Delegate history **OBSERVED-dual** on both chains; the 555-call operation-history scan **OBSERVED-single** per chain; `Upgraded` OBSERVED-dual (ETH) / OBSERVED-single (OP); write-path enumeration **SOURCED** — together these corroborate the last-event delegate result but do not independently prove exhaustive OApp reinitialization or every alternate code-replacement path *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* |
+| 14 | GAP-1: OP pre-window event set agrees with the prior lane, 18/18 | **OBSERVED-dual** (OP Labs vs Tenderly) *(caveat added per Codex review: the `g35` directory is not self-contained for the Tenderly half — the compared Tenderly bodies and their ledger rows live in the adjacent parent archive; the reviewer verified the 18/18 comparison against those adjacent bodies)* |
+| 15 | No post-2026-04-21 write touches EID 30111/30101 | ~~**OBSERVED-dual** on ETH via two surfaces; **OBSERVED-single** on OP post-window~~ **OBSERVED-single** on ETH — two internal evidence surfaces are not two providers under this register's own dual-provider definition; **OBSERVED-single** on OP post-window; claim scope capped to the decoded event/selector filters, not every possible write *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* |
+| 16 | G-06: L1 proxy admin ~~owner `0x9f26d4C9…`, one event, never changed~~ owner **by last decoded event** = `0x9f26d4C9…` — one event in the full history; current storage remains an observed-side check *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* | **OBSERVED-dual** |
+| 17 | G-07: L1 timelock ~~minDelay = 864,000 s since blk 24982415~~ minDelay **by last decoded event** = 864,000 s since blk 24982415; current storage remains an observed-side check *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* | **OBSERVED-dual** |
+| 18 | Safe versions / thresholds / owner sets (§3.6) | **OBSERVED-single**, Safe transaction service — **EvidenceFacts only, never a predicate** *(caveat added per Codex review: an acquisition-time, single-provider Safe-service snapshot)* |
+| 19 | ~~The OP Safe rotation preserved an identical 7-of-7 signer set~~ Acquisition-time snapshots of the outgoing and incoming OP Safes report identical 7-of-7 owner sets and 4-of-7 thresholds; this does not prove the signer sets were identical at rotation block 154619344, nor that the role change was a Safe "re-deployment" *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* | **OBSERVED-single** (facts class) |
 | 20 | `0xba5ed099…`, `0x2ef43d8a…`, `0x8d5aac5d…`, `0xd8f3803d…` roles/identities | **UNLABELLED** — deliberately not characterised; no explorer consulted |
 | 21 | Motive for the OP role rotation, the canceller rollout, or the 2026-04-14 reversion | **NOT CLAIMED** — no declared-intent artifact located (g02-04 GAP-4 remains open) |
 
@@ -868,16 +917,16 @@ response to an incident. Sequence is evidence; motive is not, and no public arti
 
 | Metric | Value |
 |---|---|
-| Acquisitions ledgered (effective URL + raw-body sha256 + status + bytes + note) | **156** |
-| Distinct raw bodies | **122** (38,050,641 raw bytes retained) |
+| Acquisitions ledgered (effective URL + raw-body sha256 + status + bytes + note) | ~~**156**~~ **170** — rows 157–170 are a second 14-block reorg recheck appended after the hardening sweeps *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* |
+| Distinct raw bodies | ~~**122** (38,050,641 raw bytes retained)~~ ledger: **122 unique digests**; `raw/`: **146 files, 119 unique retained bodies, 22,897,975 bytes currently on disk**. 38,050,641 is the sum of the first 156 ledger rows' byte counts — including duplicate acquisitions and lost bodies — not "raw bytes retained" *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* |
 | Redirected acquisitions recorded with effective URL (G9) | 15 |
 | Providers exercised | 15 (5 usable, 10 refusing — all refusals recorded verbatim, §2.5) |
-| Whole-sweep content-addressed artifacts | **13** |
+| Whole-sweep content-addressed artifacts | ~~**13**~~ **13 sweep ledger entries — 10 unique sweep digests, 8 retained sweep files** *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* |
 | Chunked requests issued across all sweeps | **9,069** |
 | Chunk errors, all sweeps | **0** — except the OP Labs role sweep's 11 x `-32016` rate limits, **all 11 re-queried to success, 0 additional events** |
 | Keccak self-test runs | Once per derivation script, first executable line — **all PASS** |
 | Decoder guard negative tests | **11 rejected as required, 0 leaked** |
-| End-of-lane reorg recheck | **12 pinned block hashes re-read cross-provider, 0 mismatches, 0 refusals** |
+| End-of-lane reorg recheck | ~~**12 pinned block hashes re-read cross-provider, 0 mismatches, 0 refusals**~~ **14 pinned block hashes in the recheck script, run twice** (the second run is ledger rows 157–170), re-read cross-provider, 0 mismatches, 0 refusals *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])* |
 | Block-hash assertions during decode | Every decoded log's `blockHash` asserted equal to its independently fetched header |
 | `eth_call` at head | **0** |
 | Reads of any manifest-verified value | **0** |
@@ -886,8 +935,16 @@ response to an incident. Sequence is evidence; motive is not, and no public arti
 
 ### 9.2 Self-audit — a defect in this lane's own evidence handling
 
-**Found and disclosed rather than quietly cleaned up.** Two sweep artifacts were written to the
-**same filename across two runs at different step sizes**, so the earlier bytes were overwritten:
+**Found and disclosed rather than quietly cleaned up.** ~~Two sweep artifacts were written to the
+**same filename across two runs at different step sizes**, so the earlier bytes were overwritten:~~
+**Four paths — not two — carry multiple ledgered digests** *(superseded 2026-07-26 per Codex
+review, [[g35-codex-verdict.md]])*: the two lost 1M delegate sweep artifacts below (ledger lines
+28–31); one overwritten failed ETH header response (ledger lines 63 and 66); and one overwritten
+failed OP bytecode response (ledger lines 105 and 108). The latter two do not affect surviving
+factual conclusions — the successful replacement responses remain, and the old OP error body
+survives under another filename — but the disclosure must say four path collisions. The two
+sweep-artifact collisions, where the earlier bytes were overwritten by a re-run at a different
+step size:
 
 | Artifact path | Ledger entries | Distinct digests | Recoverable on disk |
 |---|---|---|---|
@@ -898,8 +955,12 @@ The ledger is intact and correctly records what was fetched — but two of its r
 path whose contents no longer hash to the recorded digest. That is a *content-addressing violation
 in the storage layer*, and exactly the class this workbench exists to catch. **Remedy for the next
 lane: artifact filenames must include the sweep parameters (or the digest itself), so a re-run can
-never overwrite a prior exhibit.** No claim in this dossier depends on the lost bytes — both lost
-artifacts reported the *same* 6,368-event result as their surviving 250k counterparts.
+never overwrite a prior exhibit.** ~~No claim in this dossier depends on the lost bytes~~ The
+core delegate conclusion does not depend on the lost bytes, but the formerly claimed exact 10×
+step-invariance does — that claim is withdrawn (see the §4.2 replacement text) *(superseded
+2026-07-26 per Codex review, [[g35-codex-verdict.md]])* — both lost
+artifacts' ledger rows reported the *same* 6,368-event count as their surviving 250k
+counterparts, which corroborates by count only.
 
 Silver lining, recovered from the ledger notes: those overwritten runs are a **free step-invariance
 data point**. The ETH `DelegateSet` sweep returned **6,368 events at 1M steps (26 chunks) and 6,368
@@ -965,8 +1026,12 @@ ETH adapter delegate history identical at all step sizes: True
 ```
 
 Combined with the two 1M-step runs recovered from the ledger (§9.2), the ETH `DelegateSet` event
-set is **6,368 at 100k, 250k and 1M steps, across two administratively independent providers** —
-a 10x step-size range and two providers, one answer.
+~~set is **6,368 at 100k, 250k and 1M steps, across two administratively independent providers** —
+a 10x step-size range and two providers, one answer.~~ count is 6,368 at 100k, 250k and 1M steps,
+across two administratively independent providers — by exact retained-set comparison at 100k/250k
+(and 250k cross-provider), but by ledger-recorded count only at 1M: the overwritten 1M bodies
+prevent exact-set verification, and the former 10× exact-set claim is withdrawn (§4.2 replacement
+text). *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])*
 
 **Effect:** the provider-result-cap failure mode is excluded for the sweep that carries GAP-5's
 ETH answer. No claim changed; the existing claim got harder to attack.
@@ -1013,8 +1078,10 @@ has an external admin.
 **GAP-5 — RECONSTRUCTABLE. CLOSED, with the premise corrected.** The OApp emits no delegate event;
 the Endpoint does, with both parameters non-indexed. Incumbent delegate is the **timelock** on both
 chains, assigned in the same transaction as the ownership transfer, corroborated behaviourally by
-the ETH timelock actually exercising delegate authority, and with the write path closed on both
-possible writers. **The blueprint's "delegate-gated path is not proven timelocked, zero latency
+the ETH timelock actually exercising delegate authority, and ~~with the write path closed on both
+possible writers~~ with the write-path checks corroborating the last-event result (see the §4.7
+replacement text — corroboration, not independent proof of closure) *(superseded 2026-07-26 per
+Codex review, [[g35-codex-verdict.md]])*. **The blueprint's "delegate-gated path is not proven timelocked, zero latency
 floor" is refuted.**
 
 **GAP-1 — RECONSTRUCTABLE. CLOSED.** 2,966 chunks, 0 errors, 18/18 exact agreement with the prior
@@ -1022,7 +1089,10 @@ lane on the full comparison key. OP pre-window completeness rises from single-pr
 dual-provider.
 
 **Both hardening legs landed clean and changed no answer** — leg A raised GAP-5's OP half to
-dual-provider (1,756/1,756); leg B proved the ETH sweep step-size invariant across a 10x range.
+dual-provider (1,756/1,756); ~~leg B proved the ETH sweep step-size invariant across a 10x range~~
+leg B proved exact 100k/250k set equality and exact 250k cross-provider equality; the 1M runs
+corroborate by ledger-recorded count only (§4.2 replacement text; the 10× exact-set claim is
+withdrawn) *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])*.
 Every claim in this dossier is dual-provider or better except where §8 says otherwise.
 
 **Carried forward — NOT RECONSTRUCTABLE AS POSED:** the *motive* behind any of the four
@@ -1067,3 +1137,24 @@ All scripts, artifacts and the acquisition ledger:
 
 Repo files **read** (never modified): `roadmap/research/route-manifest/g02-04-execution-order.md`,
 `roadmap/research/route-manifest/blueprint.md`.
+
+---
+
+## Codex review disposition (2026-07-26)
+
+- **Verdict: NEEDS-CORRECTIONS** — independent Codex review (job `task-ms2o0tel-1yz0gm`), full
+  verdict at [[g35-codex-verdict.md]].
+- **The two principal refutations are CONFIRMED:** OP roles moved from `0x764682c7…` to
+  `0x7a00657a…` at block 154619344, and the current delegate by last decoded event is the
+  per-chain timelock on both ETH and OP.
+- **Corrections applied in-place this pass** (supersede-in-place convention, never delete): the
+  six wrong assertions (§3.2 construction-event count, §3.5 `Upgraded`-absence overreach, §3.6
+  Safe re-deployment/nonce overstatements, §4.2 step-invariance, §6.4 zero-latency scope, §9.2
+  lost-bytes dependency), the §8 claim-strength tags (claims 5, 7, 8, 13, 15, 16, 17, 19; caveats
+  on 3–4, 14, 18), the §2.2 `OwnershipTransferred` topic0 addition, the understated §9 archive
+  inventory (170 ledger rows; four path collisions; 146 files / 119 unique retained bodies /
+  22,897,975 bytes; 14-pin reorg recheck run twice; 13 sweep entries / 10 unique digests / 8
+  retained files), and the two verbatim replacement passages (§4.7 write-path, §4.2 step
+  invariance).
+- **Scoped re-verification of the patched dossier is pending. No wave-3 row is manifest-grade
+  until that gate passes** (D-006; D-b4ab3c69 convergence gate).
