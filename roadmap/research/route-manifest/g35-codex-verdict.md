@@ -173,3 +173,71 @@ construction-event-count, and 'every enumerated hop' wording before this gate ca
 - 2026-07-26 late: verdict persisted verbatim (this file). Corrections to
   `g35-dossier.md` and `blueprint.md` pending; scoped Codex re-verification after patching;
   NO wave-3 row is manifest-grade until the gate passes (D-006).
+- 2026-07-26 late +1: all 36 corrections applied supersede-in-place (`9af7c23`); scoped
+  re-verification dispatched on the same thread.
+
+---
+
+# Round 2 — scoped re-verification (task-ms2q246k-vefeop, ~9 min): FURTHER-CORRECTIONS
+
+"Commit `9af7c23` applies most corrections correctly, but the gate does not pass. Several
+superseded claims remain asserted live outside strikethrough, including in blueprint rows
+intended for promotion. The two principal findings remain confirmed."
+
+All 6 wrong-assertion primary sites, both VERBATIM replacement texts, the §2.2 addition,
+the §8 register tags/caveats, the archive totals, and blueprint G-10/note-4/claim-7/claim-18
+propagations: **PASS**. The gate blocks on live repeats outside the corrected sites.
+
+## Blocking corrections still required (verbatim)
+
+1. **§4.7 still claims exhaustive closure** (dossier ~635–647: "exactly two possible
+   writers", reinitialization "reachable only via a proxy upgrade", "Closed", "no
+   re-initialisation has occurred since"). Replace/supersede with: "The reviewed source
+   exposes two relevant write routes. No standard `Upgraded(address)` event post-dates
+   either assignment, but that absence does not prove that reinitialization or every
+   alternate code-replacement path is impossible."
+2. **Withdrawn 1M exact-set claim live in §10** (~1021–1025: code block
+   "`ETH adapter delegate history identical at all step sizes: True`" presented as active
+   evidence). Mark the output line explicitly superseded; exact equality retained only for
+   100k/250k and 250k cross-provider; 1M is count-only.
+3. **Claim 15's uncapped negative live in §5.5** (~735: "`ANY post-timelock write touching
+   30111/30101: False`"). Replace with: "No post-window touch appears in the decoded OP
+   rate-limit/`PeerSet` event filters or the decoded ETH timelock `CallExecuted` selector
+   filters. This does not exclude every possible write path."
+4. **Exact OZ lineage asserted live** in §1 (~57–63), the §3.7 table (~483), §7 (~863).
+   Strike exact versions; only `OZ-4-style`/`OZ-5-style`, tagged INFERRED.
+5. **Claims 16/17 current-state language live** in §1 (~96–100), §6.1 (~770), §6.2 (~795),
+   §7 (~860); propagates to blueprint E2 (~48), S2 (~108), S7 (~146), G-06 (~174), G-07
+   (~175). Required formulation: "Owner/minDelay by last decoded event; no later
+   corresponding standard event appears through the pinned head. Current storage remains a
+   separate observed-side check."
+6. **Safe historical equality/redeployment asserted** at dossier ~864 ("identical 7-of-7
+   signer set across the OP rotation"), ~907–910 ("an identically-signed Safe received
+   them"); blueprint G-08 ~176 ("re-deployment"). Replace with "acquisition-time snapshots
+   report identical current owner sets"; the historical event is a role/address rotation —
+   not a redeployment.
+7. **Claim 5's inference cap not propagated** to §6.3 (~812–816), §12 (~1073–1079),
+   blueprint S7 (~144–146). Each must carry: "Zero `address(0)` role events are observed;
+   'not open' is INFERRED, conditional on the deployed code obeying the sourced
+   AccessControl write/emission model."
+8. **Exact sweep-collision pairs incomplete** in §9.2 (~938–952, says only "ledger lines
+   28–31"). Required exact mapping: mevblocker sweep ledger **28/30** (same-digest repeat
+   **32**); Tenderly sweep **29/31** (repeat **43**); ETH header **63/66**; OP epoch
+   bytecode **105/108**.
+
+## Wrong vs archive-unverifiable (round-2 framing)
+
+- Wrong as logical assertions: §4.7's closure chain; §5.5's ANY-write negative.
+- Not shown false but unverifiable from the retained archive: exact 1M set equality, exact
+  OZ 4.x/5.x lineage, signer equality at the rotation block / "redeployment", current
+  owner/minDelay storage, unconditional "EXECUTOR_ROLE not open".
+
+Non-gating administrative note from the reviewer: `9af7c23` also changed a roadmap insight
+file beyond the two named research files (the incident capture — roadmap/** capture is
+always in scope; recorded here for completeness).
+
+## Disposition status (round 2)
+
+- Round-2 verdict persisted (this section). The 8 blocking items are being applied
+  supersede-in-place; scoped round-3 re-verification follows. NO wave-3 row is
+  manifest-grade until GATE-PASSES (D-006).
