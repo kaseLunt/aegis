@@ -52,14 +52,24 @@ B12/B4. **Plan step 5 DONE (e43d21b) — SLICE S3 COMPLETE:** `vite.cli.config.t
 executed and recorded — documented command over shipped fixtures exits 3 honestly, and the
 built artifact's canonical envelope is BYTE-IDENTICAL to the in-process run (`cmp` clean).
 406/406, tsc clean, lint 0 errors, doctor 0/0, selftest 0 failing.
-**S4 ACTIVE (started 2026-07-26 late): the report API** — `app/api/v1/verify` (POST) +
-`app/api/v1/reports/<hash>` (GET, content-addressed), envelope
-`{requestId, generatedAt, payload, reportHash}`, provider allowlist (never an SSRF
-primitive), size/shape limits deferred from S2. Following the S3 precedent: a four-mapper
-read-only recon workflow (`wf_3f608169-b43`: http-surface, store, canon-constraints,
-test-patterns) is IN FLIGHT; its synthesis lands as an "S4 plan" section in the W5 charter
-BEFORE any TDD test is written. Then S5 CI, S6 web drawer, S7 byte-identity gate, and the
-Codex convergence loop before any stamp. Do NOT stamp W5 mid-slice.
+**S4 DONE (2026-07-26 late, 423/423): the report API**, executed against the recon-derived
+"S4 plan" charter section (four-mapper recon `wf_3f608169-b43`). 17 TDD tests across three
+commits (`23c52d8` E1-E8, `b267e23` E9-E11, `a10bf95` F1-F4 + G1-G2): four-field envelope
+via `jcsSerialize` (payload subtree byte-identical to the CLI core — the S7 hook, E2);
+outer guard chain with a TEXT-level duplicate-key scan (R-003 at the HTTP edge) and
+base64 raw-bytes transport (load-bearing: embedded JSON would defeat the R-003 guard and
+the byte-identity that separates `duplicate_recording` 400 from `ambiguous_head_provenance`
+503); engine errors surface verbatim (no pre-judging); CLI-style pre-validation (corrupt
+recording = caller 400); boundary-exact size/shape limits (six typed codes, the S2
+deferral); structural SSRF impossibility (strict schemas reject provider/url keys BY NAME,
+profile is a registry literal); honest trust mode (untrusted = completed 200 with visible
+reasonCodes); per-isolate content-addressed store by RULING (no storage bindings exist;
+GET is 404 "not currently retained" — never "does not exist"; cache-control no-store so
+the M1 GET is never laundered into a permalink); claim-language + method-surface teeth,
+both bite-proven with real inserted violations. Three born-green pins (E8/E11/G1+G2)
+mutation-verified to isolate exactly their row.
+**Next: S5 (CI adapter), S6 (web drawer), S7 (byte-identity gate), then the Codex
+convergence loop before any stamp. Do NOT stamp W5 mid-slice.**
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
@@ -390,6 +400,20 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
      classified into `.git/info/exclude` (local, no tracked-file change), tree clean,
      review RE-DISPATCHED (Codex session `019fa193-bbd6…` resumed). Finding captured as
      [[INS-8ae8601e]].*
+     **VERDICT LANDED (task-ms2o0tel-1yz0gm): NEEDS-CORRECTIONS** — persisted verbatim in
+     `g35-codex-verdict.md` (`600dc6f`). Both principal refutations CONFIRMED (OP roles →
+     new Safe at blk 154619344; delegate = per-chain timelock, no word-offset error); all
+     retained sweeps re-parsed contiguous. Gate failed on claim-strength/completeness:
+     write-path "closed" → corroboration only; 10× step-invariance withdrawn (1M bodies
+     lost); Safe "re-deployment"/signer-set claims capped to acquisition-time snapshots;
+     eight-not-nine construction role events; four archive path collisions not two;
+     register tags 5/7/8/13/15/16/17/19 corrected. **All 36 corrections APPLIED
+     supersede-in-place (`9af7c23`)** — dossier + blueprint never claim past the corrected
+     register; applying-agent incident (destructive CRLF one-liner, recovered from HEAD
+     blobs) captured as [[INS-7e57fb37]]. **IN FLIGHT: scoped Codex re-verification of the
+     applied corrections at 9af7c23** — verdict GATE-PASSES or FURTHER-CORRECTIONS; only
+     after GATE-PASSES may wave-3 rows be promoted per their corrected tags (D-006). Then
+     the re-posed G-08 lane.
   2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
      NEEDS-CORRECTIONS** — persisted verbatim in
      `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis
