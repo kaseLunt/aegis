@@ -6,9 +6,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
+import { GET } from "../app/api/v1/reports/[hash]/route";
 import { POST } from "../app/api/v1/verify/route";
 import { API_LIMITS } from "../lib/aegis/surfaces/api";
-import { jcsSerialize } from "../lib/aegis/report/canonical";
+import { jcsSerialize, reportHash } from "../lib/aegis/report/canonical";
 import { runVerification } from "../lib/aegis/surfaces/engine";
 import { referenceDeployment } from "../lib/aegis/surfaces/profiles";
 import { renderJson } from "../lib/aegis/surfaces/render";
@@ -413,5 +414,105 @@ describe("W5 S4 — E. POST guard chain", () => {
     expect(envelope.payload.policyTrust.trustPolicyId).toBe("tp-api-e11");
     expect(envelope.payload.policyTrust.reasonCodes).toEqual(["manifest_hash_not_approved"]);
     expect(envelope.payload.verifications).toEqual([]);
+  });
+});
+
+async function getReport(hash: string): Promise<Response> {
+  return GET(new Request(`http://aegis.test/api/v1/reports/${hash}`), {
+    params: Promise.resolve({ hash }),
+  });
+}
+
+describe("W5 S4 — F. GET reports/[hash] + the store", () => {
+  test("F1: POST-then-GET returns the identical payload core with fresh delivery metadata", async () => {
+    const posted = JSON.parse(await (await post(referenceBody())).text()) as {
+      requestId: string;
+      payload: unknown;
+      reportHash: string;
+    };
+
+    const res = await getReport(posted.reportHash);
+    expect(res.status).toBe(200);
+    // Content-addressed delivery: strong etag IS the hash; and the per-isolate store must
+    // never be laundered into a permalink by intermediary caches at M1.
+    expect(res.headers.get("etag")).toBe(`"${posted.reportHash}"`);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+
+    const text = await res.text();
+    const fetched = JSON.parse(text) as {
+      requestId: string;
+      generatedAt: string;
+      payload: unknown;
+      reportHash: string;
+    };
+    expect(text).toBe(jcsSerialize(fetched));
+    expect(Object.keys(fetched).sort()).toEqual(["generatedAt", "payload", "reportHash", "requestId"]);
+    expect(fetched.reportHash).toBe(posted.reportHash);
+    expect(jcsSerialize(fetched.payload)).toBe(jcsSerialize(posted.payload));
+    // Delivery metadata is REGENERATED per delivery (ENGINEERING_SPEC:879 reading).
+    expect(fetched.requestId).not.toBe(posted.requestId);
+  });
+
+  test("F2: a well-formed unknown hash is 404 not-retained — never 'does not exist'", async () => {
+    const unknown = `sha256:${"b".repeat(64)}`;
+    const res = await getReport(unknown);
+    expect(res.status).toBe(404);
+    const text = await res.text();
+    const body = JSON.parse(text) as { error: { code: string; detail?: string } };
+    expect(body.error.code).toBe("report_not_found");
+    // Claim-strength discipline: absence from a per-isolate, non-durable store proves
+    // nothing about the report's existence — only about current retention.
+    expect(body.error.detail).toContain("not currently retained");
+    expect(text).not.toContain("does not exist");
+  });
+
+  test("F3: a malformed hash is a typed 400 before any lookup", async () => {
+    for (const bad of ["nonsense", "sha256:SHOUTING", `sha256:${"c".repeat(63)}`, `sha1:${"c".repeat(64)}`]) {
+      await expectError(await getReport(bad), 400, "invalid_report_hash", "/hash");
+    }
+  });
+
+  test("F4: the store is content-addressed — re-POST converges on one self-consistent entry", async () => {
+    const first = JSON.parse(await (await post(referenceBody())).text()) as { reportHash: string };
+    const second = JSON.parse(await (await post(referenceBody())).text()) as { reportHash: string };
+    expect(second.reportHash).toBe(first.reportHash);
+
+    const fetched = JSON.parse(await (await getReport(first.reportHash)).text()) as {
+      payload: unknown;
+      reportHash: string;
+    };
+    // The retrieved payload re-derives its own address — the strict W1 hash, recomputed.
+    expect(reportHash(fetched.payload)).toBe(first.reportHash);
+  });
+});
+
+describe("W5 S4 — G. teeth", () => {
+  test("G1: API surface sources carry no claim-language tokens (live/safe/healthy/verified)", () => {
+    // Same tooth as the CLI's C18, extended to the S4 surface sources — the transport may
+    // never editorialize, in code, strings, or comments alike.
+    const claimToken = /\b(live|safe|healthy|verified)\b/i;
+    for (const violation of ["status: live", "the deployment is safe", "Healthy!", "verified ok"]) {
+      expect(claimToken.test(violation), `regex must flag: ${violation}`).toBe(true);
+    }
+    expect(claimToken.test("verify verifications unverifiable safely alive")).toBe(false);
+
+    for (const rel of [
+      "../lib/aegis/surfaces/api.ts",
+      "../app/api/v1/verify/route.ts",
+      "../app/api/v1/reports/[hash]/route.ts",
+    ]) {
+      const source = readFileSync(join(__dirname, rel), "utf-8");
+      const match = claimToken.exec(source);
+      expect(match, `${rel} contains claim token "${match?.[0] ?? ""}"`).toBeNull();
+    }
+  });
+
+  test("G2: each route module exports exactly its intended methods", async () => {
+    // vinext auto-405s unexported methods at dispatch, which in-process tests bypass —
+    // this pins the module surface itself so a stray handler cannot appear unnoticed.
+    const verifyRoute = await import("../app/api/v1/verify/route");
+    expect(Object.keys(verifyRoute).sort()).toEqual(["POST"]);
+    const reportsRoute = await import("../app/api/v1/reports/[hash]/route");
+    expect(Object.keys(reportsRoute).sort()).toEqual(["GET"]);
   });
 });

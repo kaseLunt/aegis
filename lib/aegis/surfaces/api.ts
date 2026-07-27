@@ -47,18 +47,35 @@ const VERIFY_BODY = z
   })
   .strict();
 
+// The external representation of report identity (ENGINEERING_SPEC:835-836), pinned
+// strictly — a GET key is refused before any lookup if it does not match.
+const REPORT_HASH_STRICT = /^sha256:[0-9a-f]{64}$/;
+
+// Content-addressed report store — S4 plan §6 RULING. In-memory and PER-ISOLATE on
+// purpose: the deployment has zero storage bindings, canon requires no GET durability at
+// M1 (the durable permalink is M2, ROADMAP:127), and adding a binding is an owner
+// decision outside W5's allowed_paths. Semantics: non-durable, empty after every
+// redeploy; a POST handled by one isolate is invisible to a GET routed to another. Dev
+// (single isolate) will LOOK durable; production retention is best-effort within one
+// isolate lifetime. The stored payload is the engine's deep-frozen object.
+const REPORT_STORE = new Map<string, unknown>();
+
 function pointerFromIssue(issue: z.ZodIssue): string {
   const segments: readonly (string | number)[] =
     issue.code === "unrecognized_keys" ? [...issue.path, issue.keys[0]] : issue.path;
   return `/${segments.join("/")}`;
 }
 
-function errorResponse(status: number, code: string, path?: string): Response {
+function errorResponse(status: number, code: string, path?: string, detail?: string): Response {
   return Response.json(
     {
       requestId: crypto.randomUUID(),
       generatedAt: new Date().toISOString(),
-      error: path === undefined ? { code } : { code, path },
+      error: {
+        code,
+        ...(path === undefined ? {} : { path }),
+        ...(detail === undefined ? {} : { detail }),
+      },
     },
     { status },
   );
@@ -172,6 +189,7 @@ export async function handleVerify(request: Request): Promise<Response> {
 
   try {
     const run = await runVerification({ manifestBytes, recordings }, selector, deployment);
+    REPORT_STORE.set(run.reportHash, run.payload);
     return reportResponse(run.payload, run.reportHash);
   } catch (error) {
     // A RequestError is caller input the engine refused — the API surfaces its own
@@ -190,4 +208,22 @@ export async function handleVerify(request: Request): Promise<Response> {
         : "engine_failure";
     return errorResponse(503, code);
   }
+}
+
+export function handleGetReport(hash: string): Response {
+  if (!REPORT_HASH_STRICT.test(hash)) {
+    return errorResponse(400, "invalid_report_hash", "/hash");
+  }
+  const payload = REPORT_STORE.get(hash);
+  if (payload === undefined) {
+    // Claim-strength discipline: a miss in a per-isolate, non-durable store says nothing
+    // about whether the report ever existed — only that it is not retained HERE, NOW.
+    return errorResponse(
+      404,
+      "report_not_found",
+      "/hash",
+      `report ${hash} is not currently retained by this instance; M1 retention is per-isolate and non-durable`,
+    );
+  }
+  return reportResponse(payload, hash);
 }
