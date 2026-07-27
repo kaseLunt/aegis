@@ -657,6 +657,48 @@ fields — deliberately NOT extended. OBSERVED constraint, ENGINEERING_SPEC:868-
    ([[INS-5931d8f8-d494-4cb5-b147-c7fd9e6ffaab]]); commit. The Codex convergence loop
    comes after S7, as chartered.
 
+## S5 plan (inline recon, 2026-07-26)
+
+> S5 is an order of magnitude smaller than S3/S4 — the recon was done inline (charter
+> S5 bullet W5:167-168; ENGINEERING_SPEC:899-907; render.ts:55-57 names the CI adapter as
+> the second consumer of `exitCodeForPayload`; the S7 gate requires a distinct "CI adapter
+> entry" path, W5:91-94). RULING markers as before.
+
+### Design
+
+- `lib/aegis/surfaces/ci.ts` exports ONE entry, `runCiVerification(inputs, selector,
+  deployment): Promise<CiRun>` where `CiRun = { exitCode, reportHash, canonicalBody,
+  summaryLines }`. It calls `runVerification` (the facade, never an evaluator), derives
+  `exitCode` via the SHARED `exitCodeForPayload` (render.ts:55-57 — two transports cannot
+  classify one payload differently), and `canonicalBody` via the SHARED `renderJson` (the
+  S7 byte-identity artifact).
+- Thrown-path mapping mirrors the CLI verbatim (RULING, same as the API's):
+  `RequestError` → exitCode 4, `SurfaceError`/other → 5, returned as a `CiRun` with
+  `reportHash: null`, `canonicalBody: null`, and an `error: {code, path?}` summary line —
+  CI is a transport; a throw is an operational failure, never a verdict.
+- `summaryLines` (RULING — canon specifies no CI format): deterministic projection of the
+  payload ONLY (ENGINEERING_SPEC:879), stable `key=value` lines through the render `esc()`
+  convention: `exit`, `reportHash`, `trust` (state + reasonCodes), `boundaries` count,
+  per-state verification counts named individually (`verifications.pass=…`,
+  `.fail=…`, `.unknown=…`, `.stale=…`, `.conflict=…` — never collapsed into one aggregate
+  word, THREAT_MODEL:98), `limitations` count. No timestamps, no clock.
+- The documented workflow snippet lands in EV-W5 at stamp time (it cites the built CLI,
+  which exists since S3) — not a code deliverable of this slice.
+
+### Tests (tests/ci.test.ts, red-first)
+
+- H1: entry parity — `runCiVerification` over shipped fixtures returns `exitCode` 3 (the
+  honest shipped reality), `reportHash` equal to the facade's direct output, and
+  `canonicalBody` byte-identical to `renderJson(run)` (the S7 forward hook).
+- H2: summary determinism + shape — two runs byte-identical; per-state counts present and
+  individually named; trust line carries reasonCodes; no aggregation word.
+- H3: thrown rows — `at: "latest"` → 4 with `error=unsupported_at_selector` line;
+  ambiguous double-heads → 5 (the B13 trap's SurfaceError half).
+- H4: CLI/CI cross-transport parity — same inputs through `main(argv)` (temp files) and
+  `runCiVerification` (bytes) yield equal exit codes and equal canonical bytes.
+- H5 (tooth): claim-language scan extended to `ci.ts`; summary output itself scanned for
+  the banned tokens.
+
 ## Handoff
 
 - next: **S0–S3 DONE** (406/406, tsc + lint clean; S3 packaging landed `e43d21b` — the

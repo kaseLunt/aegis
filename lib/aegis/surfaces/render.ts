@@ -37,7 +37,7 @@ interface PayloadView {
   readonly limitations?: readonly { readonly code?: string; readonly text?: string }[];
 }
 
-function view(payload: unknown): PayloadView {
+export function view(payload: unknown): PayloadView {
   return (payload ?? {}) as PayloadView;
 }
 
@@ -45,7 +45,7 @@ function view(payload: unknown): PayloadView {
 // control bytes (ANSI redraws, BEL, a smuggled newline forging a report line) render as
 // visible \uXXXX escapes, never as bytes. Applied to EVERY interpolated payload string —
 // clean strings pass through unchanged, so trusted engine-authored text costs nothing.
-function esc(value: string): string {
+export function esc(value: string): string {
   return value.replace(
     /[\u0000-\u001f\u007f]/g,
     (c) => `\\u${c.codePointAt(0)!.toString(16).padStart(4, "0")}`,
