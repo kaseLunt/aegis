@@ -8,6 +8,8 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "vinext build",
+    "build:cli": "vite build --config vite.cli.config.ts",
+    "cli": "npm run build:cli && node dist/cli/aegis.js",
     "start": "vinext start",
     "test": "vitest run",
     "test:property": "vitest run tests/aegis-engine.test.ts",
@@ -42,5 +44,8 @@
   "overrides": {
     "postcss": "8.5.10"
   },
-  "type": "module"
+  "type": "module",
+  "bin": {
+    "aegis": "dist/cli/aegis.js"
+  }
 }
