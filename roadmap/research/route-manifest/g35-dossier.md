@@ -54,8 +54,10 @@ signatures.
   — which per the OZ constructor source means the deploy-time `admin` argument was `address(0)`.
   Role changes must therefore pass through the timelock's own delay (ETH 172,800 s / OP 259,200 s),
   and the observed grants/revokes did exactly that.
-- **The two timelocks run DIFFERENT OpenZeppelin role-model epochs** — ETH is OZ 4.x
-  (`TIMELOCK_ADMIN_ROLE`), OP is OZ 5.x (`DEFAULT_ADMIN_ROLE = bytes32(0)`). Established two ways:
+- **The two timelocks run DIFFERENT OpenZeppelin role-model epochs** — ~~ETH is OZ 4.x~~ ETH is
+  OZ-4-style (`TIMELOCK_ADMIN_ROLE`), ~~OP is OZ 5.x~~ OP is OZ-5-style
+  (`DEFAULT_ADMIN_ROLE = bytes32(0)`) — INFERRED lineage *(superseded 2026-07-26 per Codex review
+  round 2, [[g35-codex-verdict.md]])*. Established two ways:
   event shape at construction, and presence/absence of the `TIMELOCK_ADMIN_ROLE` literal in
   block-pinned runtime bytecode. **This is a direct input to blueprint GAP G-10.**
   *(per Codex review, [[g35-codex-verdict.md]] claim 8: read as OZ-4-style / OZ-5-style — the
@@ -93,10 +95,18 @@ errors, 0 transport retries**. **18 events, exact agreement with the prior lane'
 
 ### Bonus — **G-06 CLOSED, and G-07 CLOSED with a supersession the blueprint does not carry**
 
-- **G-06:** L1 proxy admin `0xa9E9bBf0…` was owned by `0x9f26d4C958fD811A1F59B01B86Be7dFFc9d20761`
-  from its deployment block 20865339 and **has never changed**. L1 upgrade authority resolved.
-- **G-07:** that L1 timelock's `minDelay` is **864,000 s (10 days)** since ETH blk 24982415.
-  The blueprint records "≤ 259,200 s bound only" — the live value is **larger** than the bound, and
+- **G-06:** L1 proxy admin `0xa9E9bBf0…` ~~was owned by `0x9f26d4C958fD811A1F59B01B86Be7dFFc9d20761`
+  from its deployment block 20865339 and **has never changed**~~ owner **by last decoded event** =
+  `0x9f26d4C958fD811A1F59B01B86Be7dFFc9d20761`, from its deployment block 20865339; no later
+  corresponding standard event appears through the pinned head. Current storage remains a separate
+  observed-side check. *(superseded 2026-07-26 per Codex review round 2, [[g35-codex-verdict.md]])*
+  L1 upgrade authority resolved.
+- **G-07:** that L1 timelock's `minDelay` ~~is **864,000 s (10 days)**~~ **by last decoded event**
+  is **864,000 s (10 days)** since ETH blk 24982415; no later `MinDelayChange` appears through the
+  pinned head; current storage remains a separate observed-side check. *(superseded 2026-07-26 per
+  Codex review round 2, [[g35-codex-verdict.md]])*
+  The blueprint records "≤ 259,200 s bound only" — ~~the live value~~ the value by last decoded
+  event is **larger** than the bound, and
   the 259,200 s figure is a superseded state that was live 2024-03-08 → 2026-04-24.
 
 ---
@@ -482,14 +492,15 @@ Deployment senders, for the record: ETH timelock created by EOA
 
 | Timelock | Runtime bytes (pinned) | `TIMELOCK_ADMIN_ROLE` literal present? | Event shape | Epoch |
 |---|---|---|---|---|
-| ETH `0xcd425f44…` @ blk 22089226 | 8,392 · sha256 `9dbf8287aa082eec04aeea34c95e9c3fe63b815bf1ac1781949d0f6fa6078881` | **True** | 4× `RoleAdminChanged` + admin grant to self | **OZ 4.x** |
-| OP `0x851dd540…` @ blk 139414997 | 6,536 · sha256 `8e13b7c8d692bdf5a33c494faaed3c53beb4be54a8e679b5b485280578c1d148` | **False** | no `RoleAdminChanged`; `bytes32(0)` grant to self | **OZ 5.x** |
+| ETH `0xcd425f44…` @ blk 22089226 | 8,392 · sha256 `9dbf8287aa082eec04aeea34c95e9c3fe63b815bf1ac1781949d0f6fa6078881` | **True** | 4× `RoleAdminChanged` + admin grant to self | ~~**OZ 4.x**~~ **OZ-4-style** (INFERRED) |
+| OP `0x851dd540…` @ blk 139414997 | 6,536 · sha256 `8e13b7c8d692bdf5a33c494faaed3c53beb4be54a8e679b5b485280578c1d148` | **False** | no `RoleAdminChanged`; `bytes32(0)` grant to self | ~~**OZ 5.x**~~ **OZ-5-style** (INFERRED) |
 
 `PROPOSER_ROLE`, `EXECUTOR_ROLE` and `CANCELLER_ROLE` literals are present in **both**. The two
 legs (bytecode literal scan, event shape) agree.
 *(added per Codex review, [[g35-codex-verdict.md]] claim 8: the exact "OZ 4.x"/"OZ 5.x" lineage
 is INFERRED — read as "OZ-4-style"/"OZ-5-style role model"; runtime literals and construction
-event shapes corroborate the model but are not an exact deployed-bytecode/source build match.)*
+event shapes corroborate the model but are not an exact deployed-bytecode/source build match.
+Round 2: the in-table exact epoch labels above are struck accordingly.)*
 **Manifest consequence:** a control-plane row cannot use one role-id vocabulary for both chains —
 the ETH timelock's role admin is `TIMELOCK_ADMIN_ROLE`, the OP timelock's is `bytes32(0)`.
 *(These two code hashes are entity characterisation and must never seed `expectedRuntimeCodeHash`
@@ -632,19 +643,25 @@ without reading the mapping, from a completely different evidence surface than �
 
 ### 4.7 Completeness — ~~the delegate write path is closed~~ delegate write-path corroboration *(superseded 2026-07-26 per Codex review, [[g35-codex-verdict.md]])*
 
-`delegates[oapp]` has exactly **two** possible writers, both established from source:
+~~`delegates[oapp]` has exactly **two** possible writers, both established from source:~~ The
+reviewed source exposes two relevant write routes, both established from source: *(superseded
+2026-07-26 per Codex review round 2, [[g35-codex-verdict.md]])*
 1. `OAppCore.setDelegate` — `onlyOwner`. Owner is the timelock on both chains since
    ETH 25296945 / OP 154486119 (g02-04 §6.1, corroborated here by the same-tx `OwnershipTransferred`
    logs). **Neither timelock has ever scheduled a `setDelegate` (`0xca5eb5e1`)** — verified by
    selector histogram over all 548 ETH `CallScheduled` calls and all 7 OP ones: **0 occurrences.**
-2. `__OAppCore_init_unchained` during (re-)initialisation — reachable only via a proxy upgrade.
-   **Closed:** `Upgraded(address)` history is complete and dual-provider on ETH
+2. `__OAppCore_init_unchained` during (re-)initialisation ~~— reachable only via a proxy upgrade.
+   **Closed:**~~ — one route to it is a proxy upgrade. *(superseded 2026-07-26 per Codex review
+   round 2, [[g35-codex-verdict.md]])* `Upgraded(address)` history is complete and dual-provider on ETH
    (mevblocker `3248085a4c8f4079c4b5f834de05465e346707a7152def06557eabd7b55f13a8` /
    Tenderly `d8fe15395948189f8165e14e8003733d568b984725ba51e59cdc2811bc8c9764`, **agreement True**),
    Tenderly on OP (`4dedede845de31a3e0f08a07a12acc51dec4ca491c52f3d6d3f84b538a7c4bcf`).
    Last upgrade: **ETH blk 21366263** → `0xa82cc578927058af14fd84d96a817dc85ac4f946`;
    **OP blk 129082737** → `0x70d7e0c93d8443325550ba3f71576f5f346b8aa9`. Both **predate** the current
-   delegate assignments, so no re-initialisation has occurred since.
+   delegate assignments~~, so no re-initialisation has occurred since~~. No standard
+   `Upgraded(address)` event post-dates either assignment, but that absence does not prove that
+   reinitialization or every alternate code-replacement path is impossible. *(superseded
+   2026-07-26 per Codex review round 2, [[g35-codex-verdict.md]])*
    *(Cross-lane check: the OP digest `4dedede8…` and ETH Tenderly digest `d8fe1539…` are
    byte-identical to those the g02-04 lane recorded for the same queries.)*
 
@@ -747,8 +764,13 @@ The equivalent ETH check was done from a *different* surface — decoding the ET
 | 25418960 | setInbound/setOutbound | 1 | 30416 | **no** |
 | 25574218 | setInbound/setOutbound | 8 | 30214, 30335, 30362, 30165, 30260, 30243, 30322, 30332 | **no** |
 
-**Net: `ANY post-timelock write touching 30111/30101: False`** — an independent corroboration of
-g02-04 §3.5 leg 4 from an acquisition surface that lane did not use.
+~~**Net: `ANY post-timelock write touching 30111/30101: False`** — an independent corroboration of
+g02-04 §3.5 leg 4 from an acquisition surface that lane did not use.~~
+**Net:** No post-window touch appears in the decoded OP rate-limit/`PeerSet` event filters or the
+decoded ETH timelock `CallExecuted` selector filters. This does not exclude every possible write
+path. Within those filters, the result is an independent corroboration of g02-04 §3.5 leg 4 from
+an acquisition surface that lane did not use. *(superseded 2026-07-26 per Codex review round 2,
+[[g35-codex-verdict.md]])*
 
 ---
 
@@ -767,7 +789,10 @@ Tenderly `ca631d141e545edb164aac23a6677ffc4f56f1753632a162dd4606bda13c5a50`):
 |---|---|
 | 20865339 | `address(0)` → **`0x9f26d4c958fd811a1f59b01b86be7dffc9d20761`** |
 
-**Exactly one event. Never changed.** L1 upgrade authority = WR2's L1 timelock. This resolves
+**Exactly one event.** ~~**Never changed.**~~ Owner **by last decoded event**; no later
+corresponding standard event appears through the pinned head. Current storage remains a separate
+observed-side check. *(superseded 2026-07-26 per Codex review round 2, [[g35-codex-verdict.md]])*
+L1 upgrade authority = WR2's L1 timelock. This resolves
 blueprint E2's "L1: proxy admin `0xa9E9bBf0…`, owner **not established**" and its
 "L1 upgrades: **unknown** — possibly instant if the proxy admin is Safe-owned."
 
@@ -792,8 +817,11 @@ decoded evidence, and dates it.
 | 19384524 | `0x…015180` → `0x…03f480` | 86,400 → 259,200 |
 | **24982415** | `0x…03f480` → `0x00000000000000000000000000000000000000000000000000000000000d2f00` | **259,200 → 864,000 (10 days)** |
 
-**The blueprint records G-07 as "≤ 259,200 s bound only". The live value is 864,000 s — larger than
-the stated bound.** 259,200 s is a *superseded* state (live ETH blk 19384524 → 24982415).
+**The blueprint records G-07 as "≤ 259,200 s bound only".** ~~**The live value is 864,000 s — larger
+than the stated bound.**~~ **The minDelay by last decoded event is 864,000 s — larger than the
+stated bound;** no later `MinDelayChange` appears through the pinned head, and current storage
+remains a separate observed-side check. *(superseded 2026-07-26 per Codex review round 2,
+[[g35-codex-verdict.md]])* 259,200 s is a *superseded* state (live ETH blk 19384524 → 24982415).
 
 ### 6.3 L1 timelock roles — same GAP-3 treatment, dual-provider agreement True
 
@@ -813,7 +841,9 @@ Matches blueprint S7's "L1 timelock proposer Safe `0xcdd57D11476c22d265722F68390
 (SOURCED WR2 §1a) — **upgraded from declaration to decoded event**, never revoked. ~~OZ 4.x epoch~~
 OZ-4-style epoch (INFERRED lineage — §8 claim 8 as corrected) *(superseded 2026-07-26 per Codex
 review, [[g35-codex-verdict.md]])*,
-`admin = address(0)`, EXECUTOR_ROLE **not** open.
+`admin = address(0)`, EXECUTOR_ROLE **not** open (zero `address(0)` role events are observed;
+"not open" is INFERRED, conditional on the deployed code obeying the sourced AccessControl
+write/emission model) *(added per Codex review round 2, [[g35-codex-verdict.md]])*.
 
 **Cross-chain pattern worth flagging:** `0x055a8B2B…` received CANCELLER on the L1 timelock at ETH
 blk **25533308** and on the ETH adapter-owner timelock at ETH blk **25533314** — six blocks apart —
@@ -857,11 +887,11 @@ vendor-side control remain outside that conclusion. *(superseded 2026-07-26 per 
 | §3 S7, OP controller Safe row | "presumed proposer/executor, GAP-3 class" | **REFUTED as of OP blk 154619344.** New holder `0x7a00657a…`. Authoring `0x764682c7…` today manufactures a false control-plane claim. |
 | §3 S7, ETH timelock row | "Proposer/executor unknown — GAP-3" | Resolved: `0x2aCA7102…` (P/E/C) + `0x055a8B2B…` (C). |
 | §2 E2 | "OP … proposer/executor = OP controller Safe (deploy-script declaration; on-chain `RoleGranted` enumeration outstanding)" | Enumerated. **Declaration is now stale**; live is `0x7a00657a…`. |
-| §2 E2 | "L1: proxy admin `0xa9E9bBf0…`, owner **not established** (G-06)"; "L1 upgrades: **unknown** — possibly instant" | **G-06 closed:** owner `0x9f26d4C9…` since blk 20865339, never changed. **L1 upgrades ≥ 864,000 s**, not "possibly instant". |
+| §2 E2 | "L1: proxy admin `0xa9E9bBf0…`, owner **not established** (G-06)"; "L1 upgrades: **unknown** — possibly instant" | **G-06 closed:** owner **by last decoded event** `0x9f26d4C9…` since blk 20865339~~, never changed~~; no later corresponding standard event appears through the pinned head (current storage remains a separate observed-side check) *(superseded 2026-07-26 per Codex review round 2, [[g35-codex-verdict.md]])*. **L1 upgrades ≥ 864,000 s**, not "possibly instant". |
 | §2 E4, E5, E7 + §5.1 | "delegate-gated path NOT proven timelocked; zero remains the honest latency floor" | **REFUTED.** Delegate = timelock on both chains. Library/DVN/`setConfig` latency is **≥172,800 s ETH / ≥259,200 s OP** at and after ETH 25296945 / OP 154486119 — and **zero before**. Time-varying, with supersession points. |
-| §4 G-07 | "≤ 259,200 s bound only" | **864,000 s** since ETH blk 24982415; 259,200 s superseded. |
-| §4 G-10 | "OP OFT role-model ABI epoch" | Adjacent finding: the **two timelocks run different OZ epochs** (4.x vs 5.x). A single role-id vocabulary across chains is wrong by construction. |
-| §4 G-09 | Safe signer sets, facts-only when closed | Facts in hand for four Safes (§3.6), including the **identical 7-of-7 signer set** across the OP rotation. |
+| §4 G-07 | "≤ 259,200 s bound only" | **864,000 s by last decoded event** since ETH blk 24982415 (current storage remains a separate observed-side check) *(round 2, [[g35-codex-verdict.md]])*; 259,200 s superseded. |
+| §4 G-10 | "OP OFT role-model ABI epoch" | Adjacent finding: the **two timelocks run different OZ role-model styles** ~~(4.x vs 5.x)~~ (OZ-4-style vs OZ-5-style, INFERRED lineage — claim 8 as corrected) *(superseded 2026-07-26 per Codex review round 2, [[g35-codex-verdict.md]])*. A single role-id vocabulary across chains is wrong by construction. |
+| §4 G-09 | Safe signer sets, facts-only when closed | Facts in hand for four Safes (§3.6), including ~~the **identical 7-of-7 signer set** across the OP rotation~~ acquisition-time snapshots reporting **identical current owner sets** for the outgoing and incoming OP role holders — a role/address rotation; not proof of signer equality at the rotation block, and not a redeployment (claim 19 as corrected) *(superseded 2026-07-26 per Codex review round 2, [[g35-codex-verdict.md]])*. |
 | §7 GAP-1 | "OP pre-window single-provider" | **Closed** — dual-provider, agreement True. |
 
 **Two caveats the patch pass must preserve.** (1) These are *expected-side* claims derived from
@@ -905,7 +935,9 @@ agreeing on `(blockNumber, blockHash, txHash, logIndex, data[, topics, address])
 | 21 | Motive for the OP role rotation, the canceller rollout, or the 2026-04-14 reversion | **NOT CLAIMED** — no declared-intent artifact located (g02-04 GAP-4 remains open) |
 
 **Causality discipline.** This dossier states that the OP controller Safe's roles were revoked and
-that an identically-signed Safe received them in the same operation. It does **not** claim the
+that ~~an identically-signed Safe~~ a Safe whose acquisition-time snapshot reports an identical
+current owner set *(superseded 2026-07-26 per Codex review round 2, [[g35-codex-verdict.md]])*
+received them in the same operation — a role/address rotation. It does **not** claim the
 rotation was performed *because of* anything, nor that it was a key rotation, a migration, or a
 response to an incident. Sequence is evidence; motive is not, and no public artifact supplies it.
 
@@ -938,8 +970,10 @@ response to an incident. Sequence is evidence; motive is not, and no public arti
 **Found and disclosed rather than quietly cleaned up.** ~~Two sweep artifacts were written to the
 **same filename across two runs at different step sizes**, so the earlier bytes were overwritten:~~
 **Four paths — not two — carry multiple ledgered digests** *(superseded 2026-07-26 per Codex
-review, [[g35-codex-verdict.md]])*: the two lost 1M delegate sweep artifacts below (ledger lines
-28–31); one overwritten failed ETH header response (ledger lines 63 and 66); and one overwritten
+review, [[g35-codex-verdict.md]])*: the two lost 1M delegate sweep artifacts below ~~(ledger lines
+28–31)~~ (mevblocker sweep: ledger lines 28/30, same-digest repeat at line 32; Tenderly sweep:
+ledger lines 29/31, same-digest repeat at line 43) *(superseded 2026-07-26 per Codex review
+round 2, [[g35-codex-verdict.md]])*; one overwritten failed ETH header response (ledger lines 63 and 66); and one overwritten
 failed OP bytecode response (ledger lines 105 and 108). The latter two do not affect surviving
 factual conclusions — the successful replacement responses remain, and the old OP error body
 survives under another filename — but the disclosure must say four path collisions. The two
@@ -1025,6 +1059,13 @@ CROSS-PROVIDER     (250k mevblocker vs 250k tenderly):    True
 ETH adapter delegate history identical at all step sizes: True
 ```
 
+*(superseded 2026-07-26 per Codex review round 2, [[g35-codex-verdict.md]]: the final script-output
+line above — ~~`ETH adapter delegate history identical at all step sizes: True`~~ — is superseded;
+the quoted output is left verbatim because editing inside script output would falsify it, but the
+claim it states is withdrawn. Exact set equality is retained only for 100k/250k on the same
+provider and for 250k cross-provider; the 1M runs corroborate by ledger-recorded count only —
+their overwritten bodies prevent exact-set verification.)*
+
 Combined with the two 1M-step runs recovered from the ledger (§9.2), the ETH `DelegateSet` event
 ~~set is **6,368 at 100k, 250k and 1M steps, across two administratively independent providers** —
 a 10x step-size range and two providers, one answer.~~ count is 6,368 at 100k, 250k and 1M steps,
@@ -1072,7 +1113,10 @@ recovered from block 0, block-hash-pinned, three-provider concordant on OP and d
 with every topic0 and role id derived in-lane and the completeness of the event stream *sourced*
 from the OpenZeppelin implementation rather than assumed. The operative answers: the controller Safe
 **is** the proposer/executor on ETH and **is no longer** on OP; `EXECUTOR_ROLE` is **not** open on
-either; the only other holder is a canceller-only Safe present on both chains; and neither timelock
+either (zero `address(0)` role events are observed; "not open" is INFERRED, conditional on the
+deployed code obeying the sourced AccessControl write/emission model) *(added per Codex review
+round 2, [[g35-codex-verdict.md]])*; the only other holder is a canceller-only Safe present on both
+chains; and neither timelock
 has an external admin.
 
 **GAP-5 — RECONSTRUCTABLE. CLOSED, with the premise corrected.** The OApp emits no delegate event;

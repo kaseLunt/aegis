@@ -68,8 +68,16 @@ GET is 404 "not currently retained" — never "does not exist"; cache-control no
 the M1 GET is never laundered into a permalink); claim-language + method-surface teeth,
 both bite-proven with real inserted violations. Three born-green pins (E8/E11/G1+G2)
 mutation-verified to isolate exactly their row.
-**Next: S5 (CI adapter), S6 (web drawer), S7 (byte-identity gate), then the Codex
-convergence loop before any stamp. Do NOT stamp W5 mid-slice.**
+**S5 DONE (2026-07-26 late, 428/428, `0eb2dfd`): the CI adapter** — `runCiVerification`
+in `surfaces/ci.ts`, the third transport: SHARED `exitCodeForPayload` classification,
+SHARED `renderJson` canonical body (S7 artifact reused, not rebuilt), deterministic
+key=value summary with individually named per-state counts (no aggregate words), thrown
+rows returned as data with the CLI's 4/5 classes. H1–H5 red-first (H4 = the S7 gate's
+CLI/CI byte-parity pair, early; H5 tooth bite-proven with a real inserted token). The
+hygiene tooth caught a live Serena CRLF injection in `render.ts` mid-slice — its designed
+catch. S5 plan (inline recon) recorded in the charter.
+**Next: S6 (web evidence drawer — recon first per the S3/S4 pattern), S7 (byte-identity
+gate), then the Codex convergence loop before any stamp. Do NOT stamp W5 mid-slice.**
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
