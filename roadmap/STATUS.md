@@ -339,12 +339,18 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
   review dispositions every line.
 - **IN FLIGHT across a compaction boundary (2026-07-26 late) — results arrive as task
   notifications, persist verbatim + doctor + commit + push when they land:**
-  1. **GAP-3/5/1 control-plane evidence lane** (chain-historian, opus): timelock
-     proposer/executor role enumeration (converts "presumed" → decoded or refutes it),
-     delegate provenance via setDelegate/DelegateSet event history (the control plane's most
-     urgent unknown per the wave-2 blueprint), OP pre-window dual-provider completeness
-     sweep. Persist to `roadmap/research/route-manifest/`; then a wave-3 blueprint patch pass
-     folds the results into the S7 control-plane rows + G-08 re-pose.
+  1. ~~GAP-3/5/1 control-plane evidence lane~~ **PAUSED by owner 2026-07-26 late (usage
+     credits) — resume when the limit resets.** All three gaps ANSWERED before the pause;
+     pause report captured verbatim in
+     `roadmap/research/route-manifest/g35-lane-report.md` (with resume checklist), evidence
+     archived (31 MB, `aegis-evidence-archive/2026-07-26-scratchpad/g35/`). Headlines: OP
+     timelock roles moved to a NEW Safe `0x7a00657a…` on 2026-07-23 (blueprint presumption
+     refuted on OP); delegate on BOTH chains is now the timelock itself (wave-2
+     "delegate-gated zero-latency" thesis refuted); GAP-1 dual-provider closed; bonus
+     G-06/G-07 closed with minDelay superseded to 864,000 s. Blueprint is KNOWN-STALE on
+     those rows until the wave-3 patch pass. Two hardening legs open (must re-run on
+     resume). Full dossier + wave-3 patch + independent review pending — NOT manifest-grade
+     yet.
   2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
      NEEDS-CORRECTIONS** — persisted verbatim in
      `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis
