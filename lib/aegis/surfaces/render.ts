@@ -98,6 +98,17 @@ export function renderHuman(
       `boundary: chain ${blk.chainId ?? "?"} block ${esc(blk.number ?? "?")} ${esc(blk.finality ?? "unknown")} ${esc(blk.hash ?? "")}`.trimEnd(),
     );
   }
+  // Finality downgrades are part of the frame (W5 acceptance: they reach the reader on
+  // every surface): the full record — requested, used, depth, reason — never just the
+  // downgraded finality word. Diagnostics are display-only; engine.ts licenses this read
+  // for a CLI renderer, and the payload/reportHash carry none of it (pinned by D21).
+  for (const b of run.diagnostics.boundaries) {
+    for (const d of b.downgrades) {
+      lines.push(
+        `downgrade: chain ${d.chainId} requested ${esc(d.requested)} used ${esc(d.used)} depth ${esc(d.confirmationDepth)} (${esc(d.reasonCode)})`,
+      );
+    }
+  }
   const cov = p.coverage;
   lines.push(
     `coverage: supported ${cov?.supported?.length ?? 0}, unsupported ${cov?.unsupported?.length ?? 0}, excluded ${cov?.excluded?.length ?? 0}`,

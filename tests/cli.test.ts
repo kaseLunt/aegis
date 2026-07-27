@@ -632,6 +632,29 @@ describe("W5 S3 — C. render language (the canon teeth)", () => {
   });
 });
 
+describe("W5 S3 — D. diagnostics", () => {
+  test("D21: a finality downgrade renders with its full record, not just the downgraded word", async () => {
+    // W5 acceptance: "finality downgrades reach the reader on every surface". The chain-10
+    // shipped recording pins via the confirmations fallback (tests/engine.test.ts:63-76), so
+    // the human render must carry the downgrade RECORD — requested, used, depth, reasonCode —
+    // in the frame, not merely the word "confirmations" on the boundary line. Diagnostics
+    // are excluded from the hashed payload (engine.ts doc), so the reportHash is untouched.
+    const human = await run(REFERENCE_ARGS);
+    expect(human.stdout).toContain(
+      "downgrade: chain 10 requested finalized used confirmations depth 12 (finality_tag_unsupported)",
+    );
+    // The frame rule holds: the downgrade renders before the first verification line.
+    const idx = human.stdout.indexOf("downgrade: chain 10");
+    expect(idx).toBeLessThan(human.stdout.indexOf("deployment.code_identity/"));
+    // Chain 1 pinned at finalized with no fallback — no spurious downgrade line.
+    expect(human.stdout).not.toContain("downgrade: chain 1 ");
+    // Display-only: the human run's reportHash is byte-equal to the canonical envelope's.
+    const json = await run([...REFERENCE_ARGS, "--json"]);
+    const envelope = JSON.parse(json.stdout) as { reportHash: string };
+    expect(human.stdout).toContain(`reportHash: ${envelope.reportHash}`);
+  });
+});
+
 // Read the fixture bytes once here so a future refactor of the helper cannot silently point
 // the suite at different inputs than the documented command uses.
 test("the fixture paths used by this suite are the shipped reference set", () => {

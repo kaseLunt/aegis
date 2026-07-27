@@ -20,7 +20,7 @@ import { loadRecordingBytes, recordedAdapter } from "../chain/adapter";
 import { type BoundaryPolicy, establishBoundary } from "../chain/engine";
 import type { ProviderConfig } from "../chain/providers";
 import type { QuorumResult } from "../chain/quorum";
-import type { PinnedBlock } from "../chain/selection";
+import type { FinalityDowngrade, PinnedBlock } from "../chain/selection";
 import { type IdentityTarget, compareIdentityTarget } from "../identity/compare";
 import { observeIdentity } from "../identity/observe";
 import {
@@ -58,6 +58,10 @@ export interface BoundaryDiagnostic {
   readonly status: "pinned" | "unresolved";
   readonly quorum: QuorumResult;
   readonly block: PinnedBlock | null;
+  // W5 acceptance: finality downgrades reach the reader on every surface. Diagnostics are
+  // excluded from the hashed payload, so carrying the full record here leaves reportHash
+  // untouched (pinned by D21).
+  readonly downgrades: readonly FinalityDowngrade[];
 }
 
 // In-process-only detail that must NOT enter the hashed payload but that an evidence drawer
@@ -140,6 +144,7 @@ export async function runVerification(
       status: result.status,
       quorum: result.quorum,
       block: result.status === "pinned" ? result.boundary.block : null,
+      downgrades: result.downgrades,
     });
     if (result.status !== "pinned") continue;
 
