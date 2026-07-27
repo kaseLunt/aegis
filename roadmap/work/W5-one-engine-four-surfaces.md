@@ -438,12 +438,232 @@ rather than faking it.
    `npm test`, `tsc`, lint, doctor, selftest all green; derive receipt impact with a doctor run
    before committing anything.
 
+## S4 plan (recon-derived, 2026-07-26)
+
+> Synthesized from the four-mapper read-only recon (run `wf_3f608169-b43`: http-surface,
+> store, canon-constraints, test-patterns; journal preserved under the session's workflow
+> directory). OBSERVED = read from the repo/docs by a mapper this run, cited `path:line`;
+> RULING = a design choice this plan makes where canon is silent, to be validated by the
+> S4 tests and the Codex loop.
+
+### 0. Ground rules binding this slice
+
+- Route handlers are transports: they call `runVerification` only and can never re-derive
+  or alter a verdict (W5:62-67). Classification is payload-derived via the shared function,
+  never recomputed per-transport (render.ts:55-57).
+- Canon endpoints: `POST /api/v1/verify` (ENGINEERING_SPEC:853), `GET /api/v1/reports/:hash`
+  (:856). Envelope `{requestId, generatedAt, payload, reportHash}` (:868-877);
+  requestId/generatedAt are delivery metadata, excluded from the hash (:846, :879).
+- Providers/URLs are structurally uncallable: `VerificationSelector` is
+  `{sourceMode, at, chainIds}` and `VerificationInputs` manifest+recording bytes only
+  (request.ts:24-33); `DeploymentConfig` is never caller input (engine.ts:41-44;
+  THREAT_MODEL:126 — the canonical allowlist statement).
+- vitest resolves no `@/` alias (vitest.config.ts:3-9 has no `resolve.alias`; tsconfig
+  paths are not read) — every file under `app/api/v1/**` uses RELATIVE imports, as
+  `bin/aegis.ts:10-15` does. `vitest.config.ts` is NOT in `allowed_paths`; do not touch it.
+- The hygiene tooth already scans `app/**` (repo-source-hygiene.test.ts SOURCE_DIRS
+  includes "app") — new files must be LF/control-char clean. Verify at G1 whether the C18
+  claim-language scan covers `app/api/v1/**`; extend it if not.
+- Do not model anything on the M0 routes (health/preflight/replay) beyond their export
+  SHAPE; zod `.strict()` at the edge is the one established app-layer pattern to keep
+  (preflight/route.ts:5-33; zod 3.25.76 already a dependency).
+- Do not stamp W5 mid-slice (W5:196).
+
+### 1. Transport encoding — the load-bearing ruling
+
+Manifest and recording documents arrive as **base64 strings of the raw bytes** inside the
+JSON body — NOT as embedded JSON objects. Two independent OBSERVED reasons:
+
+1. R-003's `findDuplicateJsonKey` runs on decoded TEXT before parse at both byte
+   boundaries (adapter.ts:109-114; trust.ts:236-259). Embedding documents as JSON objects
+   lets the platform's JSON parse last-wins duplicates before the guard ever sees them —
+   silently reopening the closed hazard.
+2. `duplicate_recording` vs `ambiguous_head_provenance` (the B13 trap) and `requestHash`
+   are decided by BYTE identity (request.ts:116-135); parse-then-restringify destroys it.
+
+Base64 (not JSON-string embedding) also keeps the `invalid_utf8` typed rejection reachable
+(adapter.ts:105-107). The zod schema validates the OUTER body only and never parses the
+embedded documents (they decode straight to `Uint8Array`). RULING: the outer body text
+also goes through `findDuplicateJsonKey` → 400 `duplicate_json_key` (R-003 spirit, cheap).
+
+### 2. POST /api/v1/verify contract
+
+Body (zod strict; unknown keys → 400):
+
+```jsonc
+{
+  "manifest": "<base64>",                    // -> inputs.manifestBytes
+  "recordings": [{"role": "heads",           // "heads" | "identity"
+                   "bytes": "<base64>"}],
+  "chainIds": [1, 10],
+  "at": "finalized",                         // passed VERBATIM; the ENGINE refuses others
+  "evaluationTime": "2026-07-24T00:00:00Z",  // determinism is an explicit input
+  "profile": "reference",                    // only value at M1 -> referenceDeployment
+  "trustPolicy": { "trustPolicyId": "...", "approvedHashes": ["..."] }  // optional
+}
+```
+
+Flow mirrors `bin/aegis.ts` phases minus the filesystem (bin/aegis.ts:29-185): read bytes →
+size limits (§5) → outer dup-key guard → JSON.parse → zod strict → base64 decode (typed
+`invalid_base64` + path on failure) → CLI-style pre-validation of each recording via
+`loadRecordingBytes` with the result DISCARDED (corruption is caller input → 400; the
+engine re-earns the WeakSet brand from raw bytes itself; bin/aegis.ts:105-126) →
+`referenceDeployment(manifestBytes, {evaluationTime, trustPolicy})` → `runVerification` →
+envelope.
+
+### 3. HTTP status mapping (RULING — canon has no status table)
+
+Canon specifies only: completed `unknown`/`stale`/`conflict` are COMPLETED reports, and 503
+is reserved for inability to construct any envelope (ENGINEERING_SPEC:881; engine.ts:84).
+Derived mapping, pinned by tests:
+
+| outcome | status |
+|---|---|
+| completed envelope — exit-class 0/2/3 AND payload-derived 4 (trust `invalid`) | **200** |
+| caller-input rejection before a run completes: body shape, limits, base64, outer dup-key, `RequestError`, pre-validation `ChainError` | **400** + `{requestId, generatedAt, error: {code, path?}}` |
+| `SurfaceError` / any other throw (no envelope) | **503** + same error body |
+| GET malformed hash (fails `SHA256_STRICT`, canonical.ts:437) | **400** `invalid_report_hash` |
+| GET well-formed hash not retained | **404** `report_not_found` |
+
+HTTP status is a DELIVERY channel; verdict classification lives in the payload and is
+derived by the shared `exitCodeForPayload` — a 200 carrying `policyTrust.state:"invalid"`
+is honest because the envelope completed, and machine consumers classify from the payload
+exactly as the CLI/CI do (render.ts:55-71). Error codes are contract
+(ENGINEERING_SPEC:803-810); error bodies reuse the landed `code`+`path` idiom, never raw
+zod issues.
+
+### 4. Envelope + serialization
+
+- Report envelope body = `jcsSerialize({requestId, generatedAt, payload, reportHash})`.
+  JCS determinism makes the payload subtree byte-identical to the CLI's
+  `jcsSerialize({payload, reportHash})` core, so S7 asserts the shared artifact without
+  re-serialization tricks (render.ts:2-4, 73-75; W5:419-423). NEVER reuse `renderJson` for
+  the API body (different shape); requestId/generatedAt never enter the hash.
+- `requestId` = `crypto.randomUUID()`; `generatedAt` = `new Date().toISOString()` at
+  delivery time. On GET replays delivery metadata is REGENERATED per delivery — the reading
+  consistent with ENGINEERING_SPEC:879.
+- Error bodies via `Response.json` (pure delivery, nothing identity-bearing).
+- ETag on report deliveries = `"<reportHash>"` (strong; precedent health route).
+  Cache-control **no-store at M1** (RULING): the per-isolate store must not be laundered
+  into a permalink by intermediary caches; caching revisits at M2 with the durable
+  permalink (ROADMAP:127).
+
+### 5. Size/shape limits (deferred from S2 — RULING, numbers pinned as constants)
+
+ENGINEERING_SPEC:883 names limit CLASSES but canon contains no numeric values anywhere
+(verified this recon). M1 has no calldata/Safe-batch/log-range/simulation inputs — those
+limits arrive with their features. What exists at M1 is bounded here, constants in the
+shared api module, each with a typed code + path:
+
+- total body ≤ 16 MiB → `request_too_large`
+- manifest ≤ 1 MiB → `manifest_too_large`
+- per-recording ≤ 8 MiB → `recording_too_large`
+- recordings ≤ 8 → `too_many_recordings`
+- chainIds ≤ 16 → `too_many_chain_ids` (validity/dedup stays the engine's job)
+- trustPolicy.approvedHashes ≤ 64 → `too_many_approved_hashes`
+
+Total-body checked on `arrayBuffer().byteLength` BEFORE decode/parse (cheap DoS guard,
+THREAT_MODEL:76/:127). Boundary-exact behavior pinned (limit passes, limit+1 rejects).
+
+### 6. The store + GET /api/v1/reports/[hash]
+
+- OBSERVED: zero storage bindings exist (dist/server/wrangler.json: empty
+  durable_objects/kv/r2/d1; vite.config.ts bindings fed by .openai/hosting.json
+  `{d1:null, r2:null}`); adding one edits files outside `allowed_paths` AND is a
+  new-architecture owner decision. Canon requires no GET durability at M1: the durable
+  permalink is M2 (ROADMAP:127), the append-only store M3 (ENGINEERING_SPEC:842-844).
+- RULING: in-memory per-isolate content-addressed `Map` in the shared api module, keyed by
+  `reportHash`, holding the frozen payload. Honest semantics documented in code:
+  per-isolate, non-durable, empty after redeploy; dev (single isolate) will LOOK durable.
+- GET contract: `app/api/v1/reports/[hash]/route.ts` (vinext parses `[seg]`,
+  route-pattern.js:3-7); handler awaits `params` (vinext's thenable satisfies the Next 16
+  async form); malformed hash → 400 BEFORE any lookup; miss → 404 whose language says the
+  report is NOT CURRENTLY RETAINED — never that it does not exist (claim-strength
+  discipline); hit → 200 envelope with fresh delivery metadata.
+- `aegis reproduce` does NOT land in S4 (RULING): the store retains payloads, not request
+  inputs, so the stored-input contract (W5:110-113) is unsatisfiable at M1 — `reproduce`
+  stays unadvertised per W5:426-427, and the S6 drawer must not present the GET as a
+  permalink.
+
+### 7. File layout
+
+- `lib/aegis/surfaces/api.ts` — framework-free shared core: limit constants, base64 decode
+  with typed errors, the guard chain, envelope builder, status mapping, the store. Shared
+  so S5/S7 and any future edge classify identically (the `exitCodeForPayload` precedent,
+  render.ts:55-57).
+- `app/api/v1/verify/route.ts` — thin adapter: `export async function POST(request)`.
+- `app/api/v1/reports/[hash]/route.ts` — thin adapter:
+  `export async function GET(request, {params})`.
+- Route files use RELATIVE imports only (`../../../../../lib/...`); no `@/`.
+- In-process tests construct `new Request("http://aegis.test/api/v1/...", {method, body})`
+  and call the exported handlers directly; GET tests pass
+  `{params: Promise.resolve({hash})}` (in-process calls bypass vinext dispatch, so the
+  auto-405 and thenable wrapping are not exercised).
+
+### 8. TDD test matrix (new file tests/api.test.ts; each observed RED first)
+
+**E. POST envelope + matrix**
+
+1. E1 happy path — shipped fixtures base64'd → 200; body is `jcsSerialize` bytes; envelope
+   has exactly the 4 keys; payload + reportHash equal the facade's direct output.
+2. E2 S7 forward hook — `jcsSerialize({payload, reportHash})` recomposed from the API
+   response equals the CLI's `renderJson` bytes for identical inputs.
+3. E3 delivery metadata — two identical POSTs → identical payload + reportHash, DIFFERENT
+   requestIds (both UUID-shaped); generatedAt ISO-UTC; neither field affects the hash.
+4. E4 outer-body rejections (each a typed 400) — unknown key (strict), missing manifest,
+   invalid base64 (+path), bad role, outer duplicate key (R-003 tooth), malformed JSON.
+5. E5 engine RequestError → 400 with the engine's own code + path (`at: "latest"` →
+   `unsupported_at_selector` — the API passes verbatim and does not pre-judge, the CLI
+   rule).
+6. E6 corrupt recording (byte-tamper, `integrity_mismatch`) → 400 (pre-validation mirror
+   of B11; caller input, the engine never sees it).
+7. E7 the B13 trap inherited — byte-identical duplicate heads → 400 `duplicate_recording`;
+   content-equal byte-different heads → 503 `ambiguous_head_provenance`.
+8. E8 completed-report honesty — unknown-verdict payload → 200 (never an error status);
+   trust-invalid manifest → 200 with `policyTrust.state "invalid"` inside the payload.
+9. E9 limits — each limit's boundary pinned (limit passes, limit+1 → its typed 400).
+10. E10 SSRF structural — body with provider/url keys → 400 unknown-key naming the path;
+    profile other than `"reference"` → 400.
+11. E11 honest trust mode — `trustPolicy` overrides self-approval (untrusted → 200,
+    payload untrusted, reasonCodes present — mirror B10).
+
+**F. GET + store**
+
+12. F1 POST-then-GET same isolate — 200, byte-identical payload core, FRESH delivery
+    metadata, etag = reportHash, cache-control no-store.
+13. F2 well-formed unknown hash → 404 `report_not_found`; "not retained" language pinned,
+    "does not exist" absent.
+14. F3 malformed hash → 400 `invalid_report_hash` with NO store lookup.
+15. F4 content-addressing — re-POST same inputs → same hash, one retrievable entry; the
+    stored payload is frozen.
+
+**G. Teeth**
+
+16. G1 claim-language scan covers `app/api/v1/**` (extend C18's file set if it does not;
+    negative-test with a real inserted violation, then remove it).
+17. G2 method surface — verify route exports POST only, reports route GET only (structural;
+    vinext auto-405s at dispatch, which in-process tests bypass).
+
+(D20-style stderr diagnostics have no API channel and the envelope is spec-fixed at 4
+fields — deliberately NOT extended. OBSERVED constraint, ENGINEERING_SPEC:868-877.)
+
+### 9. Sequencing
+
+1. E1–E3 RED → minimal `api.ts` + verify route GREEN (envelope + happy path only).
+2. E4–E8 one at a time (guard chain + status mapping earn their rows).
+3. E9–E11 (limits, SSRF-structural, trust modes).
+4. F1–F4 (store + GET route).
+5. G1–G2 teeth; then npm test, tsc, lint, doctor, selftest all green; CRLF sweep
+   ([[INS-5931d8f8-d494-4cb5-b147-c7fd9e6ffaab]]); commit. The Codex convergence loop
+   comes after S7, as chartered.
+
 ## Handoff
 
-- next: **S0 + S1 + S2 DONE** (384/384, tsc + lint clean). Start at **S3 — the CLI**:
-  `bin/aegis.ts` + `vite.cli.config.ts` + `package.json` bin/scripts, `node:util parseArgs`,
-  `surfaces/render.ts`, and the exit-code matrix (0 clean / 2 blocking fail / 3
-  unknown-stale-conflict / 4 invalid request or manifest / 5 engine failure).
+- next: **S0–S3 DONE** (406/406, tsc + lint clean; S3 packaging landed `e43d21b` — the
+  built artifact's canonical envelope is byte-identical to the in-process run, `cmp` clean,
+  documented command exits 3 honestly). Start at **S4 — the report API**, executing the
+  "S4 plan" section above in its §9 order: E1–E3 RED first, then the guard chain, then
+  the store + GET, then the teeth.
   **No more re-attestation chains in W5** — verified systematically, not from memory: every
   work item's `invalidated_by` was matched against the concrete S3-S7 path set and no item
   holding a LIVE (`status: recorded`) receipt is hit. Note the precise reason, because the
