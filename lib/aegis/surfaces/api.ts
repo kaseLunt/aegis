@@ -14,6 +14,18 @@ import { runVerification, SurfaceError } from "./engine";
 import { referenceDeployment } from "./profiles";
 import { RequestError } from "./request";
 
+// Size/shape limits, the S2 deferral landed at the HTTP edge (S4 plan §5). Canon names
+// the limit CLASSES (ENGINEERING_SPEC:883) but no numbers anywhere — these values are the
+// pinned RULING. Total-body is checked on the raw bytes BEFORE any decode or parse.
+export const API_LIMITS = {
+  maxBodyBytes: 16 * 1024 * 1024,
+  maxManifestBytes: 1024 * 1024,
+  maxRecordingBytes: 8 * 1024 * 1024,
+  maxRecordings: 8,
+  maxChainIds: 16,
+  maxApprovedHashes: 64,
+} as const;
+
 // The zod schema validates the OUTER body only. The embedded manifest/recording documents
 // stay base64 raw bytes and are NEVER parsed here: R-003's duplicate-key guard runs on
 // decoded text inside the loaders, and byte identity decides duplicate_recording vs
@@ -27,7 +39,7 @@ const VERIFY_BODY = z
     chainIds: z.array(z.number()),
     at: z.string(),
     evaluationTime: z.string(),
-    profile: z.string(),
+    profile: z.literal("reference"),
     trustPolicy: z
       .object({ trustPolicyId: z.string(), approvedHashes: z.array(z.string()) })
       .strict()
@@ -74,7 +86,13 @@ function reportResponse(payload: unknown, reportHash: string): Response {
 }
 
 export async function handleVerify(request: Request): Promise<Response> {
-  const text = await request.text();
+  // Total-body limit on the RAW bytes, before any decode or parse — the cheap DoS guard
+  // (THREAT_MODEL:76/:127).
+  const raw = await request.arrayBuffer();
+  if (raw.byteLength > API_LIMITS.maxBodyBytes) {
+    return errorResponse(400, "request_too_large");
+  }
+  const text = new TextDecoder().decode(raw);
 
   // R-003 at the outer boundary too: a duplicate key is invisible after parse, so the scan
   // runs on the text first — the same order the byte loaders use (scan, then parse).
@@ -93,19 +111,38 @@ export async function handleVerify(request: Request): Promise<Response> {
   }
   const body = checked.data;
 
+  // Shape limits on the validated outer body, before the (costlier) base64 decodes.
+  if (body.recordings.length > API_LIMITS.maxRecordings) {
+    return errorResponse(400, "too_many_recordings", "/recordings");
+  }
+  if (body.chainIds.length > API_LIMITS.maxChainIds) {
+    return errorResponse(400, "too_many_chain_ids", "/chainIds");
+  }
+  if (body.trustPolicy !== undefined && body.trustPolicy.approvedHashes.length > API_LIMITS.maxApprovedHashes) {
+    return errorResponse(400, "too_many_approved_hashes", "/trustPolicy/approvedHashes");
+  }
+
   let manifestBytes: Uint8Array;
   try {
     manifestBytes = fromBase64(body.manifest);
   } catch {
     return errorResponse(400, "invalid_base64", "/manifest");
   }
+  if (manifestBytes.byteLength > API_LIMITS.maxManifestBytes) {
+    return errorResponse(400, "manifest_too_large", "/manifest");
+  }
   const recordings: { role: "heads" | "identity"; bytes: Uint8Array }[] = [];
   for (const [index, recording] of body.recordings.entries()) {
+    let bytes: Uint8Array;
     try {
-      recordings.push({ role: recording.role, bytes: fromBase64(recording.bytes) });
+      bytes = fromBase64(recording.bytes);
     } catch {
       return errorResponse(400, "invalid_base64", `/recordings/${index}/bytes`);
     }
+    if (bytes.byteLength > API_LIMITS.maxRecordingBytes) {
+      return errorResponse(400, "recording_too_large", `/recordings/${index}/bytes`);
+    }
+    recordings.push({ role: recording.role, bytes });
   }
 
   // Pre-validation, the CLI's B11 ruling: each recording is loaded and the result

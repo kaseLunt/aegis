@@ -7,6 +7,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { POST } from "../app/api/v1/verify/route";
+import { API_LIMITS } from "../lib/aegis/surfaces/api";
 import { jcsSerialize } from "../lib/aegis/report/canonical";
 import { runVerification } from "../lib/aegis/surfaces/engine";
 import { referenceDeployment } from "../lib/aegis/surfaces/profiles";
@@ -258,5 +259,159 @@ describe("W5 S4 — E. POST guard chain", () => {
     };
     expect(invalidEnvelope.payload.policyTrust.state).toBe("invalid");
     expect(invalidEnvelope.payload.verifications).toEqual([]);
+  });
+
+  test("E9: every size/shape limit is boundary-exact — the limit passes, limit+1 draws its typed 400", async () => {
+    // Total body: pad the valid reference body with trailing whitespace (JSON-legal) to
+    // EXACTLY the limit -> full 200 run; one byte more -> request_too_large before any parse.
+    const baseText = JSON.stringify(referenceBody());
+    const atLimit = baseText + " ".repeat(API_LIMITS.maxBodyBytes - Buffer.byteLength(baseText));
+    expect(Buffer.byteLength(atLimit)).toBe(API_LIMITS.maxBodyBytes);
+    expect((await post(atLimit)).status).toBe(200);
+    await expectError(await post(atLimit + " "), 400, "request_too_large");
+
+    // Manifest: exactly maxManifestBytes of garbage passes the SIZE check (the run completes
+    // with policyTrust invalid, B9's honest 200); one byte more -> manifest_too_large.
+    const garbageManifest = "x".repeat(API_LIMITS.maxManifestBytes);
+    const atManifestLimit = await post(referenceBody({ manifest: Buffer.from(garbageManifest).toString("base64") }));
+    expect(atManifestLimit.status).toBe(200);
+    await expectError(
+      await post(referenceBody({ manifest: Buffer.from(garbageManifest + "x").toString("base64") })),
+      400,
+      "manifest_too_large",
+      "/manifest",
+    );
+
+    // Recording: pad the heads document with trailing whitespace (content-preserving) to
+    // exactly maxRecordingBytes -> full 200 run; one byte more -> recording_too_large.
+    const headsText = new TextDecoder().decode(HEADS_BYTES);
+    const paddedHeads = headsText + " ".repeat(API_LIMITS.maxRecordingBytes - Buffer.byteLength(headsText));
+    expect(Buffer.byteLength(paddedHeads)).toBe(API_LIMITS.maxRecordingBytes);
+    const atRecordingLimit = await post(
+      referenceBody({
+        recordings: [
+          { role: "heads", bytes: Buffer.from(paddedHeads).toString("base64") },
+          { role: "identity", bytes: b64(IDENTITY_BYTES) },
+        ],
+      }),
+    );
+    expect(atRecordingLimit.status).toBe(200);
+    await expectError(
+      await post(
+        referenceBody({
+          recordings: [
+            { role: "heads", bytes: Buffer.from(paddedHeads + " ").toString("base64") },
+            { role: "identity", bytes: b64(IDENTITY_BYTES) },
+          ],
+        }),
+      ),
+      400,
+      "recording_too_large",
+      "/recordings/0/bytes",
+    );
+
+    // Recording count: maxRecordings distinct documents pass; one more -> too_many_recordings.
+    // Identity variants get distinct trailing whitespace so byte-identity dedup stays quiet.
+    const identityText = new TextDecoder().decode(IDENTITY_BYTES);
+    const identityVariant = (i: number): { role: "identity"; bytes: string } => ({
+      role: "identity",
+      bytes: Buffer.from(identityText + " ".repeat(i + 1)).toString("base64"),
+    });
+    const atCount = [
+      { role: "heads", bytes: b64(HEADS_BYTES) },
+      ...Array.from({ length: API_LIMITS.maxRecordings - 1 }, (_, i) => identityVariant(i)),
+    ];
+    expect(atCount.length).toBe(API_LIMITS.maxRecordings);
+    // At the limit the gate passes and the request reaches the ENGINE, which refuses the
+    // content-overlapping identity bundles as an operational failure (the CLI's
+    // post-pre-validation ChainError -> 5 ruling, bin/aegis.ts:108): 503 with the engine's
+    // own code — proof the count check did NOT fire.
+    await expectError(
+      await post(referenceBody({ recordings: atCount })),
+      503,
+      "duplicate_provider_observation",
+    );
+    await expectError(
+      await post(referenceBody({ recordings: [...atCount, identityVariant(API_LIMITS.maxRecordings)] })),
+      400,
+      "too_many_recordings",
+      "/recordings",
+    );
+
+    // chainIds count.
+    const atChainLimit = Array.from({ length: API_LIMITS.maxChainIds }, (_, i) => i + 1);
+    expect((await post(referenceBody({ chainIds: atChainLimit }))).status).toBe(200);
+    await expectError(
+      await post(referenceBody({ chainIds: [...atChainLimit, API_LIMITS.maxChainIds + 1] })),
+      400,
+      "too_many_chain_ids",
+      "/chainIds",
+    );
+
+    // trustPolicy.approvedHashes count.
+    const hashes = (n: number): string[] =>
+      Array.from({ length: n }, (_, i) => `sha256:${i.toString(16).padStart(64, "0")}`);
+    const atHashLimit = await post(
+      referenceBody({ trustPolicy: { trustPolicyId: "tp-e9", approvedHashes: hashes(API_LIMITS.maxApprovedHashes) } }),
+    );
+    expect(atHashLimit.status).toBe(200);
+    await expectError(
+      await post(
+        referenceBody({ trustPolicy: { trustPolicyId: "tp-e9", approvedHashes: hashes(API_LIMITS.maxApprovedHashes + 1) } }),
+      ),
+      400,
+      "too_many_approved_hashes",
+      "/trustPolicy/approvedHashes",
+    );
+  });
+
+  test("E10: no caller can name a provider or URL — the deployment is structurally server-owned", async () => {
+    // Unknown keys are rejected BY NAME at every nesting level (strict schemas): an
+    // SSRF-probe shape cannot even be expressed (THREAT_MODEL:126; engine.ts:41-44).
+    await expectError(
+      await post(referenceBody({ providers: ["http://internal.example/"] })),
+      400,
+      "invalid_request_body",
+      "/providers",
+    );
+    await expectError(
+      await post(
+        referenceBody({
+          recordings: [{ role: "heads", bytes: b64(HEADS_BYTES), url: "http://internal.example/" }],
+        }),
+      ),
+      400,
+      "invalid_request_body",
+      "/recordings/0/url",
+    );
+    // The only deployment selector is the server-owned profile registry.
+    await expectError(
+      await post(referenceBody({ profile: "production" })),
+      400,
+      "invalid_request_body",
+      "/profile",
+    );
+  });
+
+  test("E11: a caller trust policy overrides self-approval — untrusted is a completed 200 with the refusal visible", async () => {
+    // The honest operator mode (B10's recipe): a policy that does not approve the manifest
+    // leaves every invariant unevaluated. Incomplete, not invalid — and never silently
+    // clean: the refusal rides inside the hashed payload with its reasonCodes.
+    const res = await post(
+      referenceBody({
+        trustPolicy: { trustPolicyId: "tp-api-e11", approvedHashes: [`sha256:${"a".repeat(64)}`] },
+      }),
+    );
+    expect(res.status).toBe(200);
+    const envelope = JSON.parse(await res.text()) as {
+      payload: {
+        policyTrust: { state: string; trustPolicyId: string; reasonCodes: readonly string[] };
+        verifications: readonly unknown[];
+      };
+    };
+    expect(envelope.payload.policyTrust.state).toBe("untrusted");
+    expect(envelope.payload.policyTrust.trustPolicyId).toBe("tp-api-e11");
+    expect(envelope.payload.policyTrust.reasonCodes).toEqual(["manifest_hash_not_approved"]);
+    expect(envelope.payload.verifications).toEqual([]);
   });
 });
