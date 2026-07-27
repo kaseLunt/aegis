@@ -653,6 +653,40 @@ describe("W5 S3 — D. diagnostics", () => {
     const envelope = JSON.parse(json.stdout) as { reportHash: string };
     expect(human.stdout).toContain(`reportHash: ${envelope.reportHash}`);
   });
+
+  test("D20: a configured provider absent from a recording draws a stderr warning — outcome untouched", async () => {
+    // W5:233-235 — a misconfigured providerId masquerades as a provider outage: the engine
+    // would just report no quorum, and the operator would chase RPC health instead of a
+    // typo. The CLI (transport-level diagnostic, stderr ONLY) names any configured provider
+    // with zero responses in a supplied recording, per recording role. Diagnostics may not
+    // alter outcomes: the exit code and the engine's refusal stay exactly as B12 pinned.
+    const recording = JSON.parse(readFileSync(HEADS, "utf-8")) as {
+      responses: Array<{ providerId: string }>;
+    };
+    recording.responses = recording.responses.filter((r) => r.providerId !== "quicknode");
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-d20-"));
+    try {
+      const headsPath = join(dir, "heads.json");
+      writeFileSync(headsPath, JSON.stringify(recording));
+      const args = REFERENCE_ARGS.map((a) => (a === HEADS ? headsPath : a));
+
+      const stripped = await run(args);
+      expect(stripped.stderr).toContain(
+        'warning: configured provider "quicknode" has no responses in the heads recording',
+      );
+      // Unchanged outcome: the same engine refusal and exit code B12 pinned for this input.
+      expect(stripped.stderr).toContain("no_observation_boundary");
+      expect(stripped.exit).toBe(5);
+
+      // Control: the full shipped bundle (both providers present in both recordings) draws
+      // no warning, and its outcome is the B4-pinned exit 3.
+      const control = await run(REFERENCE_ARGS);
+      expect(control.stderr).not.toContain("warning: configured provider");
+      expect(control.exit).toBe(3);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 // Read the fixture bytes once here so a future refactor of the helper cannot silently point

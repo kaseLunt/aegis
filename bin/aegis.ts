@@ -106,9 +106,15 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
   // The bundle is loaded and DISCARDED — the engine re-earns the provenance brand from raw
   // bytes itself (WeakSet brands survive no boundary); the CLI passes bytes, never bundles.
   // A ChainError escaping AFTER this point is an operational failure of the run (exit 5).
+  // The providerIds seen per recording feed the D20 transport diagnostic below.
+  const providersSeen: { role: string; present: ReadonlySet<string> }[] = [];
   for (const recording of recordings) {
     try {
-      loadRecordingBytes(recording.bytes);
+      const bundle = loadRecordingBytes(recording.bytes);
+      providersSeen.push({
+        role: recording.role,
+        present: new Set(bundle.responses.map((r) => r.providerId)),
+      });
     } catch (error) {
       if (error instanceof ChainError) {
         io.stderr.write(`${error.code} at ${error.path}\n`);
@@ -130,6 +136,20 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
     evaluationTime: values["evaluation-time"] as string,
     trustPolicy,
   });
+
+  // D20 transport diagnostic (W5:233-235): a configured provider with ZERO responses in a
+  // recording is more often a misconfigured providerId than an outage — without this line
+  // the operator chases RPC health instead of a typo. stderr ONLY, and it never alters the
+  // outcome: the engine still derives whatever the recordings support.
+  for (const { role, present } of providersSeen) {
+    for (const provider of deployment.providers) {
+      if (!present.has(provider.providerId)) {
+        io.stderr.write(
+          `warning: configured provider "${provider.providerId}" has no responses in the ${role} recording — a missing providerId can masquerade as a provider outage\n`,
+        );
+      }
+    }
+  }
 
   // The reproduce line (§6): rebuilt from the PARSED values, every determinism input
   // explicit, so the printed line alone re-derives the identical reportHash.

@@ -40,9 +40,17 @@ reproduce line via a pure `renderHuman(run, {reproduce})` param), renderer-wide 
 the charter: vectors are manifestVersion + trustPolicyId since provider strings can't ride
 at M1), claim-language lint (C18) and hygiene `+bin` (C19) both negative-tested with real
 inserted violations; C15 double-mutation-checked (state-word collapse, version prettify).
-**Resume at plan step 4:** §5(a) engine addition via test 21 (finality-downgrade visibility,
-RED against current diagnostics), then D20, packaging last. No re-attestation chains
-expected in S3-S7; do NOT stamp W5 mid-slice.
+**Plan step 4 DONE** (406/406): test 21 red-first drove the §5(a) engine addition —
+`BoundaryDiagnostic.downgrades` threads the full finality-downgrade record
+(requested/used/depth/reasonCode) to the render frame; reportHash pinned untouched
+(diagnostics stay unhashed); doctor-derived receipt impact: none. D20 red-first added the
+transport diagnostic: a configured provider with zero responses in a recording draws a
+stderr warning naming it per role (misconfig vs outage), outcome pinned unchanged against
+B12/B4. **Resume at plan step 5 (LAST): packaging (§4)** — config + scripts + one manual
+smoke run of the built artifact recorded in EV-W5 (documented command exits 3, honestly);
+verify npm test, tsc, lint, doctor, selftest all green. Then the S3→S7 sequence continues
+(S4 API, S5 CI, S6 web drawer, S7 byte-identity gate) and the Codex convergence loop before
+any stamp. Do NOT stamp W5 mid-slice.
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
