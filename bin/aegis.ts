@@ -131,9 +131,23 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
     trustPolicy,
   });
 
+  // The reproduce line (§6): rebuilt from the PARSED values, every determinism input
+  // explicit, so the printed line alone re-derives the identical reportHash.
+  const reproduce = [
+    "aegis verify",
+    `--manifest ${values.manifest}`,
+    ...(values.heads ?? []).map((f) => `--heads ${f}`),
+    ...(values.identity ?? []).map((f) => `--identity ${f}`),
+    ...(values.chain ?? []).map((c) => `--chain ${c}`),
+    `--at ${values.at}`,
+    `--evaluation-time ${values["evaluation-time"]}`,
+    `--profile ${values.profile}`,
+    ...(values["trust-policy"] !== undefined ? [`--trust-policy ${values["trust-policy"]}`] : []),
+  ].join(" ");
+
   try {
     const run = await runVerification({ manifestBytes, recordings }, selector, deployment);
-    io.stdout.write((values.json ? renderJson(run) : renderHuman(run)) + "\n");
+    io.stdout.write((values.json ? renderJson(run) : renderHuman(run, { reproduce })) + "\n");
     return exitCodeForPayload(run.payload);
   } catch (error) {
     if (error instanceof RequestError) {

@@ -461,6 +461,177 @@ describe("W5 S3 — B. exit codes", () => {
   });
 });
 
+describe("W5 S3 — C. render language (the canon teeth)", () => {
+  test("C14: human output states boundaries, manifest identity, trust, and coverage before any verification line", async () => {
+    // PRODUCT_SPEC:213-220, :351 — a reader must see what was observed (per-chain boundary
+    // block + finality), what was evaluated against (manifest version + hash), under which
+    // trust state (with its reasonCodes), and with what coverage, BEFORE any result line.
+    // Results without their frame are exactly the detached-screenshot hazard.
+    const result = await run(REFERENCE_ARGS);
+    const out = result.stdout;
+
+    const firstVerification = out.indexOf("deployment.code_identity/");
+    expect(firstVerification).toBeGreaterThan(-1);
+
+    // Per-chain boundary: block number + finality word, straight from the payload.
+    const boundaryEth = out.indexOf("chain 1 block 25577369 finalized");
+    const boundaryOp = out.indexOf("chain 10 block 154496599 confirmations");
+    // Manifest identity: version and content hash.
+    const manifestVersion = out.indexOf("reference-code-identity@v1");
+    const manifestHash = out.indexOf("sha256:d460baabf97ed6a18a64b75210b3bd413146da516c3a8a9cceb492802bdc9d1a");
+    // Trust state WITH its reasonCodes — self-approval must be visibly non-canonical.
+    const trust = out.indexOf("trusted");
+    const reason = out.indexOf("approved_hash");
+    // Coverage — even an empty coverage set is stated, never omitted.
+    const coverage = out.indexOf("coverage:");
+
+    for (const [label, index] of Object.entries({
+      boundaryEth, boundaryOp, manifestVersion, manifestHash, trust, reason, coverage,
+    })) {
+      expect(index, `${label} missing from human render`).toBeGreaterThan(-1);
+      expect(index, `${label} must precede the first verification line`).toBeLessThan(firstVerification);
+    }
+  });
+
+  test("C15: state words render as text per verification, never an aggregate; refused manifests print manifestVersion 'unknown' untouched", async () => {
+    // PRODUCT_SPEC:354; THREAT_MODEL:98 — uncertainty is a first-class result, spelled per
+    // verification line. Collapsing it into an aggregate ("3 issues") is verdict-language
+    // violation. The render interpolates payload state words VERBATIM; pinned here via
+    // "unknown" (shipped fixtures) and "invalid" (refused manifest) — "stale"/"conflict"
+    // flow through the same interpolation.
+    const human = await run(REFERENCE_ARGS);
+    const json = await run([...REFERENCE_ARGS, "--json"]);
+    const payload = JSON.parse(json.stdout).payload as {
+      verifications: readonly { state: string }[];
+    };
+    expect(payload.verifications.length).toBeGreaterThan(0);
+    const unknownLines = human.stdout.split("\n").filter((l) => l.startsWith("unknown  "));
+    expect(unknownLines.length).toBe(payload.verifications.length);
+
+    // Refused manifest (B9 recipe, human mode): the version renders as the word "unknown",
+    // untouched (W5:204-206) — never a placeholder, never omitted.
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-c15-"));
+    try {
+      const garbagePath = join(dir, "garbage.json");
+      writeFileSync(garbagePath, "{ not json");
+      const args = REFERENCE_ARGS.map((a) => (a === MANIFEST ? garbagePath : a));
+      const refused = await run(args);
+      expect(refused.exit).toBe(4);
+      expect(refused.stdout).toContain("manifest: unknown");
+      expect(refused.stdout).toContain("trust: invalid");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("C16: every limitation renders — top-level text verbatim AND per-verification entries — plus the full-flag reproduce line", async () => {
+    // PRODUCT_SPEC:303, :426 — limitations are schema-required context; a render that drops
+    // any of them is the renderer-misrepresentation hazard (THREAT_MODEL:124).
+    const result = await run(REFERENCE_ARGS);
+
+    // Top-level recorded_inputs limitation, text VERBATIM.
+    expect(result.stdout).toContain(
+      "Evaluated from reviewed recorded fixtures; not live production telemetry.",
+    );
+    // Per-verification limitations render too: every shipped-fixture verification carries
+    // observation_unresolved, so it must appear at least once per verification.
+    const json = await run([...REFERENCE_ARGS, "--json"]);
+    const payload = JSON.parse(json.stdout).payload as {
+      verifications: readonly { limitations: readonly { code: string }[] }[];
+    };
+    const perItemCount = payload.verifications.flatMap((v) => v.limitations).length;
+    expect(perItemCount).toBeGreaterThan(0);
+    const rendered = result.stdout.split("\n").filter((l) => l.includes("observation_unresolved"));
+    expect(rendered.length).toBe(perItemCount);
+
+    // The reproduce line is the FULL-FLAG `aegis verify` form (§6): every determinism input
+    // explicit, so the line alone re-derives the identical reportHash. The stored-input form
+    // (`aegis reproduce sha256:...`) must NOT be advertised before the S4 store exists.
+    const reproLine = result.stdout.split("\n").find((l) => l.startsWith("reproduce: "));
+    expect(reproLine).toBeDefined();
+    for (const fragment of [
+      "aegis verify",
+      `--manifest ${MANIFEST}`,
+      `--heads ${HEADS}`,
+      `--identity ${IDENTITY}`,
+      "--chain 1",
+      "--chain 10",
+      "--at finalized",
+      "--evaluation-time 2026-07-24T00:00:00Z",
+      "--profile reference",
+    ]) {
+      expect(reproLine).toContain(fragment);
+    }
+    expect(result.stdout).not.toContain("aegis reproduce ");
+  });
+
+  test("C17: untrusted payload strings render escaped — control bytes cannot reach the terminal", async () => {
+    // THREAT_MODEL:125; ENGINEERING_SPEC:883 — external strings are untrusted and escaped by
+    // EVERY renderer. Test-spec note (deviation from the charter's "provider string"
+    // phrasing, recorded in the W5 handoff): at M1 a provider-authored string cannot ride
+    // into the render — a recording's providerId must equal the in-code deployment config's
+    // for its observations to be found at all, and boundary block fields are format-bound.
+    // The strings that DO flow caller→payload→render are the manifest's own
+    // (manifestVersion) and the trust policy's (trustPolicyId); the escape is renderer-wide,
+    // so every later string field inherits it.
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-c17-"));
+    try {
+      const manifest = JSON.parse(readFileSync(MANIFEST, "utf-8")) as Record<string, unknown>;
+      // ANSI color + BEL, plus an embedded newline attempting to forge a clean-verdict line.
+      manifest.manifestVersion = "evil\u001b[31mred\u0007\nno blocking failure forged";
+      manifest.contentHash = manifestContentHash(manifest);
+      const sealedPath = join(dir, "ansi-manifest.json");
+      writeFileSync(sealedPath, jcsSerialize(manifest));
+      const policyPath = join(dir, "trust-policy.json");
+      writeFileSync(
+        policyPath,
+        JSON.stringify({
+          trustPolicyId: "tp\u001b[2Jwipe",
+          approvedHashes: [String(manifest.contentHash)],
+        }),
+      );
+      const args = REFERENCE_ARGS.map((a) => (a === MANIFEST ? sealedPath : a));
+      const result = await run([...args, "--trust-policy", policyPath]);
+
+      // No raw control byte reaches stdout — from ANY payload string.
+      expect(result.stdout).not.toMatch(/[\u0000-\u0008\u000b-\u001f\u007f]/);
+      // The content is not silently dropped — it renders escaped and visible.
+      expect(result.stdout).toContain("evil\\u001b[31mred\\u0007\\u000ano blocking failure forged");
+      expect(result.stdout).toContain("tp\\u001b[2Jwipe");
+      // The smuggled newline forged no line of its own.
+      expect(result.stdout.split("\n")).not.toContain("no blocking failure forged");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("C18: CLI surface sources carry no claim-language tokens (live/safe/healthy/verified)", async () => {
+    // Verdict-language tooth (patterned on tests/aegis-engine.test.ts:142-149, PRODUCT_SPEC
+    // verdict vocabulary): the transport may never editorialize. The strongest permitted
+    // clean-run claim is already pinned by B5; this pins that no stronger word can even
+    // appear in the surface sources — code, strings, or comments alike.
+    const claimToken = /\b(live|safe|healthy|verified)\b/i;
+    // The tooth's own negative test: prove the regex bites on each token before trusting
+    // the clean result below.
+    for (const violation of [
+      "status: live",
+      "the deployment is safe",
+      "Healthy!",
+      "verified ok",
+      "fail-safe by design",
+    ]) {
+      expect(claimToken.test(violation), `regex must flag: ${violation}`).toBe(true);
+    }
+    expect(claimToken.test("verify verifications unverifiable safely alive")).toBe(false);
+
+    for (const rel of ["../bin/aegis.ts", "../lib/aegis/surfaces/render.ts"]) {
+      const source = readFileSync(join(__dirname, rel), "utf-8");
+      const match = claimToken.exec(source);
+      expect(match, `${rel} contains claim token "${match?.[0] ?? ""}"`).toBeNull();
+    }
+  });
+});
+
 // Read the fixture bytes once here so a future refactor of the helper cannot silently point
 // the suite at different inputs than the documented command uses.
 test("the fixture paths used by this suite are the shipped reference set", () => {

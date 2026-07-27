@@ -12,7 +12,7 @@ import { extname, join } from "node:path";
 import { describe, expect, test } from "vitest";
 
 const ROOT = join(__dirname, "..");
-const SOURCE_DIRS = ["lib", "app", "tests", "components"];
+const SOURCE_DIRS = ["bin", "lib", "app", "tests", "components"];
 const SOURCE_EXT = new Set([".ts", ".tsx"]);
 
 // Tab and newline are the only control characters legal in our sources; carriage return is

@@ -33,11 +33,16 @@ six per-row mutation checks each isolated exactly one row (no dead/redundant bra
 red-first CLI additions landed under the series: recording pre-validation (B11, corruption =
 caller input exit 4, bundle discarded so the engine re-earns the brand) and repeatable
 `--heads` (B13, the ambiguous-vs-duplicate ordering trap, both exits pinned).
-**Resume at plan step 3:** tests C14-C19 render language + teeth (boundaries-before-results,
-state-words-as-text, limitations-always-printed, untrusted-strings-escaped, claim-language
-lint negative-tested, hygiene coverage +bin negative-tested). Then §5(a) engine addition via
-test 21 (finality-downgrade visibility, RED against current diagnostics), D20, packaging
-last. No re-attestation chains expected in S3-S7; do NOT stamp W5 mid-slice.
+**Plan step 3 DONE** (404/404): C14-C19 landed — canon render layout (boundaries/manifest/
+trust+reasonCodes/coverage BEFORE any verification line; per-item limitations; full-flag
+reproduce line via a pure `renderHuman(run, {reproduce})` param), renderer-wide `esc()`
+(control bytes → visible `\uXXXX`, line-forgery pinned; C17 test-spec deviation recorded in
+the charter: vectors are manifestVersion + trustPolicyId since provider strings can't ride
+at M1), claim-language lint (C18) and hygiene `+bin` (C19) both negative-tested with real
+inserted violations; C15 double-mutation-checked (state-word collapse, version prettify).
+**Resume at plan step 4:** §5(a) engine addition via test 21 (finality-downgrade visibility,
+RED against current diagnostics), then D20, packaging last. No re-attestation chains
+expected in S3-S7; do NOT stamp W5 mid-slice.
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity

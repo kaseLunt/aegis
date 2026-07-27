@@ -268,7 +268,13 @@ helper (tests/engine.test.ts:39-49), byte-tamper (tests/strict-json.test.ts:56-6
 16. `limitations always printed` — every `limitations[]` entry rendered, `recorded_inputs` text
     verbatim; reproduce line printed (full-flag form; §6) (PRODUCT_SPEC:303, :426).
 17. `untrusted strings escaped` — a resealed bundle carrying ANSI/control bytes in a provider
-    string renders escaped (THREAT_MODEL:125; ENGINEERING_SPEC:883).
+    string renders escaped (THREAT_MODEL:125; ENGINEERING_SPEC:883). *Landed with a recorded
+    test-spec deviation: at M1 a provider-authored string cannot ride into the render (a
+    recording's providerId must equal the in-code deployment config's to be matched at all;
+    boundary block fields are format-bound), so the test's vectors are the two caller strings
+    that DO flow to the render — manifestVersion and trustPolicyId — including a smuggled-
+    newline line-forgery attempt. The escape (`render.ts esc()`) is renderer-wide, so any
+    future provider-string flow inherits it.*
 18. `claim-language lint` — source-level test over `bin/aegis.ts` + `surfaces/render.ts`
     forbidding `live`, `safe`, `healthy`, `verified` claim tokens (patterned on
     tests/aegis-engine.test.ts:142-149); **negative-tested** by temporarily inserting a
