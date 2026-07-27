@@ -344,18 +344,19 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
   review dispositions every line.
 - **IN FLIGHT across a compaction boundary (2026-07-26 late) — results arrive as task
   notifications, persist verbatim + doctor + commit + push when they land:**
-  1. ~~GAP-3/5/1 control-plane evidence lane~~ **PAUSED by owner 2026-07-26 late (usage
-     credits) — resume when the limit resets.** All three gaps ANSWERED before the pause;
-     pause report captured verbatim in
-     `roadmap/research/route-manifest/g35-lane-report.md` (with resume checklist), evidence
-     archived (31 MB, `aegis-evidence-archive/2026-07-26-scratchpad/g35/`). Headlines: OP
-     timelock roles moved to a NEW Safe `0x7a00657a…` on 2026-07-23 (blueprint presumption
-     refuted on OP); delegate on BOTH chains is now the timelock itself (wave-2
-     "delegate-gated zero-latency" thesis refuted); GAP-1 dual-provider closed; bonus
-     G-06/G-07 closed with minDelay superseded to 864,000 s. Blueprint is KNOWN-STALE on
-     those rows until the wave-3 patch pass. Two hardening legs open (must re-run on
-     resume). Full dossier + wave-3 patch + independent review pending — NOT manifest-grade
-     yet.
+  1. ~~GAP-3/5/1 control-plane evidence lane~~ **COMPLETE 2026-07-26 late (post-resume).**
+     Dossier persisted verbatim: `roadmap/research/route-manifest/g35-dossier.md` (13
+     sections); lane report + resume audit in `g35-lane-report.md`; evidence archived
+     (36 MB, 156 ledgered acquisitions, `aegis-evidence-archive/2026-07-26-scratchpad/g35/`).
+     GAP-3/5/1 all CLOSED (dual/three-provider concordant), G-06/G-07 bonus closures, G-10
+     adjacent finding (different OZ role-model epochs). Headlines stand: OP timelock roles
+     moved to NEW Safe `0x7a00657a…` (identical 7-of-7 signer set) on 2026-07-23; delegate
+     on BOTH chains is the timelock itself (wave-2 "delegate-gated zero-latency" thesis
+     REFUTED); minDelay superseded to 864,000 s. Blueprint is KNOWN-STALE on those rows.
+     Evidence-handling defect self-disclosed → [[INS-56e771b0]].
+     **NEXT research-lane step: wave-3 blueprint patch pass** (fold dossier into S7
+     control-plane rows, supersede refuted claims, re-pose G-08 on the new Safe) + then
+     independent review before anything is manifest-grade.
   2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
      NEEDS-CORRECTIONS** — persisted verbatim in
      `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis

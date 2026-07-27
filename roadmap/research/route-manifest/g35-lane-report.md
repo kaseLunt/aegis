@@ -1,10 +1,20 @@
-# GAP-3/5/1 control-plane evidence lane — PAUSED report (verbatim capture)
+# GAP-3/5/1 control-plane evidence lane — ~~PAUSED report~~ COMPLETE (superseded by the dossier)
 
-- **Lane:** chain-historian (opus), dispatched 2026-07-26; **PAUSED by owner 2026-07-26 late
-  (usage credits) — resume when the limit resets.**
-- **Status:** three chartered gaps ANSWERED (two fully closed, one with a single hardening
-  leg open); two bonus closures; the full dossier + wave-3 blueprint patch are NOT yet
-  written — this verbatim pause report is the interim record.
+**LANE COMPLETE 2026-07-26 late (post-resume).** The full dossier is
+[[g35-dossier.md|`g35-dossier.md`]] — this file remains as the pause-time record plus the
+resume audit trail. Completion deltas vs the pause report below: both killed hardening legs
+audited (zero partial bytes, failed closed) and re-run clean — Leg A OP `DelegateSet`
+3,384 chunks 0 errors, 1,756/1,756 agreement (GAP-5 OP half now OBSERVED-dual); Leg B ETH
+step-invariance True across 100k/250k/1M; the OnFinality roles sweep had actually completed
+(OP roles three-provider concordant); one self-disclosed evidence-handling defect (artifact
+filename collision overwrote two exhibit files; ledger intact, no claim depends on them —
+captured as an insight, remedy: filenames must encode sweep params or digest). Nothing
+disagrees with the pause report.
+
+- **Lane:** chain-historian (opus), dispatched 2026-07-26; paused by owner (usage credits),
+  resumed same night, completed clean.
+- **Status at pause (historical):** three chartered gaps ANSWERED (two fully closed, one
+  with a single hardening leg open); two bonus closures; dossier not yet written.
 - **Evidence:** scratch dir archived at
   `C:\Users\kasel\aegis-evidence-archive\2026-07-26-scratchpad\g35\` (31 MB, 65 entries:
   acquisition ledger, sweep logs, decoders + negative tests, raw JSON logs). Agent
