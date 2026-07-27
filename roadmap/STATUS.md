@@ -362,9 +362,20 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
      on BOTH chains is the timelock itself (wave-2 "delegate-gated zero-latency" thesis
      REFUTED); minDelay superseded to 864,000 s. Blueprint is KNOWN-STALE on those rows.
      Evidence-handling defect self-disclosed → [[INS-56e771b0]].
-     **NEXT research-lane step: wave-3 blueprint patch pass** (fold dossier into S7
-     control-plane rows, supersede refuted claims, re-pose G-08 on the new Safe) + then
-     independent review before anything is manifest-grade.
+     **Wave-3 blueprint patch APPLIED** (c6f871e): 29 patch blocks, supersede-in-place, 95
+     g35 citations, 23 lane-reported caps; drafting doc kept at `wave3-patch-blocks.md`.
+     Two new S7 entities (`0x7a00657a…` OP proposer/executor Safe, `0x055a8B2B…` cross-chain
+     canceller), new gap **G-15** (chain-only entities, no declared-intent artifact), G-06/
+     G-07 CLOSED, **G-08 re-posed** with an 8-item lane charter on the new Safe, G-10
+     advanced (OZ 4.x vs 5.x epoch split → role rows cannot share one role-id vocabulary
+     across chains). Organizing thesis rebuilt: the delegate IS the timelock, so every
+     enumerated hop has a decoded non-zero latency (172,800 s / 259,200 s / 864,000 s), and
+     the fastest quiet-rotation routes are no longer config writes but DVN key rotation,
+     Safe signer rotation, and the instant liveness powers.
+     **IN FLIGHT: independent Codex review of the G35 dossier — the wave-3 gate.** No
+     wave-3-derived row is manifest-grade until it lands (D-006). Verdict is
+     CONFIRMED-SOUND / NEEDS-CORRECTIONS / DO-NOT-USE; on return, disposition findings,
+     patch the dossier + blueprint if needed, then the re-posed G-08 lane is next.
   2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
      NEEDS-CORRECTIONS** — persisted verbatim in
      `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis
