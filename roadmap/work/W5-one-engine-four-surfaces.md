@@ -879,17 +879,49 @@ manual smoke (`npm run dev`), mirroring S3's built-artifact treatment (W5:384-38
   exercised by any test (S6 plan §6); RSC inserts `<!-- -->` between adjacent text nodes,
   so exact-string greps over served HTML must tolerate comment markers.
 
+## S7 plan (inline recon, 2026-07-30)
+
+> S7 composes what S3–S6 already pinned pairwise (H4 CLI/CI, I1 drawer/facade, E1
+> API/facade) into the single mechanical gate the charter names (W5:91-94), plus the
+> documented-command re-derivation (W5:110-112, PRODUCT_SPEC:303). `aegis reproduce`
+> stays OUT per the S4 §6 ruling (the store retains payloads, not request inputs) and
+> unadvertised (C16 pins that). Inline recon: cli.test.ts `run()`/REFERENCE_ARGS,
+> api.test.ts `post()`/`referenceBody()`, and the ci/drawer direct-call idioms are the
+> composition pieces; no new surface code is expected — S7 is a gate, not a feature.
+
+### Tests (tests/byte-identity.test.ts, series J)
+
+- J1 — THE GATE: one reference request through all four entry paths (CLI `main(argv)`
+  `--json`, `handleVerify(Request)` via the route's POST, `runCiVerification`,
+  `loadEvidenceDrawer`) plus the facade directly. Four `reportHash` values equal each
+  other and the facade's; payload BYTES identical everywhere: CLI stdout ===
+  `renderJson(run) + "\n"` === CI/drawer `canonicalBody + "\n"`, and
+  `jcsSerialize({payload, reportHash})` of the API envelope === `renderJson(run)`
+  (delivery metadata excluded from identity, ENGINEERING_SPEC:846/:879).
+- J2 — the documented command re-derives: the human render's full-flag `reproduce:` line,
+  tokenized and fed back through `main(argv)` with `--json`, yields a byte-identical
+  envelope and the same hash. (EV-W5 records the printed hash at stamp time.)
+- J3 — repeat determinism at the gate: a second full pass is byte-identical on CLI/CI/
+  drawer bodies (injected clock); the API envelope's payload bytes are stable while
+  `requestId`/`generatedAt` legitimately differ.
+- Born-green expectation, mutation plan: J1 composes pinned pairs, so it will be born
+  green — verify the gate BITES by (a) a drawer `canonicalBody` rebuilt via
+  `JSON.stringify` → J1 dies, and (b) a reproduce line dropped determinism flag → J2
+  dies. Revert byte-identical.
+
 ## Handoff
 
-- next: **S0–S6 DONE** (435/435, tsc + lint clean; S6 = the evidence drawer: loader
-  `surfaces/drawer.ts` at `67b2d9e`, then component + page + lint extension + Tailwind
-  source pin — see "S6 plan §8 As-built notes" for the recorded smoke and the two
-  dev-server pitfalls). Start at **S7 — cross-surface byte identity**: one request through
-  all four entry paths (CLI `main(argv)`, API route handler, `runCiVerification`,
-  `loadEvidenceDrawer`) must yield four equal `reportHash` values equal to the facade's
-  (W5:91-94), plus the documented reproduce command. H4 (CLI/CI) and I1 (drawer/facade)
-  already pin pairs — S7 composes ALL FOUR in one test plus the `aegis reproduce`
-  path, then the Codex convergence loop (D-b4ab3c69) before any stamp.
+- next: **S0–S7 ALL DONE (438/438, tsc + lint clean) — W5 is code-complete.** S7 landed
+  `tests/byte-identity.test.ts` J1–J3: the four-path gate (equal hashes AND identical
+  canonical bytes, API delivery metadata excluded via `jcsSerialize` re-serialization),
+  the reproduce line executed mechanically back through `main(argv)` (byte-identical
+  envelope), repeat determinism; both planned mutation bites verified (drawer stringify →
+  J1+I1 die; dropped `--evaluation-time` from the reproduce builder → J2 dies).
+  **Now the Codex convergence gate (D-b4ab3c69): review dispatched over the full W5
+  surface stack. Persist each verdict verbatim → disposition → scoped re-verification →
+  repeat until converged. Only then EV-W5 (documented command + recorded hash + workflow
+  snippet + drawer smoke) and the stamp — an owner-visible action. Green local tests are
+  necessary, never sufficient. Do NOT stamp before convergence.**
   **No more re-attestation chains in W5** — verified systematically, not from memory: every
   work item's `invalidated_by` was matched against the concrete S3-S7 path set and no item
   holding a LIVE (`status: recorded`) receipt is hit. Note the precise reason, because the

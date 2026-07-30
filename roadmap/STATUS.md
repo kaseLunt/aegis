@@ -89,8 +89,17 @@ the in-process facade hash (`sha256:7631ec73…bf42`). Two dev pitfalls recorded
 charter §8: Tailwind 4 auto-scan RangeError → stale-bundle 404s (fixed: `source(none)` +
 `@source` pins in globals.css) and zombie vinext listeners masking smokes. CSP gap stays
 [[IDEA-5bb4ace0]] (owner triage).
-**Now S7 (byte-identity gate: all four entry paths equal + documented reproduce), then
-the Codex convergence loop before any stamp. Do NOT stamp W5 mid-slice.**
+**S7 DONE (2026-07-30 early, 438/438): the byte-identity gate.** `tests/byte-identity.test.ts`
+J1–J3: four entry paths → one hash, identical canonical bytes everywhere (API envelope
+re-serialized to exactly `{payload, reportHash}` matches `renderJson` byte-for-byte);
+the full-flag reproduce line tokenized and re-executed through `main(argv)` yields a
+byte-identical envelope; deterministic under repetition. Born-green composition of
+pinned pairs, both planned mutation bites verified. `aegis reproduce` stays out and
+unadvertised per the S4 §6 ruling.
+**W5 is CODE-COMPLETE (S0–S7). The Codex convergence loop (D-b4ab3c69) is now the only
+thing between here and EV-W5 + stamp: verdict → persist verbatim → corrections → scoped
+re-verification → repeat until converged. Stamp is owner-visible, after convergence
+only.**
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
