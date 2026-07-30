@@ -459,6 +459,20 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
      Next in this lane: the re-posed G-08 charter (OP Safe `0x7a00657a…e0A868`) —
      dispatched 2026-07-29 late as a background research lane (draft dossier +
      evidence artifacts only; quarantined, review loop to follow).
+     **G-08 lane RETURNED (2026-07-30 early): 8/8 charter items dispositioned** —
+     `g08-safe-dossier.md` committed (sha256 `6efef9ed…3541c` verified against the lane
+     report); evidence archive `g08-evidence/` (19 scripts, 444-acquisition ledger,
+     ~3.9k retained files, 9.5 MB) stays ON DISK UNTRACKED per the g35 archive pattern
+     (git carries dossiers only). Headlines, ALL lane-reported/quarantined pending the
+     review gate: creation + full signer/threshold history OBSERVED-dual
+     (5/thr2 → 7/thr4, one change); claim-19 gap CLOSED (distinct proxies, identical
+     7-owner set AND thr4 proven at rotation block 154619344); **material finding —
+     the outgoing Safe `0x764682c7…` still holds DEFAULT_ADMIN_ROLE + UNPAUSER_ROLE on
+     the OP OFT manifest target by last decoded event** (rotation moved only timelock
+     P/E/C); g35 NEW-1/G-15 REFUTED for `0x7a00657a…` (declared at pinned commit
+     `e30c859c` L2Constants.sol; canceller `0x055a8B2B…` still undeclared — G-15
+     stands). **G-08 Codex review gate: QUEUED behind the in-flight W5 round-1 review**
+     (one companion job at a time); item 8 (row promotion) remains owner/HITL.
   2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
      NEEDS-CORRECTIONS** — persisted verbatim in
      `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis
