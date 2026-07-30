@@ -27,3 +27,11 @@ of :125 (React text-node rendering only, no `dangerouslySetInnerHTML` — lint-h
 serves every response, so a header layer exists) and land a strict CSP before any public
 deployment of the web surface. Until then the gap is a disclosed limitation of the M1 web
 surface, not a silent one.
+
+**Triage (2026-07-30, owner delegated "best judgement"):** DEFERRED to pre-deployment —
+fold into the M2 web-surface work item, whose charter should include `next.config.ts` (or
+the worker header layer) in `allowed_paths` at authoring time. Rationale: the M1 surface
+is not publicly deployed; the escaping clause of THREAT_MODEL:125 is landed and lint-held;
+a CSP belongs with the deployment-shaped work where it can be smoke-tested against the
+real Workers pipeline rather than only in dev. Tripwire: any public deployment of the web
+surface BEFORE that item exists re-opens this as a blocker, not an idea.
