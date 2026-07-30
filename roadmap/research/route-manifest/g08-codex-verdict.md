@@ -126,3 +126,38 @@ Resume in Codex: codex resume 019fb1f6-df3d-73e3-9f42-2bf82757154a
   non-verbatim reproductions of the round-1 formulations; all three applying-agent
   judgment calls ACCEPTED; item 6 unchanged and sound. Being applied supersede-in-place;
   scoped round-3 follows.
+
+# Round 3 — convergence check (2026-07-30)
+
+Fresh Codex session per the standing multi-lane resume-hazard rule (INS-1fb3423e addendum;
+no `--resume-last`). Reviewed at `7bd249f`. Verbatim verdict follows.
+
+---
+
+[codex task-ms79i3ct-2th1po | completed | ~18min | fresh session, G-08 round 3 (thread 019fb22d-524a-77e3-8eb5-87269f9db567)]
+
+# GATE-PASSES
+
+All five Round-2 corrections are correctly applied, with no disallowed live residue.
+
+Ruling: the Section 4 framing at g08-safe-dossier.md:235 is an acceptable paraphrase of the corrected substance. It does not require normalization.
+
+Item 6 remains unchanged at its approved cap: by-last-decoded-event, `OBSERVED-single`, and limited to the named standard event filters.
+
+Codex session ID: `019fb22d-524a-77e3-8eb5-87269f9db567`
+
+Codex session ID: 019fb22d-524a-77e3-8eb5-87269f9db567
+Resume in Codex: codex resume 019fb22d-524a-77e3-8eb5-87269f9db567
+
+---
+
+## Disposition status (round 3 — LOOP CONVERGED)
+
+- **The G-08 review loop is CLOSED: GATE-PASSES at round 3** (8 → 5 → 0, monotone), per
+  [[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]].
+- The dossier is now review-converged evidence at its stated per-claim strengths — incl.
+  the item-6 material finding (outgoing Safe retains DEFAULT_ADMIN_ROLE + UNPAUSER_ROLE on
+  the OP OFT by last decoded standard event, OBSERVED-single, filter-scoped).
+- Charter item 8 stands: **any promotion of these values remains an owner/HITL action**
+  (D-006 bars this pipeline from certifying its own sourcing). Nothing here promotes
+  anything.

@@ -471,8 +471,13 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
      the OP OFT manifest target by last decoded event** (rotation moved only timelock
      P/E/C); g35 NEW-1/G-15 REFUTED for `0x7a00657a…` (declared at pinned commit
      `e30c859c` L2Constants.sol; canceller `0x055a8B2B…` still undeclared — G-15
-     stands). **G-08 Codex review gate: QUEUED behind the in-flight W5 round-1 review**
-     (one companion job at a time); item 8 (row promotion) remains owner/HITL.
+     stands). **G-08 REVIEW LOOP CLOSED 2026-07-30: GATE-PASSES at round 3 (8 → 5 → 0)**
+     — verdicts + corrections persisted in `g08-codex-verdict.md` / applied
+     supersede-in-place in the dossier (rounds committed at 06c1325, b746746). The
+     dossier is review-converged evidence at its stated per-claim strengths; the item-6
+     material finding (outgoing Safe retains DEFAULT_ADMIN + UNPAUSER on the OP OFT by
+     last decoded event) SURVIVED all three rounds. Item 8 (promotion of any value)
+     remains owner/HITL — nothing promoted.
   2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
      NEEDS-CORRECTIONS** — persisted verbatim in
      `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis
