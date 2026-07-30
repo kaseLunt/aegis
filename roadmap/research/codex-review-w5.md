@@ -142,3 +142,42 @@ Resume in Codex: codex resume 019fb220-7beb-7060-97c6-1719134082aa
   `2026-02-30T00:00:00Z` → freshness `unknown`, state `unknown`; in-test control with the
   real instant `2026-02-28T00:00:00Z` proves the scenario is otherwise stale-capable.
 - Suite 452/452; tsc + eslint clean. Ready for scoped round-3 re-verification.
+
+# Round 3 — convergence check (2026-07-30)
+
+Fresh Codex session per the standing multi-lane rule (no `--resume-last`). Reviewed at
+`b86d6a4`; correction commit verified `cc44c3a`. Verbatim verdict follows.
+
+---
+
+[codex task-ms7a0ntq-aaqo3l | completed | ~27min | fresh session, W5 round 3, final queued round (thread 019fb23a-8828-7211-8270-6bebdecd44d7)]
+
+GATE-PASSES
+
+Session ID: `019fb23a-8828-7211-8270-6bebdecd44d7`
+
+- Strict validation covers the evaluation clock and all successful observation timestamps; invalid values force `unknown`.
+- F2b is binding: reverting to `Date.parse` yields `stale`, causing the test to fail.
+- Shared-helper behavior is equivalent to the prior profile validation.
+- Re-sealing claims only envelope integrity, not authenticity or review.
+- F2b/K1/E12 passed directly; TypeScript passed; ESLint had 0 errors. The read-only sandbox ran 421 tests, with the remaining 31 blocked solely by temporary-file permissions.
+
+Codex session ID: 019fb23a-8828-7211-8270-6bebdecd44d7
+Resume in Codex: codex resume 019fb23a-8828-7211-8270-6bebdecd44d7
+
+---
+
+## Disposition status (round 3 — LOOP CONVERGED)
+
+- **The W5 convergence loop is CLOSED: GATE-PASSES at round 3** (7 findings → 1 → 0,
+  monotone) per [[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]]. Green local tests were
+  necessary; this loop was the sufficiency.
+- Reviewer-agent operational note (recorded): its first round-3 dispatch self-halted under
+  D-004 because the reviewer's own brief omitted the standing g08-evidence untracked
+  exception — a prompt omission, not a repo problem; corrected and redispatched once, the
+  non-answer discarded. The fail-closed halt worked exactly as designed.
+- Unlocked: EV-W5 (documented command + recorded hash, workflow snippet, drawer smoke,
+  verification-boundary disclosure) and the W5 achieved stamp. The recorded reference
+  hash must be RE-DERIVED post-corrections (the round-1/2 fixes changed the payload).
+- Standing cap carried into EV-W5: the fp-reference freshness window is a declared
+  reference-profile constant, never an independently reviewed production policy.
