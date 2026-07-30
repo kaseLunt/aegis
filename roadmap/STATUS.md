@@ -5,7 +5,7 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: W5
+active_task: none
 updated: 2026-07-26
 ---
 

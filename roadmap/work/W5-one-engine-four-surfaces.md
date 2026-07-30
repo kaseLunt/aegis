@@ -3,7 +3,7 @@ id: W5
 type: work
 title: aegis verify CLI + report API + CI adapter + web evidence drawer over one engine
 phase: P1
-status: active
+status: achieved
 evidence_target: "Correct + Robust + Demonstrated"
 priority: 1
 depends_on: [W4]
@@ -23,7 +23,8 @@ deliverables:
   - lib/aegis/surfaces/render.ts
   - lib/aegis/surfaces/ci.ts
   - bin/aegis.ts
-evidence_receipts: []
+evidence_receipts:
+  - roadmap/evidence/EV-W5.md
 invalidated_by:
   - lib/aegis/**
   - bin/**
@@ -31,7 +32,8 @@ invalidated_by:
   - data/**
   - package.json
 review_when: phase:P1:exit
-updated: 2026-07-25
+updated: 2026-07-30
+evidence_fingerprint: sha256:92e973142dcca88acd570346c5981cd8339a1ce0301628afeace745d23f24c54
 ---
 
 # W5 — One engine, four surfaces

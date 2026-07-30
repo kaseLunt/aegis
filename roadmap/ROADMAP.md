@@ -36,7 +36,7 @@ Dependency-gated: an item can't be certified while anything it depends on is unp
 | W2 | Manifest model + trust root (approved-hash policy, content addressing, applicability) | P1 | W1 | Correct + Robust | achieved |
 | W3 | Finalized-block selection + two independent RPC adapters + quorum/conflict semantics | P1 | W1 | Correct + Robust | achieved |
 | W4 | Identity adapters (direct / EIP-1967 / beacon / clone) + code-hash-scoped ABI registry | P1 | W2, W3 | Correct + Robust | achieved |
-| W5 | aegis verify CLI + report API + CI adapter + web evidence drawer over one engine | P1 | W4 | Correct + Robust + Demonstrated | active |
+| W5 | aegis verify CLI + report API + CI adapter + web evidence drawer over one engine | P1 | W4 | Correct + Robust + Demonstrated | achieved |
 | W6 | M1 recorded scenario fixture corpus + reorg supersession | P1 | W5 | Correct + Robust | candidate |
 | WR1 | ETH-OP expected-policy research (route manifest inputs) | P1 | — | Correct | achieved |
 | WR2 | Authority research (owners, delegates, roles, Safes, timelocks, guardians) | P1 | — | Correct | achieved |
