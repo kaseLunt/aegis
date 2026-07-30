@@ -699,13 +699,156 @@ fields — deliberately NOT extended. OBSERVED constraint, ENGINEERING_SPEC:868-
 - H5 (tooth): claim-language scan extended to `ci.ts`; summary output itself scanned for
   the banned tokens.
 
+## S6 plan (recon-derived, 2026-07-29)
+
+> Three read-only mappers (ui-stack / drawer-canon / test-reality, workflow
+> `wf_2dc69dd5-5ad`); every load-bearing claim below carries the mapper's citation.
+> RULING markers as before.
+
+### 0. Ground rules binding this slice
+
+- The drawer's server-side loader is the FOURTH S7 entry path (W5:91-94). It is a
+  transport only — no evaluation, no re-wording of verdicts, ever (W5:53-54).
+- **M0 quarantine.** Never import `lib/aegis/types.ts` (M0 vocabulary, W5:745-747). The
+  existing `EvidenceDrawer` inside `components/aegis-dashboard.tsx:815-889` is typed on M0
+  `InvariantResult` — a CSS/layout precedent only, never a model. No `/api/health`-style
+  client fetches (W5:748-749).
+- **vitest reality (OBSERVED, test-reality §1).** `vitest.config.ts`: `environment: "node"`,
+  `include: tests/**/*.test.ts` only, NO `resolve.alias`, no plugins. Therefore: anything a
+  test imports uses relative paths; tests contain no JSX syntax (drive components with
+  `React.createElement`); the drawer `.tsx` must be **sync and props-fed** because
+  `react-dom/server` `renderToStaticMarkup` cannot render async components. No repo test
+  has ever imported a `.tsx` module — the import path is a SPIKE, proven red/green, with a
+  documented lint-only fallback.
+- `vitest.config.ts` and `next.config.ts` are outside `allowed_paths` — untouchable.
+
+### 1. The diagnostics ruling (the S6-bullet tension, settled)
+
+The S6 bullet demands downgrades AND "payload-derived fields only" (W5:169-170), but
+downgrade records exist only in `run.diagnostics`, which must never enter the hashed
+payload (W5:131-133). `engine.ts:67-68` explicitly licenses "an evidence drawer and a CLI
+renderer" to read diagnostics, and the CLI already renders them under that license
+(render.ts:101-111; the D21 contract, tests/cli.test.ts:636-645). **RULING:** the drawer
+display model = hashed-payload projections + the licensed diagnostics records
+(downgrades/applicability), display-only; `reportHash` and `canonicalBody` remain
+payload-only, so the hash is untouched — the exact argument that admitted D21 on the CLI.
+"Payload-derived fields only" means *no semantic field originates outside the canonical
+run* (ENGINEERING_SPEC:879), not a diagnostics ban the engine's own license contradicts.
+
+### 2. Loader design (`lib/aegis/surfaces/drawer.ts`)
+
+- ONE entry mirroring the CI adapter (ci.ts:52-56): `loadEvidenceDrawer(inputs, selector,
+  deployment): Promise<DrawerRun>`, `DrawerRun = { reportHash, canonicalBody,
+  classification, model }`. `canonicalBody` = SHARED `renderJson` (the S7 byte artifact,
+  reused not rebuilt); `classification` = SHARED `exitCodeForPayload` (third consumer —
+  transports cannot classify one payload differently, render.ts:55-58).
+- **Thrown path (RULING):** the loader does NOT catch — `RequestError`/`SurfaceError`
+  propagate. Unlike CI there is no step consuming exit classes as data; a throw is an
+  operational failure surfacing as an error, never a verdict and never a null-state model
+  (W5:83-84). The S7 gate needs success-path parity only.
+- `DrawerModel` is a pure projection ordered **frame before results** (PRODUCT_SPEC:213-220,
+  :351; the detached-screenshot hazard, render.ts:85-87): header (manifest identity —
+  `manifestVersion` verbatim, `"unknown"` stays `"unknown"` per W5:725-727; `manifestHash`;
+  `sourceMode` with recorded labeling, W5:85-86) → trust (state + reasonCodes, W5:73-75) →
+  boundaries with per-boundary licensed downgrade records (requested/used/depth/reasonCode)
+  → coverage → verifications (canonical state words VERBATIM, render.ts:56-70; statement;
+  per-verification limitations whole) → evidence refs (id, kind, provenanceClass,
+  providerId, method, rawResultHash, capturedAt, boundary) → limitations whole, never
+  summarized (render.ts:119-126 precedent).
+- `PayloadView` (render.ts:8-38) omits `evidence` and `sourceMode` — extend the view
+  additively; never reach into the raw payload untyped.
+- **capturedAt honesty:** head evidence `capturedAt` is bundle-level — the model labels it
+  as bundle capture and never implies per-call head timestamps (W5:728-730,
+  [[INS-84853447-d1bb-4095-bfd6-9cc0fbaafabc]]).
+- **No aggregate roll-up anywhere:** `unknown`/`stale`/`conflict` never collapse into one
+  count or word (THREAT_MODEL:98); any counts shown are named individually (the S5 idiom).
+
+### 3. Component + page design
+
+- `components/report-drawer.tsx`: sync, props-fed (`{ model }`), **relative imports**,
+  zero logic beyond presence checks and array maps; payload strings rendered as React text
+  nodes only — no `dangerouslySetInnerHTML` (a lint-able property; THREAT_MODEL:125's
+  escaping clause is satisfied by React auto-escaping — `esc()` stays a terminal concern).
+  Reuses the existing `drawer-*`/`panel`/`status` class vocabulary from `app/globals.css`
+  (visual precedent only).
+- `app/reports/page.tsx`: async server component labeled as the reference scenario;
+  acquires fixture bytes via vite `?raw` imports (build-time bundling — the Workers runtime
+  has no `fs`; `.gitattributes` marks `data/** -text` so raw-import bytes are repo-exact).
+  **Parse-then-restringify is forbidden** — it destroys [[R-003]] and `requestHash` byte
+  identity. `?raw` under vinext is UNVERIFIED — proven by the recorded manual smoke, never
+  assumed. Fixture acquisition stays in the page, OUTSIDE the tested surface; the loader
+  takes bytes like every other transport (brand re-earned in-process).
+- **Friendly labels declined (RULING).** PRODUCT_SPEC:333 permits "Holding"-style labels;
+  the M1 drawer shows canonical state words directly — nothing to de-map, less to lint.
+- **CSP gap (flagged, not absorbed):** THREAT_MODEL:125 also demands a strict CSP; the app
+  sets none and `next.config.ts` is outside `allowed_paths`. Owner triage item:
+  [[IDEA-5bb4ace0-d67b-4d91-ab8e-d458526b38a9]]. S6 lands the escaping clause only.
+
+### 4. Teeth
+
+- **Trust-language lint extension (the W5:106-107 acceptance line):**
+  `tests/aegis-engine.test.ts:142-149` becomes a loop over a file SET — the dashboard plus
+  `lib/aegis/surfaces/drawer.ts`, `components/report-drawer.tsx`, `app/reports/page.tsx`.
+  Claim-token regex per file; positive assertions stay per-file (the dashboard keeps its
+  M0-casing `REFERENCE_SCENARIO` + "not a protocol safety score"; the new files assert the
+  canonical `reference_scenario` casing, profiles.ts:40, and the claim-ceiling wording of
+  render.ts:127-130).
+- `tests/repo-source-hygiene.test.ts` already walks `app` + `components` — new `.tsx` files
+  are auto-covered for control chars/CRLF; no edit needed.
+
+### 5. TDD matrix (tests/drawer.test.ts, red-first)
+
+- I1: entry parity — `loadEvidenceDrawer` over shipped fixture bytes: `classification` 3
+  (the honest shipped reality), `reportHash` equal to the facade's direct output,
+  `canonicalBody` byte-identical to `renderJson(run)`.
+- I2: model honesty — frame-before-results field order; `manifestVersion` `"unknown"`
+  verbatim on an untrusted manifest; recorded labeling present; trust state + reasonCodes;
+  limitations passed through whole; canonical state words verbatim (no re-wording, no
+  friendly mapping).
+- I3: the D21 contract on the drawer — inline `sealedBundle` finality-downgrade scenario:
+  downgrade records (requested/used/depth/reasonCode) present in the model when a downgrade
+  occurred, absent otherwise; `reportHash` equal to the facade's for the same inputs
+  (diagnostics never perturb the hash).
+- I4: evidence refs — providerId/kind/rawResultHash/capturedAt projected; head `capturedAt`
+  carried as bundle-level capture (never per-call); `sourceMode: "recorded"` surfaced.
+- I5: thrown path — `at: "latest"` REJECTS (RequestError propagates, no model);
+  re-encoded double heads REJECTS (SurfaceError) — `expect(...).rejects`, both.
+- I6 (SPIKE): component render — `React.createElement(ReportDrawer, { model })` +
+  `renderToStaticMarkup`: boundary markup precedes verdict markup; limitation text present;
+  downgrade line present. UNVERIFIED-no-precedent for `.tsx` import under this vitest
+  config: if resolution/transform fails, drop to lint-only and record the boundary in
+  EV-W5 — the slice's honesty does not depend on it.
+- I7 (tooth): claim-token scan (negative-tested regex, the H5 idiom) over `drawer.ts` +
+  `report-drawer.tsx` + `page.tsx` sources AND the I6 markup (or the model's text fields
+  when I6 dropped); plus the aegis-engine lint extension of §4.
+
+### 6. Verification boundary (verbatim into EV-W5)
+
+Provable under this config: the loader exhaustively (every displayed field's derivation,
+S7 hash parity, shared classification); markup text and ordering IF the I6 spike lands;
+all language teeth. NOT provable: visual layout, CSS, theming, interactivity/hydration,
+actual rendering inside the vinext/Workers runtime — structural (no browser runner;
+adding one edits `vitest.config.ts`, out of scope). EV-W5 must state the drawer is
+verified at loader + markup-text level and **unverified in a browser** beyond one recorded
+manual smoke (`npm run dev`), mirroring S3's built-artifact treatment (W5:384-385).
+
+### 7. Sequencing
+
+1. I1 RED → `drawer.ts` loader skeleton + minimal model → GREEN.
+2. I2 → I3 → I4 (model fields land incrementally, each red first).
+3. I5 (thrown path).
+4. I6 spike (fallback documented if red for structural reasons) → I7 + the §4 lint
+   extension.
+5. `report-drawer.tsx` + `app/reports/page.tsx` wiring; recorded manual smoke; tsc + lint +
+   full suite; commit per slice discipline.
+
 ## Handoff
 
-- next: **S0–S3 DONE** (406/406, tsc + lint clean; S3 packaging landed `e43d21b` — the
-  built artifact's canonical envelope is byte-identical to the in-process run, `cmp` clean,
-  documented command exits 3 honestly). Start at **S4 — the report API**, executing the
-  "S4 plan" section above in its §9 order: E1–E3 RED first, then the guard chain, then
-  the store + GET, then the teeth.
+- next: **S0–S5 DONE** (428/428, tsc + lint clean; S4 = the report API, tests E1–E11/
+  F1–F4/G1–G2 through `23c52d8`; S5 = the CI adapter, H1–H5, `0eb2dfd`). Start at **S6 —
+  the web evidence drawer**, executing the "S6 plan" section above in its §7 order: I1 RED
+  against the loader first; component + page wiring last; the I6 `.tsx`-import spike has a
+  documented lint-only fallback.
   **No more re-attestation chains in W5** — verified systematically, not from memory: every
   work item's `invalidated_by` was matched against the concrete S3-S7 path set and no item
   holding a LIVE (`status: recorded`) receipt is hit. Note the precise reason, because the
