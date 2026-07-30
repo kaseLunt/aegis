@@ -12,6 +12,7 @@ import { PROVIDERS } from "../lib/aegis/chain/providers";
 import { manifestContentHash } from "../lib/aegis/manifest/trust";
 import { reportHash, validateReport } from "../lib/aegis/report/canonical";
 import { SurfaceError, runVerification } from "../lib/aegis/surfaces/engine";
+import { exitCodeForPayload } from "../lib/aegis/surfaces/render";
 import { requestHash } from "../lib/aegis/surfaces/request";
 
 const DATA = join(__dirname, "..", "data");
@@ -244,6 +245,112 @@ describe("W5 S0 — runVerification fails closed", () => {
 
     await expect(attempt).rejects.toThrow(SurfaceError);
     await expect(attempt).rejects.toMatchObject({ code: "no_observation_boundary" });
+  });
+});
+
+describe("W5 Codex round 1 — F1 applicability gating", () => {
+  const fullInputs = () => ({
+    manifestBytes: manifestBytes(),
+    recordings: [
+      { role: "heads", bytes: headsBytes() },
+      { role: "identity", bytes: identityBytes() },
+    ] as const,
+  });
+
+  test("F1a: a trusted manifest that does not apply is never evaluated — gated targets, forced non-clean", async () => {
+    // environment_mismatch on every chain: the manifest is TRUSTED (hash-approved) but
+    // INAPPLICABLE. Before this gate the target loop evaluated anyway — a pass-capable
+    // fixture would have produced a false-clean exit 0.
+    const run = await runVerification(fullInputs(), SELECTOR, {
+      ...deployment(),
+      environment: "production",
+    });
+    const p = run.payload as {
+      policyTrust: { state: string };
+      verifications: readonly unknown[];
+      limitations: readonly { code: string; text: string }[];
+    };
+    expect(p.policyTrust.state).toBe("trusted");
+    // No target on an inapplicable chain is observed or compared — zero verification rows.
+    expect(p.verifications).toEqual([]);
+    // Per-chain inapplicability is declared with its reasons...
+    const chainRows = p.limitations.filter((l) => l.code === "manifest_not_applicable");
+    expect(chainRows).toHaveLength(2);
+    expect(chainRows.map((l) => l.text).join(" ")).toContain("environment_mismatch");
+    // ...and every skipped target is surfaced BY NAME, never silently dropped.
+    const targetRows = p.limitations.filter((l) => l.code === "target_manifest_not_applicable");
+    const targetText = targetRows.map((l) => l.text).join(" ");
+    expect(targetText).toContain("reference-eip1967-proxy");
+    expect(targetText).toContain("reference-direct");
+    // Forced non-clean through the SHARED classifier.
+    expect(exitCodeForPayload(run.payload)).toBe(3);
+  });
+
+  test("F1b: applicability gates PER CHAIN — an expired window on one chain leaves the other evaluated", async () => {
+    const modified = JSON.parse(new TextDecoder().decode(manifestBytes())) as {
+      validity: { toBlock: unknown };
+      contentHash: string;
+    };
+    // A real window (fromBlock 25000000 <= toBlock) that the pinned chain-1 head 25577369
+    // has outgrown — the validator refuses an inverted window as invalid, which would test
+    // the wrong refusal. The manifest embeds its own contentHash (integrity check), so it
+    // is recomputed after the edit; the policy approves the same recomputed hash.
+    modified.validity.toBlock = { chainId: 1, number: "25000001" };
+    modified.contentHash = manifestContentHash(modified);
+    const bytes = new TextEncoder().encode(JSON.stringify(modified));
+    const run = await runVerification(
+      { manifestBytes: bytes, recordings: fullInputs().recordings },
+      SELECTOR,
+      {
+        ...deployment(),
+        trustPolicy: { trustPolicyId: "tp-f1b", approvedHashes: [modified.contentHash] },
+      },
+    );
+    const p = run.payload as {
+      policyTrust: { state: string };
+      verifications: readonly { invariantId: string }[];
+      limitations: readonly { code: string; text: string }[];
+    };
+    expect(p.policyTrust.state).toBe("trusted");
+    const invariants = p.verifications.map((v) => v.invariantId).join(" ");
+    // Chain 1 is expired at its pinned boundary: its target is gated...
+    expect(invariants).not.toContain("reference-eip1967-proxy");
+    expect(
+      p.limitations
+        .filter((l) => l.code === "target_manifest_not_applicable")
+        .map((l) => l.text)
+        .join(" "),
+    ).toContain("reference-eip1967-proxy");
+    expect(
+      p.limitations
+        .filter((l) => l.code === "manifest_not_applicable")
+        .map((l) => l.text)
+        .join(" "),
+    ).toContain("manifest_expired");
+    // ...while chain 10 still evaluates its target honestly.
+    expect(invariants).toContain("reference-direct");
+    expect(exitCodeForPayload(run.payload)).toBe(3);
+  });
+
+  test("F1c: the classifier refuses clean when an inapplicability limitation exists — the false-clean pin", () => {
+    // Pass-capable engine fixtures are W6 work; the classifier is SHARED across all four
+    // surfaces (J1/J4), so the false-clean kill is pinned payload-level: all-pass
+    // verifications plus an inapplicability row must classify 3, never 0.
+    const base = {
+      policyTrust: { state: "trusted", reasonCodes: [] },
+      verifications: [{ state: "pass", invariantId: "x", statement: "x" }],
+      limitations: [] as { code: string; text: string }[],
+    };
+    expect(exitCodeForPayload(base)).toBe(0);
+    expect(
+      exitCodeForPayload({ ...base, limitations: [{ code: "manifest_not_applicable", text: "x" }] }),
+    ).toBe(3);
+    expect(
+      exitCodeForPayload({
+        ...base,
+        limitations: [{ code: "target_manifest_not_applicable", text: "x" }],
+      }),
+    ).toBe(3);
   });
 });
 

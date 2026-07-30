@@ -765,7 +765,8 @@ describe("W5 Codex round 1 — K. edge-validation teeth", () => {
   test("K3 (F4): duplicate keys in a trust policy are refused at the byte boundary — last-wins can flip trust", async () => {
     const dir = mkdtempSync(join(tmpdir(), "aegis-cli-k3-"));
     try {
-      const manifestHash = manifestContentHash(readFileSync(MANIFEST));
+      // Parsed object, not bytes — manifestContentHash hashes the normalized manifest.
+      const manifestHash = manifestContentHash(JSON.parse(readFileSync(MANIFEST, "utf-8")));
       // First key approves the real manifest; the duplicate overrides with garbage. Under
       // last-wins parsing this file silently flips the trust decision — the R-003 class
       // reopened at a THIRD byte boundary. It must never parse at all.
@@ -785,8 +786,12 @@ describe("W5 Codex round 1 — K. edge-validation teeth", () => {
         cleanPath,
         JSON.stringify({ trustPolicyId: "tp-k3", approvedHashes: [manifestHash] }),
       );
-      const clean = await run([...REFERENCE_ARGS, "--trust-policy", cleanPath]);
+      const clean = await run([...REFERENCE_ARGS, "--trust-policy", cleanPath, "--json"]);
       expect(clean.exit).toBe(3);
+      // TRUSTED-3 (unknown verdicts), not untrusted-3 — the control must distinguish, or a
+      // wrong hash in the policy would green this test for the wrong reason.
+      const cleanPayload = JSON.parse(clean.stdout).payload as { policyTrust: { state: string } };
+      expect(cleanPayload.policyTrust.state).toBe("trusted");
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

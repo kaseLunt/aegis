@@ -77,7 +77,14 @@ export function exitCodeForPayload(payload: unknown): number {
     verifications.some((v) => v.state !== "pass") ||
     trust !== "trusted" ||
     verifications.length === 0 ||
-    (p.limitations ?? []).some((l) => l.code === "target_boundary_unavailable");
+    // Unevaluated declared expectations are INCOMPLETE, never clean (W5 round-1 Codex F1:
+    // an inapplicable-but-trusted manifest with gated targets must not classify 0).
+    (p.limitations ?? []).some(
+      (l) =>
+        l.code === "target_boundary_unavailable" ||
+        l.code === "manifest_not_applicable" ||
+        l.code === "target_manifest_not_applicable",
+    );
   return uncertain ? 3 : 0;
 }
 

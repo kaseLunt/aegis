@@ -211,6 +211,8 @@ export async function runVerification(
 
   const verifications: unknown[] = [];
   const unverifiableTargets: { targetId: string; chainId: number }[] = [];
+  const notApplicableTargets: { targetId: string; chainId: number }[] = [];
+  const inapplicableChains = new Set(applicability.map((a) => a.chainId));
 
   for (const target of targetsOf(loaded)) {
     const pinned = boundaries.find((b) => b.chainId === target.chainId)?.block ?? null;
@@ -218,6 +220,14 @@ export async function runVerification(
       // A declared expectation we could not evaluate is surfaced, never silently dropped —
       // a filtered target reads as "checked and fine" when it was never checked at all.
       unverifiableTargets.push({ targetId: target.targetId, chainId: target.chainId });
+      continue;
+    }
+    // W5 round-1 Codex F1: a TRUSTED manifest must also APPLY at this chain's boundary.
+    // An out-of-window or wrong-environment manifest is gated BEFORE observation and
+    // comparison — recording the inapplicability while still evaluating would let a
+    // pass-capable fixture reach a false-clean exit 0.
+    if (inapplicableChains.has(target.chainId)) {
+      notApplicableTargets.push({ targetId: target.targetId, chainId: target.chainId });
       continue;
     }
 
@@ -264,6 +274,10 @@ export async function runVerification(
     ...unverifiableTargets.map((t) => ({
       code: "target_boundary_unavailable",
       text: `Target ${t.targetId} was not evaluated: no observation boundary on chain ${t.chainId}.`,
+    })),
+    ...notApplicableTargets.map((t) => ({
+      code: "target_manifest_not_applicable",
+      text: `Target ${t.targetId} was not evaluated: manifest does not apply at the chain ${t.chainId} boundary.`,
     })),
   ];
 
