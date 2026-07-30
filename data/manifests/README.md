@@ -12,3 +12,12 @@ input for *authoring* a real route manifest; it does not make a fixture canonica
 
 Byte note (INS-001): these files are content-addressed. They are stored LF and read in binary
 mode; `manifestContentHash` hashes the JCS bytes with the embedded `contentHash` field excluded.
+
+## Scenario manifests (W6)
+
+`scenario-*.json` are DERIVED artifacts: each is produced from its committed spec in
+`tests/corpus-recipes.ts` (targets swapped into the reference manifest, `contentHash`
+resealed, JCS + LF) and byte-pinned by `tests/corpus.test.ts`. Their expected values are
+co-authored with the recorded reads they verify — a disclosed `reference_scenario`
+construction, never independent expected-side provenance and never promoted live policy.
+The per-scenario outcome table lives in `data/recordings/README.md`.

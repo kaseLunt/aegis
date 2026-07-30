@@ -82,7 +82,9 @@ describe("W5 S3 — B4. the shipped-fixture reality", () => {
     const result = await run([...REFERENCE_ARGS, "--json"]);
 
     // The reference manifest's expected values do not match what the shipped identity
-    // recording observes, BY DESIGN (W6's constraint: no shipped fixture may produce a pass).
+    // recording observes, BY DESIGN. (Renegotiated at W6-S1: the REFERENCE trio produces
+    // no pass; the scenario corpus beside it has DECLARED outcomes, pinned per fixture by
+    // tests/corpus.test.ts — this test pins the reference trio's all-unknown reality.)
     // The documented command therefore exits 3, and EV-W5 must record 3, never a tuned 0.
     expect(result.exit).toBe(3);
     const envelope = JSON.parse(result.stdout);
@@ -120,8 +122,9 @@ function sealedManifestBytes(targets: unknown[]): string {
 
 describe("W5 S3 — B. exit codes", () => {
   test("B5: a re-sealed manifest covering the shipped identity reads earns exit 0 — in-test only", async () => {
-    // Exit 0 is deliberately unreachable from shipped fixture files (W6's constraint: no
-    // shipped fixture may produce a pass). The only honest route to the clean-exit row is
+    // Exit 0 is unreachable from the REFERENCE fixture trio (renegotiated at W6-S1: the
+    // scenario corpus now ships a declared pass pair, data/manifests/scenario-pass.json,
+    // derived by the same recipe and pinned by tests/corpus.test.ts). Here the route is
     // synthesizing a manifest whose expectations match what the shipped identity recording
     // actually observed, then re-sealing its content hash.
     const dir = mkdtempSync(join(tmpdir(), "aegis-cli-b5-"));
