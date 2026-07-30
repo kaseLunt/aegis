@@ -78,3 +78,55 @@ denied), distinct from the 7 numbered findings.
   exit 3, API 200, and four-surface hash parity (K4, J5).
 - Suite: 438 → 451 tests, all green; tsc + eslint clean. Ready for scoped round-2
   re-verification.
+
+# Round 2 — scoped re-verification (2026-07-30)
+
+Fresh Codex session (the `--resume-last` hazard below made resuming the round-1 thread
+unsafe). Reviewed at `f6d4c02` base; the job self-detected the concurrent G-08 commit
+advancing HEAD to `b746746` mid-run, confirmed W5-relevant paths byte-unchanged, and
+correctly did not halt. Verbatim verdict follows.
+
+---
+
+[codex task-ms7902la-mcz8am | completed | ~27min | fresh session, W5 round 2 (thread 019fb220-7beb-7060-97c6-1719134082aa)]
+
+# FURTHER-CORRECTIONS
+
+Session ID: `019fb220-7beb-7060-97c6-1719134082aa`
+
+## Blocking finding
+
+1. F2 remains incomplete for calendar-invalid evidence timestamps. The recording loader verifies only that `capturedAt` is a string at adapter.ts:131, while freshness uses permissive `Date.parse` at engine.ts:363. V8 normalizes `2026-02-30T00:00:00Z` to March 2, so integrity-valid caller evidence containing an impossible timestamp is classified `current` or `stale` rather than the required `unknown`.
+
+   Required fix: strictly validate each freshness-bearing observation timestamp as a real instant using grammar plus exact calendar round-trip. Any malformed, overflowing, or otherwise unassessable timestamp must force `unknown`. Add a re-sealed recording test containing an overflowing `capturedAt` that would otherwise produce a non-unknown result.
+
+## Disposition rulings
+
+- F6: Acceptable. `"unknown"` honestly represents unavailable acquisition time, preserves determinism, and is rendered without aliasing the evaluation clock.
+- F2 seven-day policy: Legitimate for the explicitly reference-only fixture profile. It is a fixed declared policy, not a hardcoded result. It must not be promoted as an independently reviewed production policy.
+- F2 scope: Sufficient. Identity freshness may cover identity-read acquisition timestamps while block-head divergence remains a separate `maxHeadLagBlocks` axis. This does not imply absolute wall-clock chain-head freshness.
+
+F1, F3–F7 otherwise resolve their original failure modes. No additional blocking overclaim was found in `target_manifest_not_applicable`, K3's trusted-3 control, or J5's fixture.
+
+J4, I5, and F1c are binding and passed directly: 3/3. The broader sandbox run reached 420 passing tests; 31 were blocked by temp-directory `EPERM`. TypeScript passed. ESLint reported 0 errors and one pre-existing `.remember/**` warning.
+
+Codex session ID: 019fb220-7beb-7060-97c6-1719134082aa
+Resume in Codex: codex resume 019fb220-7beb-7060-97c6-1719134082aa
+
+---
+
+## Disposition status (round 2)
+
+- ONE blocking item: strict-instant validation extended to evidence timestamps (the F3
+  round-trip rule, shared — one validator for clock AND captures) + the re-sealed
+  overflowing-capturedAt test. All three round-1 judgment calls ACCEPTED; F1/F3–F7 closed.
+- The fp-reference 7-day window ruling carries a standing cap: it must never be promoted
+  as an independently reviewed production policy.
+- **Operational finding (multi-lane review pattern):** the companion's `--resume-last`
+  resolves to the chronologically newest job in the workspace+session, NOT a semantically
+  named thread — with G35/W5/G-08 interleaved it attached to the WRONG subject's thread;
+  the reviewer agent detected the mismatch, cancelled before any output surfaced, and
+  dispatched fresh. Standing rule: `--resume-last` is safe only when no other review
+  thread has been dispatched since the one being resumed; otherwise dispatch FRESH against
+  the persisted verdict file. Recorded as an addendum to
+  [[INS-1fb3423e-7413-490a-ad7e-66aea1d2e74a]].

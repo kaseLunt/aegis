@@ -5,7 +5,7 @@ title: "review-thread continuity dies with the session -- verbatim-persisted ver
 status: candidate
 informs: ["D-b4ab3c69-c110-4d78-bc4c-f9a332489db4"]
 review_when: date:2026-08-10
-updated: 2026-07-27
+updated: 2026-07-30
 ---
 
 # INS-1fb3423e-7413-490a-ad7e-66aea1d2e74a — review-thread continuity dies with the session -- verbatim-persisted verdicts are the resume mechanism
@@ -35,3 +35,12 @@ BEFORE the next dispatch, never batched; (2) a resume failure is a fail-closed h
 coordinator decision, never an agent-improvised workaround; (3) briefs for later rounds
 must cite the persisted verdict file as the context source so they survive session
 resets by construction.
+
+**Addendum (2026-07-30, multi-lane hazard).** `--resume-last` resolves to the
+chronologically NEWEST job in the workspace+session, not a semantically named thread.
+With multiple review subjects interleaved (G35 / W5 / G-08), a W5 round-2 resume attached
+to the G-08 round-2 thread (`task-ms78y0ko-u30gej`, cancelled before any output surfaced,
+re-dispatched fresh). Binding habit (4): `--resume-last` is safe ONLY when no other review
+thread has been dispatched in the workspace+session since the one being resumed; in any
+interleaved-lane pattern, go straight to a fresh dispatch against the persisted verdict
+file — which habit (3) already guarantees is sufficient context.
