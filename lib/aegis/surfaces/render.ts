@@ -8,6 +8,7 @@ import type { VerificationRun } from "./engine";
 interface PayloadView {
   readonly manifestVersion?: string;
   readonly manifestHash?: string;
+  readonly sourceMode?: string;
   readonly policyTrust?: {
     readonly state?: string;
     readonly reasonCodes?: readonly string[];
@@ -32,6 +33,16 @@ interface PayloadView {
     readonly invariantId?: string;
     readonly statement?: string;
     readonly limitations?: readonly { readonly code?: string; readonly text?: string }[];
+  }[];
+  readonly evidence?: readonly {
+    readonly id?: string;
+    readonly kind?: string;
+    readonly provenanceClass?: string;
+    readonly sourceMode?: string;
+    readonly providerId?: string;
+    readonly method?: string;
+    readonly rawResultHash?: string;
+    readonly capturedAt?: string;
   }[];
   // Canonical limitation fields are (code, text) — canonical.ts limitationKey.
   readonly limitations?: readonly { readonly code?: string; readonly text?: string }[];
