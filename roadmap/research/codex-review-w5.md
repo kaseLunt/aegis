@@ -52,3 +52,29 @@ denied), distinct from the 7 numbered findings.
   language), F6 (capturedAt conflation), F1 (applicability gating), F2 (freshness evaluation).
   F1/F2 are engine-semantics changes and land last with pass-capable inline fixtures.
 - Scoped round-2 re-verification follows the applied set. NO stamp until GATE-PASSES.
+
+## Round-1 corrections APPLIED (2026-07-30, all seven, red-first with bites)
+
+- **F7** → `2854bb1`: J4 mechanical evaluator guard (full-source token scan over every
+  surface file except engine.ts; bite-proven with a planted import).
+- **F3** → `2854bb1`: strict ISO-UTC clock shared at construction (`referenceDeployment`
+  throws `invalid_evaluation_time` at `/evaluationTime`); V8's Feb-30 rollover refused via
+  round-trip comparison; CLI exit 4 / API 400 (K1, E12).
+- **F4** → `2854bb1`: `loadTrustPolicyBytes` in surfaces/request — duplicate-key scan
+  before parse + strict shape; every failure typed caller-input exit 4 (K2, K3; K3's
+  control now distinguishes trusted-3 from untrusted-3).
+- **F5** → `639be67`: "reviewed" removed from the recorded_inputs text; machine check over
+  arbitrary re-encoded valid recordings pins /\breviewed\b/i out of all payload texts.
+- **F6** → `639be67`: manifest evidence capturedAt = canonical degraded `"unknown"`
+  (caller bytes carry no acquisition metadata; a wall clock would break determinism);
+  clocks tested as distinct values.
+- **F1** → `d54a7bf`: applicability gates targets per chain BEFORE observation;
+  gated targets surfaced by name (`target_manifest_not_applicable`); the shared
+  classifier refuses clean on any inapplicability row (F1a/F1b engine scenarios + F1c
+  all-pass-payload false-clean pin).
+- **F2** → `f58955c`: `evaluateFreshness` over the observation's own per-response capture
+  timestamps vs the injected clock, under the declared `fp-reference` 7-day window;
+  `unknown` when unassessable (F2a); pass-capable stale case proves state `stale`,
+  exit 3, API 200, and four-surface hash parity (K4, J5).
+- Suite: 438 → 451 tests, all green; tsc + eslint clean. Ready for scoped round-2
+  re-verification.

@@ -75,3 +75,54 @@ Resume in Codex: codex resume 019fb1f6-df3d-73e3-9f42-2bf82757154a
   artifacts independently verified.
 - Corrections being applied supersede-in-place by the correction lane; scoped round-2
   re-verification follows. NO row manifest-grade until GATE-PASSES; promotion owner-gated.
+
+# Round 2 — scoped re-verification (2026-07-30)
+
+Resumed Codex thread `019fb1f6-df3d-73e3-9f42-2bf82757154a` (round-1 session, registry entry
+survived — full context of the original evidence audit retained). Reviewed at `06c1325`.
+Verbatim verdict follows (hyperlink markup flattened; content byte-preserved).
+
+---
+
+[codex task-ms78hs5a-6eqfev | completed | ~26min | resumed thread 019fb1f6-df3d-73e3-9f42-2bf82757154a (round-1 session, registry entry survived)]
+
+# FURTHER-CORRECTIONS
+
+1. **Finding 2 remains live and is not verbatim at all three required sites.** In §5.2 line 299, the code block still says "identical owner sets AND thresholds at rotation block," without the by-last-event cap. Replace that output label or explicitly strike and supersede it. In §10 claim 7, line 503, reproduce the required text verbatim:
+
+   > By the last decoded OwnerManager event at or before OP block 154619344, both Safes fold to the same seven-owner set and threshold 4. This is event-history evidence; storage at the rotation block remains a separate observed-side check.
+
+2. **Finding 3 has a live headline repeat.** §0 item 2, line 38 still says "Full self-event history from block 0, OBSERVED-dual (Tenderly 1M + OP Labs 10k)." Replace it with the actual ranges: Tenderly `[0,154897427]`; OP Labs `[153277304,154897427]`; no-pre-creation coverage is **INFERRED**, conditional on the dual-provider creation boundary.
+
+3. **Finding 4 is incomplete and has live independence repeats.** The exact required replacement is altered in §4 lines 254–260 and compressed in §10 claim 5, line 501. Reproduce verbatim:
+
+   > At OP block 154897427, dual-provider event folding and dual-provider storage reads agree on seven owners and threshold 4. A separately acquired Safe-service snapshot reported the same owners and threshold at acquisition time. The storage and service legs additionally agree on nonce 1 and singleton. These are three concordant methods/acquisition surfaces, not three independent evidence roots.
+
+   Also replace "independent acquisition path" at §1.6 line 143 and "independent path" at §13 lines 590–593 with "separate corroborating method/acquisition surface, not an independent evidence root."
+
+4. **Finding 7 has two live pinned-provenance repeats.** §1.6 lines 138–139 still calls the source a "pinned deploy tree." §14 lines 621–623 still says "pinned commit," "HEAD-verified," and `output/*.json`. Replace these with retained-copy strength: one retained `L2Constants.sol`, one retained `base` output, and no retained Git-object binding to `e30c859c`.
+
+5. **Finding 8 is not verbatim in the claim register.** §10 claim 13, line 509 inserts the corpus list inside the required sentence. Reproduce verbatim, then list the corpus separately:
+
+   > `0x055a8B2B…` was not located in the explicitly named searched corpus as of the reviewed revisions; no broader artifact-absence claim is made.
+
+Judgment calls:
+
+- **(a) Acceptable.** The plain metadata replacement plus correction note correctly resolves finding 1; substantive strikethrough was unnecessary.
+- **(b) Acceptable.** Section 12's item-5, item-7, and provenance-hardening propagations faithfully carry findings 2 and 7 and introduce no new claim.
+- **(c) Acceptable in §7.1 and section 12.** The text says independent verification is required and does not claim it occurred. The contradictory §14 tail is the blocker identified above.
+- **Item 6 remains sound and unchanged in strength:** by-last-decoded-event, OBSERVED-single, and limited to the named standard event filters.
+
+Codex session ID: `019fb1f6-df3d-73e3-9f42-2bf82757154a`
+
+Codex session ID: 019fb1f6-df3d-73e3-9f42-2bf82757154a
+Resume in Codex: codex resume 019fb1f6-df3d-73e3-9f42-2bf82757154a
+
+---
+
+## Disposition status (round 2)
+
+- Persisted before the correction dispatch. 5 residual items — live repeats and
+  non-verbatim reproductions of the round-1 formulations; all three applying-agent
+  judgment calls ACCEPTED; item 6 unchanged and sound. Being applied supersede-in-place;
+  scoped round-3 follows.
