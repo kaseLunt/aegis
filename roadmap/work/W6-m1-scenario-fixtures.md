@@ -232,12 +232,13 @@ New files under `data/recordings/**` invalidate **EV-W3 + EV-W4 + EV-W5 simultan
 
 ## Handoff
 
-- next: **Recon DONE, "W6 plan" synthesized above (2026-07-30). Start W6-S1** in plan §4
-  order: the authoring helper + conformance harness red-first, then the success/mismatch
-  pairs. The first `data/**` PUSH HEAD carries EV-W3-Rn + EV-W4-Rn + EV-W5-Rn minted and
-  stamped in the same commit (plan §1 — the charter's original EV-W5-only note
-  undercounted; W3/W4 both list `data/recordings/**`). The B4/J1/README honesty-teeth
-  renegotiation rides in that same batch (plan §2). Cache/canonicality stays in W6.
+- next: **W6-S1 DONE (7cbabfc + b19f1b0, 456/456). Start W6-S2** per plan §2/§4: the
+  stale, provider-conflict, ABI-mismatch, and not_applicable pairs + their outcome-table
+  rows and parity tests. S2 adds RECORDING bundles (conflict needs an authored adversarial
+  identity bundle; stale can ride either the clock or a re-sealed capturedAt bundle) — so
+  the S2 push head owes the next EV-W3/W4/W5 re-attestation trio via the same two-commit
+  chain (owner authorizes the red middle). The conformance harness generalizes: recipes
+  gain bundle-derivation specs (the sealBundle idiom), not just manifest swaps. Cache/canonicality stays in W6.
 - read_first: docs/ROADMAP.md M1 deliverables + exit gate; `data/recordings/README.md`
   (illustrative-vs-recorded caveats); `tests/engine.test.ts` `sealedBundle()` — the recipe
   for building a bundle whose per-response `rawResponseSha256` and `envelopeSha256` are

@@ -22,10 +22,18 @@ the migrated workflows after push. main protected; residuals in [[R-005]] under 
 ## Current task (WIP = 1 per agent, [[D-006]])
 **W6 — M1 recorded scenario fixture corpus + reorg supersession. ACTIVE (activated
 2026-07-30, owner-reviewed; W5 ACHIEVED the same morning — [[EV-W5]], stamp
-`sha256:92e97314…f24c54`, commit `3627c5b`).** W6 is what closes M1: the recorded
-non-success corpus as reviewable DATA (mismatch, missing-evidence, stale, conflict,
-ABI-mismatch, reorg) + block-hash-keyed supersession. Next: read the W6 charter fully,
-then the recon-first pattern before any fixture is authored.
+`sha256:92e97314…f24c54`, commit `3627c5b`).** W6 is what closes M1.
+**Recon DONE + "W6 plan" in the charter (1e8a294). W6-S1 DONE (2026-07-30, 456/456):**
+the corpus OPENED — pass + mismatch matched pairs as DERIVED data (committed specs in
+tests/corpus-recipes.ts; conformance = byte-compare against re-derivation; outcome pinned
+on all four surfaces with one hash each, tests/corpus.test.ts), honesty teeth renegotiated
+to the reference trio, outcome table in both READMEs. Landed via the INS-58ac6162
+two-commit chain (owner-run red middle 7cbabfc -> green head b19f1b0) with the triple
+re-attestation EV-W3-R6/EV-W4-R4/EV-W5-R2 (contracts byte-identical, inputs re-based —
+the README edit under data/recordings/ is what pulled W3/W4 in, not the fixtures).
+**Next: W6-S2** (stale, provider-conflict, ABI-mismatch, not_applicable scenarios + their
+outcome rows; recording bundles land here so the NEXT triple re-attestation rides that
+push head too), then S3 (supersession evaluator + reorg), then the Codex loop.
 
 ### W5 history (S0–S7 + convergence, ACHIEVED)
 
