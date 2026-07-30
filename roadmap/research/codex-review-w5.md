@@ -130,3 +130,15 @@ Resume in Codex: codex resume 019fb220-7beb-7060-97c6-1719134082aa
   thread has been dispatched since the one being resumed; otherwise dispatch FRESH against
   the persisted verdict file. Recorded as an addendum to
   [[INS-1fb3423e-7413-490a-ad7e-66aea1d2e74a]].
+
+## Round-2 correction APPLIED (2026-07-30) → `cc44c3a`
+
+- One shared `parseStrictInstant` in surfaces/request (grammar + exact calendar
+  round-trip, epoch-ms or null) now backs BOTH the deployment clock validation
+  (profiles — replacing its inline copy of the same rule) and `evaluateFreshness`'s
+  per-observation capture timestamps. A calendar-invalid `capturedAt` forces `unknown`.
+- Test F2b: re-sealed identity recording (per-response envelope hashes recomputed — the
+  loader's integrity check binds capturedAt, so an unsealed edit is refused bytes) with
+  `2026-02-30T00:00:00Z` → freshness `unknown`, state `unknown`; in-test control with the
+  real instant `2026-02-28T00:00:00Z` proves the scenario is otherwise stale-capable.
+- Suite 452/452; tsc + eslint clean. Ready for scoped round-3 re-verification.
