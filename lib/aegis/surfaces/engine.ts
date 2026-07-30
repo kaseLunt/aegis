@@ -40,6 +40,7 @@ import {
   type VerificationRequest,
   type VerificationSelector,
   buildRequest,
+  parseStrictInstant,
   requestHash,
 } from "./request";
 
@@ -355,17 +356,24 @@ function evaluateFreshness(
   deployment: DeploymentConfig,
   pinned: PinnedBlock,
 ): EvaluatedFreshness {
-  const evaluatedAt = Date.parse(deployment.evaluationTime);
+  // The SAME strict-instant rule as the deployment clock (W5 round-2 Codex): a
+  // calendar-invalid capturedAt is not a real instant — V8 would roll it over and
+  // classify integrity-valid caller evidence current or stale. Unassessable is unknown.
+  const evaluatedAt = parseStrictInstant(deployment.evaluationTime);
   const maxAgeMs = Number(deployment.freshnessPolicy.maxAgeSeconds) * 1000;
   const captures = observed.reads.flatMap((read) =>
     read.observations
       .filter((o) => o.status === "ok")
-      .map((o) => (typeof o.capturedAt === "string" ? Date.parse(o.capturedAt) : Number.NaN)),
+      .map((o) => (typeof o.capturedAt === "string" ? parseStrictInstant(o.capturedAt) : null)),
   );
   let state: FreshnessState;
-  if (captures.length === 0 || captures.some((c) => Number.isNaN(c) || c > evaluatedAt)) {
+  if (
+    evaluatedAt === null ||
+    captures.length === 0 ||
+    captures.some((c) => c === null || c > evaluatedAt)
+  ) {
     state = "unknown";
-  } else if (captures.some((c) => evaluatedAt - c > maxAgeMs)) {
+  } else if (captures.some((c) => evaluatedAt - (c as number) > maxAgeMs)) {
     state = "stale";
   } else {
     state = "current";

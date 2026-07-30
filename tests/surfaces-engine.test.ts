@@ -5,12 +5,13 @@
 // hash that is supposed to be identical everywhere. runVerification is that composition
 // promoted into production code: recordings -> adapters -> boundaries per chain -> policy
 // trust -> canonical payload, with the report hashed by W1's strict path.
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { PROVIDERS } from "../lib/aegis/chain/providers";
 import { manifestContentHash } from "../lib/aegis/manifest/trust";
-import { reportHash, validateReport } from "../lib/aegis/report/canonical";
+import { jcsSerialize, reportHash, validateReport } from "../lib/aegis/report/canonical";
 import { SurfaceError, runVerification } from "../lib/aegis/surfaces/engine";
 import { exitCodeForPayload } from "../lib/aegis/surfaces/render";
 import { requestHash } from "../lib/aegis/surfaces/request";
@@ -408,6 +409,80 @@ describe("W5 Codex round 1 — F5/F6 payload honesty", () => {
       for (const a of v.freshness.assessments) {
         expect(a.state).toBe("unknown");
       }
+    }
+  });
+
+  test("F2b: a calendar-invalid capture timestamp is unassessable — unknown, never rolled into stale or current", async () => {
+    // W5 round-2 Codex: V8 normalizes 2026-02-30 to March 2, so permissive parsing would
+    // classify this integrity-valid caller evidence as STALE (months old at the reference
+    // clock). It is not a real instant — freshness cannot be assessed from it.
+    const covered = {
+      targetId: "reference-eip1967-proxy",
+      chainId: 1,
+      address: `0x${"a1".repeat(20)}`,
+      identityStrategy: "eip1967",
+      expectedImplementation: `0x${"b2".repeat(20)}`,
+      expectedRuntimeCodeHash: `sha256:${createHash("sha256")
+        .update(Buffer.from("608060405f", "hex"))
+        .digest("hex")}`,
+    };
+    const sealed = (capturedAt: string) => {
+      const manifest = JSON.parse(new TextDecoder().decode(manifestBytes())) as Record<string, unknown>;
+      manifest.targets = [covered];
+      manifest.contentHash = manifestContentHash(manifest);
+      const identity = JSON.parse(new TextDecoder().decode(identityBytes())) as {
+        responses: Record<string, unknown>[];
+      };
+      // capturedAt is bound by each response's envelope hash — re-seal it after the edit
+      // (the loader's integrity check is the point: an UNSEALED edit is refused bytes).
+      identity.responses = identity.responses.map((r) => {
+        const envelope: Record<string, unknown> = { ...r, capturedAt };
+        delete envelope.envelopeSha256;
+        return {
+          ...envelope,
+          envelopeSha256: `sha256:${createHash("sha256")
+            .update(Buffer.from(jcsSerialize(envelope), "utf-8"))
+            .digest("hex")}`,
+        };
+      });
+      return {
+        inputs: {
+          manifestBytes: new TextEncoder().encode(JSON.stringify(manifest)),
+          recordings: [
+            { role: "heads", bytes: headsBytes() },
+            { role: "identity", bytes: new TextEncoder().encode(JSON.stringify(identity)) },
+          ] as const,
+        },
+        dep: {
+          ...deployment(),
+          trustPolicy: { trustPolicyId: "tp-f2b", approvedHashes: [manifest.contentHash as string] },
+        },
+      };
+    };
+
+    // Control: a REAL instant this old is stale — the scenario is stale-capable, so the
+    // impossible-date result below cannot be a vacuous unknown.
+    const control = sealed("2026-02-28T00:00:00Z");
+    const staleRun = await runVerification(control.inputs, SELECTOR, control.dep);
+    const staleP = staleRun.payload as {
+      verifications: readonly { state: string; freshness: { aggregate: string } }[];
+    };
+    expect(staleP.verifications.length).toBeGreaterThan(0);
+    for (const v of staleP.verifications) {
+      expect(v.freshness.aggregate).toBe("stale");
+      expect(v.state).toBe("stale");
+    }
+
+    // The impossible date: unknown, never a rolled-over stale.
+    const invalid = sealed("2026-02-30T00:00:00Z");
+    const run = await runVerification(invalid.inputs, SELECTOR, invalid.dep);
+    const p = run.payload as {
+      verifications: readonly { state: string; freshness: { aggregate: string } }[];
+    };
+    expect(p.verifications.length).toBeGreaterThan(0);
+    for (const v of p.verifications) {
+      expect(v.freshness.aggregate).toBe("unknown");
+      expect(v.state).toBe("unknown");
     }
   });
 

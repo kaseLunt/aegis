@@ -142,6 +142,23 @@ export function requestHash(request: VerificationRequest): string {
   return `sha256:${createHash("sha256").update(Buffer.from(jcsSerialize(request), "utf-8")).digest("hex")}`;
 }
 
+// The ONE strict-instant rule (W5 round-1 Codex F3, extended to evidence timestamps by
+// round 2): grammar (ISO-UTC, optional milliseconds, Z only) plus an exact calendar
+// round-trip — V8's Date.parse ROLLS impossible dates over (Feb 30 -> Mar 2) instead of
+// refusing them, so NaN-checking is not a calendar check. Returns epoch milliseconds, or
+// null when the value is not a real instant. Shared by the deployment clock validation
+// and the freshness evaluation so the two can never disagree about what a timestamp is.
+export function parseStrictInstant(value: string): number | null {
+  const form = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(\.\d{1,3})?Z$/.exec(value);
+  if (form === null) return null;
+  const parsed = new Date(value);
+  const fraction = (form[2] ?? ".").slice(1).padEnd(3, "0");
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString() !== `${form[1]}.${fraction}Z`) {
+    return null;
+  }
+  return parsed.getTime();
+}
+
 // W5 round-1 Codex F4: the CLI's --trust-policy file is a THIRD untrusted byte boundary —
 // raw JSON.parse there reopened the [[R-003]] last-wins class (a duplicate approvedHashes
 // key silently flips the trust decision) and misclassified wrong-shaped caller input as an
