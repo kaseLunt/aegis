@@ -435,10 +435,15 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
      PASS; Blueprint S3 "set once … never changed" needs the by-last-decoded-`PeerSet`
      cap (S3 lines 121–122 + G-03 line 171, required formulation quoted in the verdict);
      judgment call G-08 item (4): no change required. Persisted verbatim in
-     `g35-codex-verdict.md`. **IN FLIGHT: the single S3/G-03 correction
-     supersede-in-place, then scoped round-4 re-verification.** Only after GATE-PASSES may
-     wave-3 rows be promoted per their corrected tags (D-006), promotion itself
-     owner-gated. Then the re-posed G-08 lane.
+     `g35-codex-verdict.md`. Correction applied supersede-in-place (`aa52a65`, three table
+     lines). **Round 4 (task-ms74umgq-mmhc4k, resumed round-3 thread): GATE-PASSES —
+     THE WAVE-3 CONVERGENCE LOOP IS CLOSED** (36 → 8 → 1 → 0, monotone; both
+     applying-agent glue wordings ruled acceptable/cosmetic). Persisted verbatim in
+     `g35-codex-verdict.md`. **Wave-3 rows now PROMOTABLE per their corrected tags;
+     promotion itself remains an owner/phase-review action — NOT taken by any agent.**
+     Next in this lane: the re-posed G-08 charter (OP Safe `0x7a00657a…e0A868`) —
+     dispatched 2026-07-29 late as a background research lane (draft dossier +
+     evidence artifacts only; quarantined, review loop to follow).
   2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
      NEEDS-CORRECTIONS** — persisted verbatim in
      `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis

@@ -299,3 +299,46 @@ Resume in Codex: codex resume 019fb1a6-0e33-7883-a879-382621c93945
 - Being applied supersede-in-place; scoped round-4 re-verification follows. NO wave-3 row
   is manifest-grade until GATE-PASSES (D-006), and row promotion remains owner-gated
   regardless of the gate.
+
+# Round 4 — convergence check (2026-07-29)
+
+Resumed Codex thread `019fb1a6-0e33-7883-a879-382621c93945` (the round-3 session — the
+registry entry survived this time). Verbatim verdict follows.
+
+---
+
+[codex task-ms74umgq-mmhc4k | completed | ~3min | resumed thread 019fb1a6-0e33-7883-a879-382621c93945 (round-3 session, registry entry survived)]
+
+# Verdict: GATE-PASSES
+
+Verified at HEAD `aa52a6513fe6f255eac9d78bacc1ea73c6838e61`. The persisted round-3 blocker is correctly resolved.
+
+- **S3 L1 row — PASS:** required wording is verbatim; "never changed" is struck and the round-3 supersession marker is present at blueprint.md:121.
+- **S3 OP row — PASS:** required wording is verbatim; "to the current value" is struck and the round-3 marker is present at blueprint.md:122.
+- **G-03 row — PASS:** "both current values" is struck and replaced with "both values by last decoded `PeerSet`," with a round-3 marker at blueprint.md:171.
+
+Judgment calls:
+
+- **"This row's expected value" — acceptable.** At line 122, it identifies the expected-side table value assigned by the decoded historical event. It does not assert current storage, and the immediately following prescribed wording explicitly preserves that boundary.
+- **"; the" → ". The" — cosmetic only.** The sentence break changes no claim content and leaves the required formulation complete and verbatim at line 122.
+
+No other correction-class overclaim was introduced or re-exposed by the three-line edit. The dossier remains unchanged, and unrelated W5 S6 files were excluded from review.
+
+The Codex correction gate is closed; wave-3 rows may now proceed to manifest-grade promotion under the project's owner-controlled promotion process.
+
+Codex session ID: 019fb1a6-0e33-7883-a879-382621c93945
+Resume in Codex: codex resume 019fb1a6-0e33-7883-a879-382621c93945
+
+---
+
+## Disposition status (round 4 — LOOP CONVERGED)
+
+- **The wave-3 Codex convergence loop is CLOSED: GATE-PASSES at round 4** (rounds:
+  NEEDS-CORRECTIONS 36 → FURTHER-CORRECTIONS 8 → FURTHER-CORRECTIONS 1 → GATE-PASSES),
+  findings narrowing monotonically, per [[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]].
+- Wave-3 rows are now PROMOTABLE per their corrected tags. **Promotion itself remains an
+  owner/phase-review action** — nothing in this file promotes anything (HITL barrier;
+  D-006 quarantine of INFERRED/lane-reported material from manifest-grade use still
+  applies row by row).
+- Next in this lane: the re-posed G-08 charter (OP Safe
+  `0x7a00657a45420044bc526B90Ad667aFfaee0A868`).
