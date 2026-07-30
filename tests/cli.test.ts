@@ -689,6 +689,109 @@ describe("W5 S3 — D. diagnostics", () => {
   });
 });
 
+describe("W5 Codex round 1 — K. edge-validation teeth", () => {
+  test("K1 (F3): a malformed --evaluation-time is caller input — exit 4, no report", async () => {
+    for (const bad of [
+      "not-an-iso-time",
+      "2026-07-24T00:00:00+02:00",
+      "2026-02-30T00:00:00Z",
+      "2026-07-24",
+    ]) {
+      const result = await run([
+        "verify",
+        "--manifest", MANIFEST,
+        "--heads", HEADS,
+        "--identity", IDENTITY,
+        "--chain", "1",
+        "--chain", "10",
+        "--at", "finalized",
+        "--evaluation-time", bad,
+        "--profile", "reference",
+      ]);
+      expect(result.exit, `evaluation-time "${bad}" must be caller-input exit 4`).toBe(4);
+      expect(result.stdout, `"${bad}" must emit no report`).toBe("");
+      expect(result.stderr).toContain("invalid_evaluation_time");
+    }
+
+    // Boundary controls: millisecond precision and a real leap day remain valid clocks.
+    for (const ok of ["2026-07-24T00:00:00.000Z", "2024-02-29T12:00:00Z"]) {
+      const result = await run([
+        "verify",
+        "--manifest", MANIFEST,
+        "--heads", HEADS,
+        "--identity", IDENTITY,
+        "--chain", "1",
+        "--chain", "10",
+        "--at", "finalized",
+        "--evaluation-time", ok,
+        "--profile", "reference",
+      ]);
+      expect(result.exit, `evaluation-time "${ok}" must still verify`).toBe(3);
+    }
+  });
+
+  test("K2 (F4): a wrong-shaped trust policy is caller input — exit 4, never an engine failure", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-k2-"));
+    try {
+      const cases: readonly [string, string][] = [
+        ["not-an-object", JSON.stringify([1, 2])],
+        ["missing-approvedHashes", JSON.stringify({ trustPolicyId: "tp-k2" })],
+        ["empty-id", JSON.stringify({ trustPolicyId: "", approvedHashes: [] })],
+        ["non-string-entry", JSON.stringify({ trustPolicyId: "tp-k2", approvedHashes: [7] })],
+        ["malformed-hash", JSON.stringify({ trustPolicyId: "tp-k2", approvedHashes: ["sha256:xyz"] })],
+        [
+          "duplicate-entry",
+          JSON.stringify({
+            trustPolicyId: "tp-k2",
+            approvedHashes: [`sha256:${"a".repeat(64)}`, `sha256:${"a".repeat(64)}`],
+          }),
+        ],
+        ["not-json", "{nope"],
+      ];
+      for (const [name, content] of cases) {
+        const policyPath = join(dir, `${name}.json`);
+        writeFileSync(policyPath, content);
+        const result = await run([...REFERENCE_ARGS, "--trust-policy", policyPath]);
+        expect(result.exit, `trust policy case "${name}" must exit 4`).toBe(4);
+        expect(result.stdout, `case "${name}" must emit no report`).toBe("");
+        expect(result.stderr).toContain("invalid_trust_policy");
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("K3 (F4): duplicate keys in a trust policy are refused at the byte boundary — last-wins can flip trust", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-k3-"));
+    try {
+      const manifestHash = manifestContentHash(readFileSync(MANIFEST));
+      // First key approves the real manifest; the duplicate overrides with garbage. Under
+      // last-wins parsing this file silently flips the trust decision — the R-003 class
+      // reopened at a THIRD byte boundary. It must never parse at all.
+      const policyPath = join(dir, "dup.json");
+      writeFileSync(
+        policyPath,
+        `{"trustPolicyId":"tp-k3","approvedHashes":["${manifestHash}"],"approvedHashes":["sha256:${"a".repeat(64)}"]}`,
+      );
+      const result = await run([...REFERENCE_ARGS, "--trust-policy", policyPath]);
+      expect(result.exit).toBe(4);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toContain("duplicate_json_key");
+
+      // Control: the same policy without the duplicate key is a working caller policy.
+      const cleanPath = join(dir, "clean.json");
+      writeFileSync(
+        cleanPath,
+        JSON.stringify({ trustPolicyId: "tp-k3", approvedHashes: [manifestHash] }),
+      );
+      const clean = await run([...REFERENCE_ARGS, "--trust-policy", cleanPath]);
+      expect(clean.exit).toBe(3);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 // Read the fixture bytes once here so a future refactor of the helper cannot silently point
 // the suite at different inputs than the documented command uses.
 test("the fixture paths used by this suite are the shipped reference set", () => {

@@ -182,12 +182,14 @@ export async function handleVerify(request: Request): Promise<Response> {
     at: body.at as "finalized",
     chainIds: body.chainIds,
   };
-  const deployment = referenceDeployment(manifestBytes, {
-    evaluationTime: body.evaluationTime,
-    trustPolicy: body.trustPolicy,
-  });
-
+  // Deployment construction validates the clock (invalid_evaluation_time, W5 round-1
+  // Codex F3) — inside the guarded region so a refusal is a 400 with its exact pointer,
+  // never an unhandled throw.
   try {
+    const deployment = referenceDeployment(manifestBytes, {
+      evaluationTime: body.evaluationTime,
+      trustPolicy: body.trustPolicy,
+    });
     const run = await runVerification({ manifestBytes, recordings }, selector, deployment);
     REPORT_STORE.set(run.reportHash, run.payload);
     return reportResponse(run.payload, run.reportHash);

@@ -516,3 +516,14 @@ describe("W5 S4 — G. teeth", () => {
     expect(Object.keys(reportsRoute).sort()).toEqual(["GET"]);
   });
 });
+
+describe("W5 Codex round 1 — F3 at the HTTP edge", () => {
+  test("E12: a malformed evaluationTime is a 400 with the exact pointer — never a canonical report", async () => {
+    // The clock enters the payload AND (today) evidence timestamps — an unvalidated
+    // string here becomes a "successful" canonical report. Strict ISO-UTC only.
+    for (const bad of ["not-an-iso-time", "2026-07-24T00:00:00+02:00", "2026-02-30T00:00:00Z", ""]) {
+      const res = await post(referenceBody({ evaluationTime: bad }));
+      await expectError(res, 400, "invalid_evaluation_time", "/evaluationTime");
+    }
+  });
+});

@@ -9,7 +9,8 @@
 // spec keys caches on provider policy and evaluator version SEPARATELY from the request
 // hash (ENGINEERING_SPEC §Storage and caching).
 import { createHash } from "node:crypto";
-import { jcsSerialize } from "../report/canonical";
+import type { ManifestTrustPolicy } from "../manifest/trust";
+import { findDuplicateJsonKey, jcsSerialize } from "../report/canonical";
 
 // Which role a recorded bundle plays in the run. Recorded mode must be told this rather
 // than inferring it: a bundle answers whatever it happens to contain, and guessing would
@@ -139,4 +140,66 @@ export function buildRequest(
 
 export function requestHash(request: VerificationRequest): string {
   return `sha256:${createHash("sha256").update(Buffer.from(jcsSerialize(request), "utf-8")).digest("hex")}`;
+}
+
+// W5 round-1 Codex F4: the CLI's --trust-policy file is a THIRD untrusted byte boundary —
+// raw JSON.parse there reopened the [[R-003]] last-wins class (a duplicate approvedHashes
+// key silently flips the trust decision) and misclassified wrong-shaped caller input as an
+// engine failure. Same discipline as the manifest/recording loaders: duplicate scan on the
+// TEXT before parsing, then a strict shape — every failure is typed caller input.
+const SHA256_ID = /^sha256:[0-9a-f]{64}$/;
+
+export function loadTrustPolicyBytes(bytes: Uint8Array): ManifestTrustPolicy {
+  const text = new TextDecoder().decode(bytes);
+  const duplicate = findDuplicateJsonKey(text);
+  if (duplicate !== null) {
+    throw new RequestError("duplicate_json_key", "/trustPolicy", duplicate);
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new RequestError("invalid_trust_policy", "/trustPolicy", "not valid JSON");
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new RequestError("invalid_trust_policy", "/trustPolicy", "must be an object");
+  }
+  const record = parsed as Record<string, unknown>;
+  if (Object.keys(record).sort().join(",") !== "approvedHashes,trustPolicyId") {
+    throw new RequestError(
+      "invalid_trust_policy",
+      "/trustPolicy",
+      "exactly trustPolicyId and approvedHashes",
+    );
+  }
+  const { trustPolicyId, approvedHashes } = record;
+  if (typeof trustPolicyId !== "string" || trustPolicyId.length === 0) {
+    throw new RequestError(
+      "invalid_trust_policy",
+      "/trustPolicy/trustPolicyId",
+      "nonempty string required",
+    );
+  }
+  if (!Array.isArray(approvedHashes)) {
+    throw new RequestError("invalid_trust_policy", "/trustPolicy/approvedHashes", "array required");
+  }
+  const seen = new Set<string>();
+  for (const [index, entry] of approvedHashes.entries()) {
+    if (typeof entry !== "string" || !SHA256_ID.test(entry)) {
+      throw new RequestError(
+        "invalid_trust_policy",
+        `/trustPolicy/approvedHashes/${index}`,
+        "sha256:<64 lowercase hex> required",
+      );
+    }
+    if (seen.has(entry)) {
+      throw new RequestError(
+        "invalid_trust_policy",
+        `/trustPolicy/approvedHashes/${index}`,
+        "duplicate entry",
+      );
+    }
+    seen.add(entry);
+  }
+  return { trustPolicyId, approvedHashes: approvedHashes as string[] };
 }

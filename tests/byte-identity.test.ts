@@ -3,7 +3,7 @@
 // paths yields four reportHash values equal to each other and to the facade's direct
 // output — and the canonical payload BYTES are identical everywhere, with delivery
 // metadata excluded from identity (ENGINEERING_SPEC:846, :879).
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { main } from "../bin/aegis";
@@ -160,5 +160,40 @@ describe("W5 S7 — J. cross-surface byte identity", () => {
     expect(jcsSerialize({ payload: second.api.payload, reportHash: second.api.reportHash })).toBe(
       jcsSerialize({ payload: first.api.payload, reportHash: first.api.reportHash }),
     );
+  });
+
+  test("J4 (tooth): no surface source references the engine's evaluators — the one-engine guard, mechanical", () => {
+    // W5 round-1 Codex F7. Charter Acceptance ("One engine … mechanically checked";
+    // ENGINEERING_SPEC:1041 — no verdict logic outside the shared engine): the three
+    // evaluator entry points may be referenced ONLY by surfaces/engine.ts. A full-source
+    // token scan is stricter than an import parse — a surface may not even NAME them, so
+    // J1's single-fixture parity can never mask a divergent evaluator on another path.
+    const forbidden = /\b(establishBoundary|observeIdentity|compareIdentityTarget)\b/;
+    // The tooth's own negative test.
+    expect(forbidden.test('import { establishBoundary } from "../chain/engine";')).toBe(true);
+    expect(forbidden.test('const x = compareIdentityTarget(t, o, p);')).toBe(true);
+    expect(forbidden.test("observeIdentityX establishBoundaries recompareIdentityTargets")).toBe(false);
+
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const p = join(dir, entry.name);
+        if (entry.isDirectory()) walk(p);
+        else if (/\.(ts|tsx)$/.test(entry.name)) files.push(p);
+      }
+    };
+    for (const root of ["bin", join("lib", "aegis", "surfaces"), "app", "components"]) {
+      walk(join(__dirname, "..", root));
+    }
+    const engine = join("surfaces", "engine.ts");
+    const scanned = files.filter((f) => !f.endsWith(engine));
+    // The four entry paths and their shared modules are all present — an empty or
+    // mis-rooted walk must fail loudly, not pass vacuously.
+    expect(scanned.length).toBeGreaterThan(10);
+    for (const f of scanned) {
+      const source = readFileSync(f, "utf-8");
+      const match = forbidden.exec(source);
+      expect(match, `${f} references evaluator "${match?.[0] ?? ""}"`).toBeNull();
+    }
   });
 });

@@ -10,8 +10,9 @@ import { parseArgs } from "node:util";
 import { loadRecordingBytes } from "../lib/aegis/chain/adapter";
 import { ChainError } from "../lib/aegis/chain/quorum";
 import { runVerification, SurfaceError } from "../lib/aegis/surfaces/engine";
+import type { DeploymentConfig } from "../lib/aegis/surfaces/engine";
 import { referenceDeployment } from "../lib/aegis/surfaces/profiles";
-import { RequestError } from "../lib/aegis/surfaces/request";
+import { loadTrustPolicyBytes, RequestError } from "../lib/aegis/surfaces/request";
 import { exitCodeForPayload, renderHuman, renderJson } from "../lib/aegis/surfaces/render";
 
 export interface CliIo {
@@ -82,7 +83,7 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
 
   let manifestBytes: Uint8Array;
   let recordings: { role: "heads" | "identity"; bytes: Uint8Array }[];
-  let trustPolicy: { trustPolicyId: string; approvedHashes: string[] } | undefined;
+  let trustPolicyBytes: Uint8Array | undefined;
   try {
     manifestBytes = readFileSync(values.manifest as string);
     recordings = [
@@ -96,10 +97,26 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
       })),
     ];
     if (values["trust-policy"]) {
-      trustPolicy = JSON.parse(readFileSync(values["trust-policy"], "utf8"));
+      trustPolicyBytes = readFileSync(values["trust-policy"]);
     }
   } catch (error) {
     return fail(io, `cannot read input: ${(error as Error).message}`);
+  }
+
+  // The trust policy is an untrusted byte boundary like every other caller file (W5
+  // round-1 Codex F4): duplicate-key scan before parse, strict shape, every failure a
+  // typed caller-input exit 4 — never last-wins, never an engine failure.
+  let trustPolicy: { trustPolicyId: string; approvedHashes: string[] } | undefined;
+  if (trustPolicyBytes !== undefined) {
+    try {
+      trustPolicy = loadTrustPolicyBytes(trustPolicyBytes);
+    } catch (error) {
+      if (error instanceof RequestError) {
+        io.stderr.write(`${error.message}\n`);
+        return 4;
+      }
+      throw error;
+    }
   }
 
   // Pre-validation: recording corruption is CALLER INPUT (exit 4), not an engine failure.
@@ -132,10 +149,21 @@ export async function main(argv: string[], io: CliIo): Promise<number> {
     at: values.at as "finalized",
     chainIds: (values.chain ?? []).map(Number),
   };
-  const deployment = referenceDeployment(manifestBytes, {
-    evaluationTime: values["evaluation-time"] as string,
-    trustPolicy,
-  });
+  // Deployment construction validates the clock (invalid_evaluation_time, F3) — a refusal
+  // there is caller input, exit 4, before any engine work.
+  let deployment: DeploymentConfig;
+  try {
+    deployment = referenceDeployment(manifestBytes, {
+      evaluationTime: values["evaluation-time"] as string,
+      trustPolicy,
+    });
+  } catch (error) {
+    if (error instanceof RequestError) {
+      io.stderr.write(`${error.message}\n`);
+      return 4;
+    }
+    throw error;
+  }
 
   // D20 transport diagnostic (W5:233-235): a configured provider with ZERO responses in a
   // recording is more often a misconfigured providerId than an outage — without this line
