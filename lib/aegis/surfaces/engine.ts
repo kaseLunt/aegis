@@ -253,7 +253,10 @@ export async function runVerification(
   }
 
   const limitations = [
-    { code: "recorded_inputs", text: "Evaluated from reviewed recorded fixtures; not live production telemetry." },
+    // "reviewed" is banned here (W5 round-1 Codex F5): the API accepts arbitrary caller
+    // bytes, and integrity-valid material is not evidence of review — the payload may
+    // never attest one.
+    { code: "recorded_inputs", text: "Evaluated from recorded fixtures; not live production telemetry." },
     ...applicability.map((a) => ({
       code: "manifest_not_applicable",
       text: `Manifest does not apply at the chain ${a.chainId} boundary: ${a.reasonCodes.join(", ")}.`,
@@ -315,7 +318,12 @@ function manifestEvidenceOf(manifestHash: string, deployment: DeploymentConfig, 
       snapshot: { sourceId: "manifest", contentHash: manifestHash },
     },
     rawResultHash: manifestHash,
-    capturedAt: deployment.evaluationTime,
+    // The manifest's acquisition time is unknowable at M1: caller bytes carry no
+    // acquisition metadata, and a wall clock would break payload determinism. The only
+    // honest value is the canonical degraded "unknown" (the manifestVersion precedent) —
+    // aliasing the injected evaluation clock as a capture time presents a modeled or
+    // future clock as source-snapshot acquisition (W5 round-1 Codex F6).
+    capturedAt: "unknown",
   };
 }
 

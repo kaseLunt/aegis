@@ -181,10 +181,13 @@ describe("W5 S6 — I. evidence drawer loader", () => {
     // head rows carry the identical capturedAt string.
     expect(new Set(heads.map((e) => e.capturedAt)).size).toBe(1);
 
-    // The manifest evidence row: captured at the injected evaluation time, no rpc scope.
+    // The manifest evidence row: its acquisition time is genuinely unknowable at M1
+    // (caller bytes carry no acquisition metadata; a wall clock would break determinism),
+    // so the payload carries the canonical degraded "unknown" — NEVER the evaluation
+    // clock aliased as a capture time (W5 round-1 Codex F6). No rpc scope.
     const manifest = model.evidence.find((e) => e.kind === "manifest");
     expect(manifest).toBeDefined();
-    expect(manifest?.capturedAt).toBe(EVALUATION_TIME);
+    expect(manifest?.capturedAt).toBe("unknown");
     expect(manifest?.capturedAtScope).toBeUndefined();
   });
 

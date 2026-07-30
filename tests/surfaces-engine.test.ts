@@ -246,3 +246,48 @@ describe("W5 S0 — runVerification fails closed", () => {
     await expect(attempt).rejects.toMatchObject({ code: "no_observation_boundary" });
   });
 });
+
+describe("W5 Codex round 1 — F5/F6 payload honesty", () => {
+  test("F5: no payload text claims arbitrary caller recordings were reviewed", async () => {
+    // The API accepts arbitrary caller bytes — integrity-valid material is NOT evidence
+    // of review, so no payload string may attest one. Drive the facade with a re-encoded
+    // (valid, content-equal, byte-different) heads recording: an arbitrary caller
+    // artifact nobody reviewed.
+    const reencoded = new TextEncoder().encode(
+      JSON.stringify(JSON.parse(new TextDecoder().decode(headsBytes()))),
+    );
+    const run = await runVerification(
+      { manifestBytes: manifestBytes(), recordings: [{ role: "heads", bytes: reencoded }] },
+      SELECTOR,
+      deployment(),
+    );
+    const p = run.payload as {
+      limitations: readonly { text: string }[];
+      verifications: readonly { limitations?: readonly { text: string }[] }[];
+    };
+    const texts = [
+      ...p.limitations.map((l) => l.text),
+      ...p.verifications.flatMap((v) => (v.limitations ?? []).map((l) => l.text)),
+    ];
+    expect(texts.length).toBeGreaterThan(0);
+    for (const text of texts) {
+      expect(text, `payload text must not attest review: "${text}"`).not.toMatch(/\breviewed\b/i);
+    }
+  });
+
+  test("F6: the manifest evidence never aliases the evaluation clock as a capture time", async () => {
+    // No manifest acquisition timestamp exists at M1 (caller bytes carry none), and a
+    // wall clock would break payload determinism — the only honest value is the canonical
+    // degraded "unknown" (the manifestVersion precedent). The two clocks stay DISTINCT
+    // concepts: evaluationTime remains the injected clock verbatim.
+    const run = await runVerification(inputs(), SELECTOR, deployment());
+    const p = run.payload as {
+      evaluationTime: string;
+      evidence: readonly { kind: string; capturedAt: string }[];
+    };
+    const manifest = p.evidence.find((e) => e.kind === "manifest");
+    expect(manifest).toBeDefined();
+    expect(manifest?.capturedAt).toBe("unknown");
+    expect(p.evaluationTime).toBe("2026-07-24T00:00:00Z");
+  });
+});

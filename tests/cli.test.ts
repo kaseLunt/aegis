@@ -529,9 +529,10 @@ describe("W5 S3 — C. render language (the canon teeth)", () => {
     // any of them is the renderer-misrepresentation hazard (THREAT_MODEL:124).
     const result = await run(REFERENCE_ARGS);
 
-    // Top-level recorded_inputs limitation, text VERBATIM.
+    // Top-level recorded_inputs limitation, text VERBATIM. ("reviewed" was removed by the
+    // W5 round-1 Codex F5 correction: caller bytes are never attested as reviewed.)
     expect(result.stdout).toContain(
-      "Evaluated from reviewed recorded fixtures; not live production telemetry.",
+      "Evaluated from recorded fixtures; not live production telemetry.",
     );
     // Per-verification limitations render too: every shipped-fixture verification carries
     // observation_unresolved, so it must appear at least once per verification.
