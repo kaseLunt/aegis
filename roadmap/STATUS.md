@@ -96,10 +96,21 @@ the full-flag reproduce line tokenized and re-executed through `main(argv)` yiel
 byte-identical envelope; deterministic under repetition. Born-green composition of
 pinned pairs, both planned mutation bites verified. `aegis reproduce` stays out and
 unadvertised per the S4 §6 ruling.
-**W5 is CODE-COMPLETE (S0–S7). The Codex convergence loop (D-b4ab3c69) is now the only
-thing between here and EV-W5 + stamp: verdict → persist verbatim → corrections → scoped
-re-verification → repeat until converged. Stamp is owner-visible, after convergence
-only.**
+**W5 is CODE-COMPLETE (S0–S7) and CODEX-CONVERGED (2026-07-30: GATE-PASSES at round 3,
+7 → 1 → 0; verdicts + dispositions in `roadmap/research/codex-review-w5.md`). 452/452,
+tsc + eslint clean.** [[EV-W5]] is recorded and committed (documented command re-run at
+`ba9160e`: exit 3 honest, hash `sha256:976ebf08…34f0`, built artifact `cmp`-identical to
+in-process; fingerprints match `--receipt-basis W5` at that commit).
+**The ACHIEVED transition is PREPARED but awaits owner review — the scope gate correctly
+refused it as a durable transition (status:achieved + ROADMAP projection + STATUS
+active_task are owner-acknowledged changes; agents halt, never bypass). To execute after
+review:** (1) `python roadmap/tools/claim.py release fable-main`; (2) set W5
+`status: achieved` + `evidence_receipts: [roadmap/evidence/EV-W5.md]`, flip the ROADMAP
+ladder row to achieved and STATUS `active_task: none`; (3) `git add` those three +
+`python roadmap/tools/doctor.py --stamp W5` (deterministic — it re-derives fingerprint
+`sha256:92e97314…f24c54`); (4) commit once with `CONTROL_PLANE_OWNER_REVIEWED=1`. The
+deliverables-ledger completion (full surface set) is a second contract change under the
+same flag, at your option. Then W6 activation.
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
