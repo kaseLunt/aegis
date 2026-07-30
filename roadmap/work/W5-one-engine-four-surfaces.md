@@ -24,7 +24,7 @@ deliverables:
   - lib/aegis/surfaces/ci.ts
   - bin/aegis.ts
 evidence_receipts:
-  - roadmap/evidence/EV-W5.md
+  - roadmap/evidence/EV-W5-R2.md
 invalidated_by:
   - lib/aegis/**
   - bin/**
@@ -33,7 +33,7 @@ invalidated_by:
   - package.json
 review_when: phase:P1:exit
 updated: 2026-07-30
-evidence_fingerprint: sha256:92e973142dcca88acd570346c5981cd8339a1ce0301628afeace745d23f24c54
+evidence_fingerprint: sha256:dfe1a3e08c8ffe350aa57519b3332fc6c9051855b4cf347f59af4ad1d1686f17
 ---
 
 # W5 — One engine, four surfaces

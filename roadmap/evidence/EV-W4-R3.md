@@ -2,7 +2,8 @@
 id: EV-W4-R3
 type: evidence
 title: W4 verification re-attested at the R-003 duplicate-key closure
-status: recorded
+status: superseded
+superseded_by: EV-W4-R4
 work: W4
 result: pass
 commands:

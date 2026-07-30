@@ -2,7 +2,8 @@
 id: EV-W5
 type: evidence
 title: W5 one engine, four surfaces — verified at Codex convergence (S0–S7 complete)
-status: recorded
+status: superseded
+superseded_by: EV-W5-R2
 work: W5
 result: pass
 commands:

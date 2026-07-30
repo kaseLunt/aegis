@@ -19,7 +19,7 @@ deliverables:
   - lib/aegis/identity/compare.ts
   - lib/aegis/identity/abi.ts
 evidence_receipts:
-  - roadmap/evidence/EV-W4-R3.md
+  - roadmap/evidence/EV-W4-R4.md
 invalidated_by:
   - lib/aegis/identity/**
   - lib/aegis/chain/**
@@ -28,7 +28,7 @@ invalidated_by:
   - data/recordings/**
 review_when: phase:P1:exit
 updated: 2026-07-23
-evidence_fingerprint: sha256:804b527dfce9128a238769ac534ab29bf9c69a5be5029f7ad0c4decbcfeca490
+evidence_fingerprint: sha256:2f3fd81c8b32dd154a2cd7f201e06b9193581c01f6d682450712d052e7335ee1
 ---
 
 # W4 — Identity adapters + code-hash-scoped ABI registry
