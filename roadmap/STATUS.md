@@ -5,7 +5,7 @@ enforcement: bootstrap
 enforcement_evidence: []
 project_state: active
 active_phase: P1
-active_task: none
+active_task: W6
 updated: 2026-07-26
 ---
 
@@ -20,7 +20,14 @@ green locally, all achieved items re-attested with evidence receipts. Verify rem
 the migrated workflows after push. main protected; residuals in [[R-005]] under [[D-007]].
 
 ## Current task (WIP = 1 per agent, [[D-006]])
-**W5 — one engine, four surfaces. ACTIVE at slice S4 (the report API), claim generation 7.**
+**W6 — M1 recorded scenario fixture corpus + reorg supersession. ACTIVE (activated
+2026-07-30, owner-reviewed; W5 ACHIEVED the same morning — [[EV-W5]], stamp
+`sha256:92e97314…f24c54`, commit `3627c5b`).** W6 is what closes M1: the recorded
+non-success corpus as reviewable DATA (mismatch, missing-evidence, stale, conflict,
+ABI-mismatch, reorg) + block-hash-keyed supersession. Next: read the W6 charter fully,
+then the recon-first pattern before any fixture is authored.
+
+### W5 history (S0–S7 + convergence, ACHIEVED)
 
 S0/S1/S2 are DONE (384/384). S3 executes against the recon-derived plan now embedded in the
 W5 charter ("S3 plan" section): 21 TDD tests in sequence, the total exit-code mapping, the

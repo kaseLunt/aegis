@@ -3,7 +3,7 @@ id: W6
 type: work
 title: M1 recorded scenario fixture corpus + reorg supersession
 phase: P1
-status: candidate
+status: active
 evidence_target: "Correct + Robust"
 priority: 2
 depends_on: [W5]
@@ -20,7 +20,7 @@ invalidated_by:
   - lib/aegis/**
   - data/**
 review_when: phase:P1:exit
-updated: 2026-07-24
+updated: 2026-07-30
 ---
 
 # W6 — M1 recorded scenario fixture corpus + reorg supersession
@@ -67,17 +67,47 @@ This is why W5 proves its non-success paths with inline `sealedBundle` construct
 reviewable success corpus needs authored manifest/recording pairs, which is W6's job. W5's
 evidence claim is scoped accordingly.
 
-## Acceptance (to refine at kickoff — candidate placeholder)
+## Acceptance
 
-- Correct: one sealed bundle per M1 scenario (success, mismatch, missing-evidence,
-  stale-provider, provider-conflict, ABI-mismatch, reorg), each envelope-verified by
-  `loadRecordingBytes` and each producing exactly the intended typed outcome through the W5
-  facade; a reorged block is superseded, not silently replaced, and orphaned observations are
-  marked rather than deleted.
-- Robust: caches are keyed by (provider policy, manifest hash, chain id, block hash, request
-  hash, evaluator version) — never block number alone; a block-hash change invalidates
-  derived entries; property tests over supersession ordering.
-- Kickoff refines these before status: active.
+*(Refined at kickoff 2026-07-30, owner-reviewed activation; supersedes the candidate
+placeholder. W5's facade, exit matrix, and four-surface parity gate are the fixed
+substrate — W6 authors DATA against them, never new verdict logic.)*
+
+### Correct
+- **One sealed fixture set per M1 scenario** — success (`pass`), mismatch (`fail`),
+  missing-evidence (`unknown`), stale-provider (`stale`), provider-conflict (`conflict`),
+  ABI-mismatch, and reorg — each a manifest/recording pairing under `data/**`, each
+  envelope-verified by `loadRecordingBytes`, and each producing EXACTLY its intended
+  canonical verdict and exit/status class through the unmodified W5 facade.
+- **The success pair follows the matched-pair recipe** (this charter's hard constraint):
+  `expectedRuntimeCodeHash` computed as sha256 over the recorded code BYTES (never a hex
+  string), `expectedImplementation` matching the recorded EIP-1967 slot word, and the
+  manifest's embedded `contentHash` resealed afterwards.
+- **The stale scenario is honest to the declared policy:** it crosses the fp-reference
+  window by capture timestamps, and never presents that declared reference constant as a
+  reviewed production policy (W5 round-2 Codex cap, carried verbatim).
+- **Reorg is supersession, never replacement:** a reorged block's evidence is superseded
+  with the supersession visible; orphaned observations are MARKED, never deleted.
+- **Per-scenario documented reproduction:** each fixture has a documented single command
+  whose printed verdict/exit matches the corpus's declared outcome table.
+
+### Robust
+- **Four-surface parity per scenario:** each fixture driven through the J1 gate idiom
+  (CLI/API/CI/drawer) yields one hash and the same classification — the corpus cannot
+  green on one transport and diverge on another.
+- **Caches keyed by content, never height:** (provider policy, manifest hash, chain id,
+  BLOCK HASH, request hash, evaluator version); a block-hash change invalidates derived
+  entries; property tests over supersession ordering.
+- **Honesty teeth extend to the corpus:** README caveats (illustrative vs recorded) extend
+  to every new bundle; no fixture fabricates protocol history — adversarial bundles are
+  labeled as authored adversarial constructions.
+- **W5 re-attestation is planned, not accidental:** the first commit touching `data/**`
+  carries EV-W5-R2 in the same commit (W5's `invalidated_by` covers `data/**`), per
+  [[INS-58ac6162-b9e8-4e35-b3a0-f7c824fbed94]].
+
+Then the Codex convergence gate ([[D-b4ab3c69-c110-4d78-bc4c-f9a332489db4]]) before any
+achieved stamp — verdicts persisted verbatim, corrections dispositioned, re-verified until
+GATE-PASSES.
 
 ## Non-goals
 
@@ -93,9 +123,14 @@ npm test
 
 ## Handoff
 
-- next: CANDIDATE — owner authorized the W5/W6 split at the W5 kickoff (2026-07-24); not yet
-  promoted to committed (HITL barrier: only a phase review promotes). Kickoff must refine
-  acceptance and confirm whether M1's cache/canonicality items belong here or in a sibling.
+- next: **ACTIVATED 2026-07-30 (owner-reviewed), claim generation 8, acceptance refined at
+  kickoff.** The cache/canonicality items STAY in W6 (kickoff ruling: they are properties
+  of the recorded corpus, not a sibling concern). Start with the house recon-first
+  pattern: a read-only recon of (a) the existing fixture formats + sealedBundle recipes,
+  (b) the M1 deliverable list in docs/ROADMAP.md, and (c) where supersession must live in
+  lib/ — synthesized into a "W6 plan" section HERE before any red test. First slice
+  boundary suggestion from recon, not assumed. Remember: the FIRST data/** commit carries
+  EV-W5-R2.
 - read_first: docs/ROADMAP.md M1 deliverables + exit gate; `data/recordings/README.md`
   (illustrative-vs-recorded caveats); `tests/engine.test.ts` `sealedBundle()` — the recipe
   for building a bundle whose per-response `rawResponseSha256` and `envelopeSha256` are
