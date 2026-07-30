@@ -35,7 +35,7 @@ identifier and are **not** pinned to these heads. *(superseded 2026-07-30 per Co
 | # | Charter item | Outcome | Headline |
 |---|---|---|---|
 | 1 | Creation provenance of `0x7a00657a…` | **ANSWERED** | OP blk **153277304** (2026-06-22), tx `0x2a528cc9…`, creator EOA `0x8d5aac5d…` (the same EOA that created the ETH adapter-owner timelock and both canceller-Safe instances), factory `0xc2283458…` = GnosisSafeProxyFactory v1.3.0, singleton `0xfb1bffc9…` = GnosisSafeL2 v1.3.0. OBSERVED-dual + independent Safe-service path. |
-| 2 | Signer-set provenance from creation | **ANSWERED** | Full self-event history from block 0, OBSERVED-dual (Tenderly 1M + OP Labs 10k): SafeSetup **5 owners / thr 2** @153277304, then **+2 owners, thr→4** @153703252 ⇒ **7 owners / thr 4**. ~~No `RemovedOwner` ever.~~ No `RemovedOwner` appears through pinned head 154897427. *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* |
+| 2 | Signer-set provenance from creation | **ANSWERED** | ~~Full self-event history from block 0, OBSERVED-dual (Tenderly 1M + OP Labs 10k):~~ Full self-event history, OBSERVED-dual over the actual sweep ranges — Tenderly `[0,154897427]` at 1M steps; OP Labs `[153277304,154897427]` at 10k steps; no-pre-creation coverage is **INFERRED**, conditional on the dual-provider creation boundary (§3) *(superseded 2026-07-30 per Codex review [round 2], [[g08-codex-verdict.md]])*: SafeSetup **5 owners / thr 2** @153277304, then **+2 owners, thr→4** @153703252 ⇒ **7 owners / thr 4**. ~~No `RemovedOwner` ever.~~ No `RemovedOwner` appears through pinned head 154897427. *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* |
 | 3 | Threshold history | **ANSWERED** | **2 → 4**, single change at OP blk 153703252 (`ChangedThreshold`, full-word decoded). |
 | 4 | Second acquisition path for current owners/threshold | **ANSWERED (three concordant methods)** | ~~event-fold **=** pinned dual-provider **storage walk** (owner linked-list, ownerCount, threshold, nonce, singleton) **=** Safe-service snapshot: **7 owners / thr 4 / nonce 1**. g35's OBSERVED-single facts raised to OBSERVED-multi-path.~~ At OP block 154897427, dual-provider event folding and dual-provider storage reads agree on seven owners and threshold 4. A separately acquired Safe-service snapshot reported the same owners and threshold at acquisition time. The storage and service legs additionally agree on nonce 1 and singleton. These are three concordant methods/acquisition surfaces, not three independent evidence roots. *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]] — the "OBSERVED-multi-path" aggregate tag is withdrawn)* |
 | 5 | Relationship to outgoing Safe `0x764682c7…` | **ANSWERED ~~, and the g35 Codex gap CLOSED~~ at event-history strength** | Two **distinct** Safe proxies (different creation blocks/txs → **not** a "re-deployment"). ~~Event-fold of both **at rotation block 154619344** proves **identical owner sets AND thresholds at that block** (7-of-7 shared, 0 delta) — closing exactly what g35 claim-19 could not (current snapshots).~~ By the last decoded OwnerManager event at or before OP block 154619344, both Safes fold to the same seven-owner set and threshold 4. This is event-history evidence; storage at the rotation block remains a separate observed-side check. *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* CAP: identical signers ≠ identical control (custody unknowable, G-09); no motive stated. |
@@ -135,12 +135,16 @@ POSITIVE control: SafeSetup decodes 5 owners threshold 2; AddedOwner decodes own
 | `safe-transaction-{mainnet,optimism}.safe.global` → `api.safe.global/tx-service/{eth,oeth}/…` | OK; **308-redirects** (9 acquisitions ledgered with the **effective** URL, G9 discipline); **requires EIP-55 checksums** (derived in-lane with this lane's keccak) |
 
 ### 1.6 Explorer quarantine + D-006 role separation
-**No block explorer** was used — every address label is either (a) SOURCED from the pinned deploy
-tree / vendor deployment registry with its citation, or (b) explicitly **unlabelled**. This lane made
+**No block explorer** was used — every address label is either (a) SOURCED from ~~the pinned deploy
+tree~~ the retained deploy-source copy (retained-copy strength; no retained Git-object binding to
+`e30c859c` — §7.1) *(superseded 2026-07-30 per Codex review [round 2], [[g08-codex-verdict.md]])*
+/ vendor deployment registry with its citation, or (b) explicitly **unlabelled**. This lane made
 **no read of any value the manifest will verify** as a predicate: `owner()`, `delegates()`,
 `hasRole()`, `getMinDelay()`, `getOwners()`, `getThreshold()` were **not** called. The storage-walk
 reads (§4) are historical-block-pinned `eth_getStorageAt` used only to **corroborate** the
-event-fold as an independent acquisition path, and are recorded as **EvidenceFacts** (G-09 class),
+event-fold as ~~an independent acquisition path~~ a separate corroborating method/acquisition
+surface, not an independent evidence root *(superseded 2026-07-30 per Codex review [round 2],
+[[g08-codex-verdict.md]])*, and are recorded as **EvidenceFacts** (G-09 class),
 never as a pass/fail predicate. No code hash in this dossier may seed `expectedRuntimeCodeHash`
 (G-01 anti-seeding, by analogy — g35 §2.7).
 
@@ -255,9 +259,11 @@ facts (claims 18–19) to OBSERVED-multi-path** for the current state.~~ At OP b
 dual-provider event folding and dual-provider storage reads agree on seven owners and threshold 4.
 A separately acquired Safe-service snapshot reported the same owners and threshold at acquisition
 time. The storage and service legs additionally agree on nonce 1 and singleton. These are three
-concordant methods/acquisition surfaces, not three independent evidence roots — the
+concordant methods/acquisition surfaces, not three independent evidence roots. The
 "OBSERVED-multi-path" aggregate tag is withdrawn; per-leg strengths stand alone. *(superseded
-2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* Strength: **OBSERVED-dual** for
+2026-07-30 per Codex review [round 1]; replacement reproduced verbatim — the em-dash join that
+altered its final sentence removed — per Codex review [round 2], [[g08-codex-verdict.md]])*
+Strength: **OBSERVED-dual** for
 the storage walk, **OBSERVED-single** for the service leg, event fold OBSERVED-dual.
 
 Also read (`s10` follow-up): `modules[SENTINEL]` at the pinned head = sentinel (**empty module list**,
@@ -299,6 +305,13 @@ incoming 0x7a00657a: 4 of 7   |   outgoing 0x764682c7: 4 of 7
 identical owner sets AND thresholds at rotation block 154619344: True
 shared 7 | only-incoming [] | only-outgoing []
 ```
+
+*(superseded 2026-07-30 per Codex review [round 2], [[g08-codex-verdict.md]]: the script-output
+label above — ~~`identical owner sets AND thresholds at rotation block 154619344: True`~~ — is
+superseded; the quoted output is left verbatim because editing inside script output would falsify
+it. Read it under the by-last-event cap: By the last decoded OwnerManager event at or before OP
+block 154619344, both Safes fold to the same seven-owner set and threshold 4. This is
+event-history evidence; storage at the rotation block remains a separate observed-side check.)*
 
 ~~So at the rotation block the two Safes had an **identical 7-owner set and identical 4-of-7 threshold**,
 established from the decoded OwnerManager event history (not a head snapshot).~~ By the last decoded
@@ -498,15 +511,15 @@ creation **through the pinned heads** (ETH 25643936 / OP 154897427) — only `Sa
 | 2 | Creator EOA `0x8d5aac5d…`; factory GnosisSafeProxyFactory v1.3.0; singleton GnosisSafeL2 v1.3.0 | OBSERVED-dual + SOURCED (vendor registry) | `creation_tx.json`; `raw/safe_deployments_v1.3.0_*` |
 | 3 | Signer history: 5/thr2 @153277304 → 7/thr4 @153703252; ~~no RemovedOwner~~ no `RemovedOwner` appears through pinned head 154897427 *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* | OBSERVED-dual | `safehist_…7a00657a…_tenderly.bin` `5a459417…` + OP Labs `29904f89…`, agreement True |
 | 4 | Threshold history 2→4, one change | OBSERVED-dual | same |
-| 5 | ~~Current 7/thr4/nonce1 on three concordant paths~~ At OP 154897427, 7 owners/thr 4 by dual-provider fold and dual-provider storage; nonce 1 + singleton by storage and by an acquisition-time Safe-service snapshot — three concordant methods/acquisition surfaces, not three independent evidence roots *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* | OBSERVED-dual (fold+storage) + OBSERVED-single (service) | `storage_walk.json`, `svc_snapshots.json` |
+| 5 | ~~Current 7/thr4/nonce1 on three concordant paths~~ ~~At OP 154897427, 7 owners/thr 4 by dual-provider fold and dual-provider storage; nonce 1 + singleton by storage and by an acquisition-time Safe-service snapshot — three concordant methods/acquisition surfaces, not three independent evidence roots~~ At OP block 154897427, dual-provider event folding and dual-provider storage reads agree on seven owners and threshold 4. A separately acquired Safe-service snapshot reported the same owners and threshold at acquisition time. The storage and service legs additionally agree on nonce 1 and singleton. These are three concordant methods/acquisition surfaces, not three independent evidence roots. *(superseded 2026-07-30 per Codex review [round 1]; reproduced verbatim per Codex review [round 2], [[g08-codex-verdict.md]])* | OBSERVED-dual (fold+storage) + OBSERVED-single (service) | `storage_walk.json`, `svc_snapshots.json` |
 | 6 | `0x764682c7…` and `0x7a00657a…` are distinct proxies (different creation tx/block) | OBSERVED-dual / -single | `creation_tx.json` |
-| 7 | ~~Identical 7-owner set AND thr **at rotation block 154619344**~~ By the last decoded OwnerManager event at or before OP block 154619344, both Safes fold to the same seven-owner set and threshold 4 — event-history evidence; rotation-block storage remains a separate observed-side check *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* | OBSERVED-dual both Safes (event history) | event-fold snapshot, `fold_results.json` |
+| 7 | ~~Identical 7-owner set AND thr **at rotation block 154619344**~~ ~~By the last decoded OwnerManager event at or before OP block 154619344, both Safes fold to the same seven-owner set and threshold 4 — event-history evidence; rotation-block storage remains a separate observed-side check~~ By the last decoded OwnerManager event at or before OP block 154619344, both Safes fold to the same seven-owner set and threshold 4. This is event-history evidence; storage at the rotation block remains a separate observed-side check. *(superseded 2026-07-30 per Codex review [round 1]; reproduced verbatim per Codex review [round 2], [[g08-codex-verdict.md]])* | OBSERVED-dual both Safes (event history) | event-fold snapshot, `fold_results.json` |
 | 8 | Identical signers ≠ identical control; no motive; role/address rotation not redeployment | **CAP** (INFERRED-none) | causality discipline; G-09 |
 | 9 | `0x764682c7…` still holds DEFAULT_ADMIN + UNPAUSER on OP OFT `0x5a7facb9…` by last event | OBSERVED-single (OP Tenderly sweep) | `residual_raw.json`, `raw/residual_OP_764682c7_RG_acct_*.bin` |
 | 10 | Those role standings **only** within standard event filters | **CAP** | §6.3 |
 | 11 | ~~`0x7a00657a…` declared as `DEPLOYMENT_CONTRACT_CONTROLLER`/`L2_CONTRACT_CONTROLLER_SAFE` at pinned commit e30c859c~~ The retained source copy reports `0x7a00657a…` declared as `DEPLOYMENT_CONTRACT_CONTROLLER`/`L2_CONTRACT_CONTROLLER_SAFE`; commit binding to `e30c859c` not independently retained; one tx-builder file retained (24-file count withdrawn) | ~~**SOURCED** (pinned deploy tree, HEAD-verified, clean)~~ **SOURCED at retained-copy strength** (no Git object record retained) *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* | `raw/deploysrc_L2Constants.sol_e30c859.txt` `ddd02778…` |
 | 12 | OP config in the retained copy still names old `0x764682c7…`; ~~rotation aligned OP to the canonical L2 controller~~ the "aligned OP to the canonical L2 controller" reading is **INFERRED** *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* | SOURCED at retained-copy strength + OBSERVED (rotation) + INFERRED (alignment reading) | L2Constants.sol L404-406; g35 §3.3 |
-| 13 | ~~`0x055a8B2B…` in no artifact (G-15 stands)~~ `0x055a8B2B…` was not located in the explicitly named searched corpus (repo + deploy-tree checkout + WR1/WR2 + docs/) as of the reviewed revisions; no broader artifact-absence claim is made (G-15 stands) *(superseded 2026-07-30 per Codex review [round 1], [[g08-codex-verdict.md]])* | SOURCED-absence (corpus-scoped) | repo + deploy-tree + WR grep; search manifest retention required before independently verifiable |
+| 13 | ~~`0x055a8B2B…` in no artifact (G-15 stands)~~ ~~`0x055a8B2B…` was not located in the explicitly named searched corpus (repo + deploy-tree checkout + WR1/WR2 + docs/) as of the reviewed revisions; no broader artifact-absence claim is made (G-15 stands)~~ `0x055a8B2B…` was not located in the explicitly named searched corpus as of the reviewed revisions; no broader artifact-absence claim is made. Searched corpus, listed separately: the Aegis repo, the deploy-tree scratchpad checkout, WR1/WR2, and `docs/`. G-15 stands. *(superseded 2026-07-30 per Codex review [round 1]; reproduced verbatim with the corpus listed separately per Codex review [round 2], [[g08-codex-verdict.md]])* | SOURCED-absence (corpus-scoped) | repo + deploy-tree + WR grep; search manifest retention required before independently verifiable |
 | 14 | Canceller Safe creation/singleton/owners both chains; proxy code identical, singletons differ | OBSERVED-dual + SOURCED | §9 |
 | 15 | OP OFT uses OZ AccessControl (`DEFAULT_ADMIN_ROLE=bytes32(0)`) — data point, G-10 still open | INFERRED | role-id decode; exact epoch needs G-01 code binding |
 | 16 | Reorg/cross-provider recheck: 10 load-bearing blocks, 0 mismatches | OBSERVED-dual | `s13`, `raw/reorg_*` |
@@ -588,8 +601,10 @@ retained bytes; the no-overwrite assertion is limited to `s12`'s guarded artifac
 5. **Code hashes are characterisation.** No `eth_getCode`/proxy-code hash here may seed
    `expectedRuntimeCodeHash` for any target (G-01 anti-seeding).
 6. **Single-provider spots, disclosed:** the outgoing Safe's creation tx/receipt (OP Labs only,
-   Tenderly pruned); the Safe-service snapshots (one HTTP API). Both are corroborated by an
-   independent path where it matters (creation-block self-logs are dual-provider; service snapshots
+   Tenderly pruned); the Safe-service snapshots (one HTTP API). Both are corroborated by ~~an
+   independent path~~ a separate corroborating method/acquisition surface, not an independent
+   evidence root, *(superseded 2026-07-30 per Codex review [round 2], [[g08-codex-verdict.md]])*
+   where it matters (creation-block self-logs are dual-provider; service snapshots
    match the dual-provider storage walk).
 
 ---
@@ -619,5 +634,9 @@ All scripts, artifacts and the acquisition ledger live in
 | `*.json` | intermediate decoded outputs (`creation_*`, `safehist_raw`, `fold_results`, `storage_walk`, `svc_snapshots`, `residual_raw`, `msig_ops_*`, `safe_topics`, `pins`) |
 
 Repo files **read** (never modified): `blueprint.md`, `g35-dossier.md`, `g35-codex-verdict.md`,
-`g02-04-execution-order.md`, WR1/WR2 sources. Deploy source **read** (pinned commit `e30c859c`,
-scratchpad checkout, HEAD-verified): `weETH-cross-chain/utils/L2Constants.sol` and `output/*.json`.
+`g02-04-execution-order.md`, WR1/WR2 sources. Deploy source **read** ~~(pinned commit `e30c859c`,
+scratchpad checkout, HEAD-verified): `weETH-cross-chain/utils/L2Constants.sol` and `output/*.json`.~~
+at retained-copy strength (prior-lane scratchpad checkout; rev-parse/status recorded but no
+retained Git-object binding to `e30c859c`): one retained copy of
+`weETH-cross-chain/utils/L2Constants.sol` (`ddd02778…`) and one retained `base` output file
+(`025b9223…`). *(superseded 2026-07-30 per Codex review [round 2], [[g08-codex-verdict.md]])*
