@@ -76,8 +76,15 @@ rows returned as data with the CLI's 4/5 classes. H1–H5 red-first (H4 = the S7
 CLI/CI byte-parity pair, early; H5 tooth bite-proven with a real inserted token). The
 hygiene tooth caught a live Serena CRLF injection in `render.ts` mid-slice — its designed
 catch. S5 plan (inline recon) recorded in the charter.
-**Next: S6 (web evidence drawer — recon first per the S3/S4 pattern), S7 (byte-identity
-gate), then the Codex convergence loop before any stamp. Do NOT stamp W5 mid-slice.**
+**S6 ACTIVE (2026-07-29): the web evidence drawer.** Three-mapper read-only recon
+(ui-stack / drawer-canon / test-reality, workflow `wf_2dc69dd5-5ad`) synthesized into the
+charter's "S6 plan" section BEFORE any test: diagnostics ruling settled (display model =
+payload + engine-licensed diagnostics; hash stays payload-only), loader
+`surfaces/drawer.ts` mirrors the CI adapter, `.tsx` sync/props-fed/relative-imported with
+the I6 import-spike fallback, CSP gap captured as [[IDEA-5bb4ace0]] (owner triage — not
+silently absorbed). TDD matrix I1–I7, executing in charter §7 order.
+**Then S7 (byte-identity gate), then the Codex convergence loop before any stamp. Do NOT
+stamp W5 mid-slice.**
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity
@@ -418,10 +425,20 @@ red pushes is RETIRED; a red selftest is now a real failure with no known flake 
      register tags 5/7/8/13/15/16/17/19 corrected. **All 36 corrections APPLIED
      supersede-in-place (`9af7c23`)** — dossier + blueprint never claim past the corrected
      register; applying-agent incident (destructive CRLF one-liner, recovered from HEAD
-     blobs) captured as [[INS-7e57fb37]]. **IN FLIGHT: scoped Codex re-verification of the
-     applied corrections at 9af7c23** — verdict GATE-PASSES or FURTHER-CORRECTIONS; only
-     after GATE-PASSES may wave-3 rows be promoted per their corrected tags (D-006). Then
-     the re-posed G-08 lane.
+     blobs) captured as [[INS-7e57fb37]]. **Round 2 (scoped re-verification at 9af7c23):
+     FURTHER-CORRECTIONS** — 8 live repeats outside strikethrough; verdict persisted
+     (`082a07d`), all 8 applied supersede-in-place (`d96eb8d`). **Round 3
+     (task-ms7482ph-qne68w, FRESH Codex session — thread continuity died with the session
+     reset, re-armed from the persisted verdict file per [[INS-1fb3423e]]; first dispatch
+     self-halted on a D-004 dispatch race, re-dispatched at clean 9de8a29):
+     FURTHER-CORRECTIONS, narrowed to ONE live item** — all eight round-2 corrections
+     PASS; Blueprint S3 "set once … never changed" needs the by-last-decoded-`PeerSet`
+     cap (S3 lines 121–122 + G-03 line 171, required formulation quoted in the verdict);
+     judgment call G-08 item (4): no change required. Persisted verbatim in
+     `g35-codex-verdict.md`. **IN FLIGHT: the single S3/G-03 correction
+     supersede-in-place, then scoped round-4 re-verification.** Only after GATE-PASSES may
+     wave-3 rows be promoted per their corrected tags (D-006), promotion itself
+     owner-gated. Then the re-posed G-08 lane.
   2. ~~Codex verification of the EDR fix-site scout~~ **LANDED 2026-07-26 late: verdict
      NEEDS-CORRECTIONS** — persisted verbatim in
      `roadmap/research/rehearse-selection/edr-scout-codex-verdict.md`. Core diagnosis

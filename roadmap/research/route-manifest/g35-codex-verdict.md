@@ -241,3 +241,61 @@ always in scope; recorded here for completeness).
 - Round-2 verdict persisted (this section). The 8 blocking items are being applied
   supersede-in-place; scoped round-3 re-verification follows. NO wave-3 row is
   manifest-grade until GATE-PASSES (D-006).
+
+# Round 3 — scoped re-verification (2026-07-29)
+
+Fresh Codex session (thread continuity died with the prior session — per
+[[INS-1fb3423e-7413-490a-ad7e-66aea1d2e74a]] the persisted rounds above were the context
+source). Verbatim verdict follows.
+
+---
+
+[codex task-ms7482ph-qne68w | completed | ~26min | fresh session (thread 019fb1a6-0e33-7883-a879-382621c93945) — verified against written record per coordinator's established pattern, HEAD 9de8a29]
+
+# Verdict: FURTHER-CORRECTIONS
+
+HEAD is `9de8a297a0607470ff2abedadc281dc569d6e291`; the tree is clean, and both subject files are byte-identical to `d96eb8d`. All eight round-2 corrections pass. One additional live overclaim remains in Blueprint S3, so the wave-3 rows must not yet be promoted.
+
+## Round-2 checklist
+
+| Item | Disposition |
+|---|---|
+| a. §4.7 closure | **PASS.** Exhaustive language is struck at §4.7 lines 644–670; the corrected corroboration passage is present at lines 672–679. Blueprint mirrors the correction at §2 line 38 and E4 line 60. |
+| b. §10 quoted output | **PASS.** The quoted line remains byte-verbatim at line 1059, unchanged from `9af7c23`; the immediately adjacent note withdraws it and correctly distinguishes exact 100k/250k and 250k cross-provider equality from 1M count-only evidence at lines 1062–1067. |
+| c. §5.5 ANY-write negative | **PASS.** The old assertion is struck and replaced by the within-filters formulation, including the alternate-path limitation, at lines 752–773. |
+| d. OZ lineage | **PASS.** OZ-4-style/OZ-5-style and INFERRED appear in dossier §1 lines 57–65, §3.7 lines 491–503, and §7 line 893, plus Blueprint G-10 line 178. Exact version phrases survive only in strikethrough or correction explanations. |
+| e. Claims 16/17 | **PASS.** Correctly capped in dossier §1 lines 98–110, §6.1 lines 782–797, §6.2 lines 805–824, and §7 lines 890–892. Blueprint propagation is present at E2 lines 48–49, S2 line 108, S7 line 146, and G-06/G-07 lines 174–175. |
+| f. Safe history | **PASS.** Acquisition-time snapshot and historical non-proof language appears at dossier §3.6 lines 469–475, §7 line 894, and §8 lines 932–940; Blueprint carries it at S7 line 142, line 151, and G-08 line 176. "Re-deployment" remains only struck, negated, or in correction notes. |
+| g. Claim-5 inference cap | **PASS.** Present in dossier §6.3 lines 840–846 and §12 lines 1111–1120, and in all three Blueprint S7 timelock rows at lines 144–146. |
+| h. Collision mapping | **PASS.** Exact mapping is present at §9.2 lines 968–979: mevblocker 28/30 with repeat 32; Tenderly 29/31 with repeat 43; ETH header 63/66; OP bytecode 105/108. |
+
+## Judgment calls
+
+1. **Blueprint S3: yes, it needs the by-last-decoded-event cap.**
+   S3 line 121 says "set once … never changed." The evidence establishes decoded `PeerSet` history, not a separate current-storage read. The same issue also appears as "current value" at line 122 and "Both current values" in G-03 line 171.
+
+   Required formulation:
+
+   > Peer by last decoded `PeerSet`; no later corresponding `PeerSet` appears through the pinned head. Current storage remains a separate observed-side check.
+
+   Apply it to both S3 rows and change G-03's "Both current values" to "Both values by last decoded `PeerSet`."
+
+2. **Blueprint G-08 item (4): acceptable.**
+   At G-08 line 176, "tag carried verbatim" refers to the corrected `OBSERVED-single, facts class` strength, while the subject is explicitly the **current** owners/threshold. Item (5) supplies the set-equality and no-motive/redeployment limitations; S7 independently supplies the acquisition-time and historical-block cap at lines 142 and 151. No correction is required there.
+
+Apart from the S3/G-03 peer wording above, no other live correction-class overclaim remains outside strikethrough, quoted-output-with-adjacent-withdrawal, negation, or explicit correction-note contexts.
+
+Codex session ID: 019fb1a6-0e33-7883-a879-382621c93945
+Resume in Codex: codex resume 019fb1a6-0e33-7883-a879-382621c93945
+
+---
+
+## Disposition status (round 3)
+
+- Round-3 verdict persisted (this section) BEFORE the correction dispatch, per
+  [[INS-1fb3423e-7413-490a-ad7e-66aea1d2e74a]].
+- Blocking set: ONE item — Blueprint S3 peer wording (lines 121–122) + G-03 line 171,
+  required formulation quoted verbatim above. Judgment call 2 (G-08 item 4): no change.
+- Being applied supersede-in-place; scoped round-4 re-verification follows. NO wave-3 row
+  is manifest-grade until GATE-PASSES (D-006), and row promotion remains owner-gated
+  regardless of the gate.
