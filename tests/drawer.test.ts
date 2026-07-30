@@ -228,4 +228,140 @@ describe("W5 S6 — I. evidence drawer loader", () => {
     expect(ambiguous).toBeInstanceOf(SurfaceError);
     expect(ambiguous).toMatchObject({ code: "ambiguous_head_provenance", path: "/recordings" });
   });
+
+  test("I6 (spike): the component renders the model frame-before-results as escaped text", async () => {
+    // UNVERIFIED-no-precedent in this repo: importing a .tsx module from a .test.ts under
+    // this vitest config (S6 plan §0). Dynamic import keeps a structural failure contained
+    // to this test; the documented fallback is lint-only coverage recorded in EV-W5.
+    // The component is sync and props-fed, so react-dom/server can render it without a DOM.
+    const [{ ReportDrawer }, { renderToStaticMarkup }, { createElement }] = await Promise.all([
+      import("../components/report-drawer"),
+      import("react-dom/server"),
+      import("react"),
+    ]);
+    const drawer = await referenceDrawer();
+    const markup = renderToStaticMarkup(
+      createElement(ReportDrawer, { model: drawer.model, reportHash: drawer.reportHash }),
+    );
+
+    // Frame before results in the RENDERED output: manifest identity, trust, the chain-10
+    // downgrade record, and coverage all precede the first verification statement.
+    const firstVerification = markup.indexOf("deployment.code_identity/");
+    expect(firstVerification).toBeGreaterThan(0);
+    for (const frameText of [
+      drawer.model.header.manifestHash,
+      "mode: recorded",
+      "finality_tag_unsupported",
+      "coverage",
+    ]) {
+      const at = markup.indexOf(frameText);
+      expect(at, `frame text "${frameText}" present`).toBeGreaterThanOrEqual(0);
+      expect(at, `frame text "${frameText}" precedes results`).toBeLessThan(firstVerification);
+    }
+    // The full downgrade record renders — never just the downgraded finality word.
+    expect(markup).toContain("requested finalized used confirmations depth 12");
+
+    // Every top-level limitation reaches the reader whole.
+    for (const l of drawer.model.limitations) {
+      expect(markup).toContain(l.code);
+    }
+    // The result hash is in the drawer (PRODUCT_SPEC drawer contents).
+    expect(markup).toContain(drawer.reportHash);
+
+    // Untrusted payload strings render ESCAPED: markup-significant characters from a
+    // hostile statement can never become live markup (THREAT_MODEL:125 escaping clause —
+    // React text nodes only, a property the source lint pins by banning
+    // dangerouslySetInnerHTML).
+    const hostile = {
+      ...drawer.model,
+      verifications: [
+        {
+          state: "unknown",
+          invariantId: "deployment.code_identity/hostile",
+          statement: '<script>alert(1)</script><img src=x onerror="p()">',
+          limitations: [],
+        },
+      ],
+    };
+    const hostileMarkup = renderToStaticMarkup(
+      createElement(ReportDrawer, { model: hostile, reportHash: drawer.reportHash }),
+    );
+    // The hostile text survives as INERT text (its "onerror=" substring may appear — that
+    // is correct escaping, not a leak); what may never appear is a live tag.
+    expect(hostileMarkup).not.toContain("<script>");
+    expect(hostileMarkup).not.toContain("<img");
+    expect(hostileMarkup).toContain("&lt;script&gt;");
+  });
+
+  test("I7 (tooth): drawer surface sources and rendered markup carry no claim-language tokens", async () => {
+    // The C18/H5 tooth extended to the fourth transport: loader, component, AND page
+    // sources; then the rendered markup itself. dangerouslySetInnerHTML is banned at the
+    // source level — the escaping property I6 proves depends on it.
+    const claimToken = /\b(live|safe|healthy|verified)\b/i;
+    for (const violation of ["status: live", "the deployment is safe", "Healthy!", "verified ok"]) {
+      expect(claimToken.test(violation), `regex must flag: ${violation}`).toBe(true);
+    }
+    expect(claimToken.test("verify verifications unverifiable safely alive")).toBe(false);
+
+    for (const rel of [
+      "../lib/aegis/surfaces/drawer.ts",
+      "../components/report-drawer.tsx",
+      "../app/reports/page.tsx",
+    ]) {
+      const source = readFileSync(join(__dirname, rel), "utf-8");
+      const match = claimToken.exec(source);
+      expect(match, `${rel} contains claim token "${match?.[0] ?? ""}"`).toBeNull();
+      expect(source, `${rel} must not use dangerouslySetInnerHTML`).not.toContain(
+        "dangerouslySetInnerHTML",
+      );
+    }
+
+    const [{ ReportDrawer }, { renderToStaticMarkup }, { createElement }] = await Promise.all([
+      import("../components/report-drawer"),
+      import("react-dom/server"),
+      import("react"),
+    ]);
+    // The output scan isolates TRANSPORT-authored text. Canonical payload strings render
+    // verbatim by contract — the recorded_inputs limitation text itself contains "live"
+    // in negation ("not live production telemetry"), and re-wording it would be the real
+    // violation. So the scan renders a model whose every payload-derived string is a
+    // neutral token, with every optional branch populated: whatever remains in the markup
+    // is exactly what the component itself says.
+    const neutral = {
+      header: { manifestVersion: "x", manifestHash: "x", sourceMode: "recorded" },
+      trust: { state: "unknown", reasonCodes: ["x"], trustPolicyId: "x" },
+      boundaries: [
+        {
+          kind: "execution_block",
+          block: { chainId: 1, number: "1", finality: "finalized", hash: "0x0" },
+          downgrades: [
+            { chainId: 1, requested: "finalized", used: "confirmations", confirmationDepth: "12", reasonCode: "x" },
+          ],
+        },
+      ],
+      coverage: { supported: 0, unsupported: 0, excluded: 0 },
+      verifications: [
+        { state: "unknown", invariantId: "x", statement: "x", limitations: [{ code: "x", text: "x" }] },
+      ],
+      evidence: [
+        {
+          id: "x",
+          kind: "rpc_call",
+          provenanceClass: "reference_scenario",
+          sourceMode: "recorded",
+          providerId: "x",
+          method: "x",
+          rawResultHash: "x",
+          capturedAt: "x",
+          capturedAtScope: "bundle" as const,
+        },
+      ],
+      limitations: [{ code: "x", text: "x" }],
+    };
+    const markup = renderToStaticMarkup(
+      createElement(ReportDrawer, { model: neutral, reportHash: "sha256:x" }),
+    );
+    const outputMatch = claimToken.exec(markup);
+    expect(outputMatch, `markup contains claim token "${outputMatch?.[0] ?? ""}"`).toBeNull();
+  });
 });

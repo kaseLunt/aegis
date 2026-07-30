@@ -842,13 +842,54 @@ manual smoke (`npm run dev`), mirroring S3's built-artifact treatment (W5:384-38
 5. `report-drawer.tsx` + `app/reports/page.tsx` wiring; recorded manual smoke; tsc + lint +
    full suite; commit per slice discipline.
 
+### 8. As-built notes (2026-07-29 execution — deviations and findings, all verified)
+
+- **The I6 spike LANDED.** `.tsx` imports, transforms, and `renderToStaticMarkup`-renders
+  under this vitest config (automatic JSX runtime via the repo tsconfig). The lint-only
+  fallback was not needed. I5 and the thrown-path RULING were born green and
+  **mutation-verified** (a swallowing catch fails exactly I5).
+- **I7 output scan runs over a NEUTRAL synthetic model, not the reference payload.** The
+  canonical `recorded_inputs` limitation text itself contains "live" in negation ("not
+  live production telemetry") and renders verbatim by contract — re-wording it would be
+  the real violation. The scan therefore isolates transport-authored text (every optional
+  branch populated with neutral tokens). Both lint branches bite-proven with planted
+  violations, reverted byte-identical.
+- **§4 positive assertions as-built:** the dashboard keeps its M0-casing pair; the PAGE
+  carries `reference_scenario` + "not a protocol safety score"; loader and component get
+  negative scans only (they hardcode no honesty prose — they render payload values). The
+  render.ts claim-ceiling line is unreachable at M1 (no pass-capable fixtures) and was
+  not forced into drawer sources.
+- **`app/raw-imports.d.ts` added** (ambient `*?raw` module type; tsconfig `types` is
+  restricted, no vite/client).
+- **Tailwind source pin was REQUIRED** (`app/globals.css`: `@import "tailwindcss"
+  source(none)` + `@source "./"` + `@source "../components"`). Tailwind 4's
+  auto-detection walks the whole repo; its CSS-escape decoder throws
+  `RangeError: Invalid code point` on repo content at dev-server start, the rsc worker
+  build dies, and the dev server serves a STALE cached bundle — new routes 404 while old
+  ones work. Pitfall inside the pitfall: `kill` on the npm wrapper does not kill the
+  vinext child, so a zombie server keeps answering the port and masks fixes — kill the
+  port's PID and confirm the listener count is zero before trusting a smoke result.
+- **Recorded manual smoke (vinext dev, 2026-07-29):** `GET /reports` → 200; page carries
+  "Evidence report — reference_scenario", the full chain-10 downgrade record
+  (`finality_tag_unsupported`), "not a protocol safety score", and report hash
+  `sha256:7631ec734edda601e96442bc9f7ce83e55dc5675335e8541efe2e0348478bf42` — **equal to
+  the in-process facade's hash over the same fixtures**, proving `?raw` bytes are
+  repo-exact through the dev pipeline (the drawer leg of S7, previewed over the wire).
+  Boundary: verified under `vinext dev` only — the production Workers build is NOT
+  exercised by any test (S6 plan §6); RSC inserts `<!-- -->` between adjacent text nodes,
+  so exact-string greps over served HTML must tolerate comment markers.
+
 ## Handoff
 
-- next: **S0–S5 DONE** (428/428, tsc + lint clean; S4 = the report API, tests E1–E11/
-  F1–F4/G1–G2 through `23c52d8`; S5 = the CI adapter, H1–H5, `0eb2dfd`). Start at **S6 —
-  the web evidence drawer**, executing the "S6 plan" section above in its §7 order: I1 RED
-  against the loader first; component + page wiring last; the I6 `.tsx`-import spike has a
-  documented lint-only fallback.
+- next: **S0–S6 DONE** (435/435, tsc + lint clean; S6 = the evidence drawer: loader
+  `surfaces/drawer.ts` at `67b2d9e`, then component + page + lint extension + Tailwind
+  source pin — see "S6 plan §8 As-built notes" for the recorded smoke and the two
+  dev-server pitfalls). Start at **S7 — cross-surface byte identity**: one request through
+  all four entry paths (CLI `main(argv)`, API route handler, `runCiVerification`,
+  `loadEvidenceDrawer`) must yield four equal `reportHash` values equal to the facade's
+  (W5:91-94), plus the documented reproduce command. H4 (CLI/CI) and I1 (drawer/facade)
+  already pin pairs — S7 composes ALL FOUR in one test plus the `aegis reproduce`
+  path, then the Codex convergence loop (D-b4ab3c69) before any stamp.
   **No more re-attestation chains in W5** — verified systematically, not from memory: every
   work item's `invalidated_by` was matched against the concrete S3-S7 path set and no item
   holding a LIVE (`status: recorded`) receipt is hit. Note the precise reason, because the

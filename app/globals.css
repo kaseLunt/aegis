@@ -1,4 +1,10 @@
-@import "tailwindcss";
+/* Pin Tailwind's candidate scan to the UI sources. Auto-detection walks the whole repo
+   (research markdown, tool logs) — slow, wrong, and its CSS-escape decoder chokes on
+   Windows-path content (String.fromCodePoint RangeError at dev-server start, which then
+   serves a stale worker bundle and 404s new routes). */
+@import "tailwindcss" source(none);
+@source "./";
+@source "../components";
 
 :root {
   --canvas: #f1f0ea;

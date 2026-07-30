@@ -76,15 +76,21 @@ rows returned as data with the CLI's 4/5 classes. H1–H5 red-first (H4 = the S7
 CLI/CI byte-parity pair, early; H5 tooth bite-proven with a real inserted token). The
 hygiene tooth caught a live Serena CRLF injection in `render.ts` mid-slice — its designed
 catch. S5 plan (inline recon) recorded in the charter.
-**S6 ACTIVE (2026-07-29): the web evidence drawer.** Three-mapper read-only recon
-(ui-stack / drawer-canon / test-reality, workflow `wf_2dc69dd5-5ad`) synthesized into the
-charter's "S6 plan" section BEFORE any test: diagnostics ruling settled (display model =
-payload + engine-licensed diagnostics; hash stays payload-only), loader
-`surfaces/drawer.ts` mirrors the CI adapter, `.tsx` sync/props-fed/relative-imported with
-the I6 import-spike fallback, CSP gap captured as [[IDEA-5bb4ace0]] (owner triage — not
-silently absorbed). TDD matrix I1–I7, executing in charter §7 order.
-**Then S7 (byte-identity gate), then the Codex convergence loop before any stamp. Do NOT
-stamp W5 mid-slice.**
+**S6 DONE (2026-07-29 late, 435/435): the web evidence drawer.** Recon-first (three
+mappers, `wf_2dc69dd5-5ad`) → "S6 plan" in the charter → I1–I7 red-first. Loader
+`surfaces/drawer.ts` = fourth transport (shared classifier, shared `renderJson` S7 body,
+frame-ordered display model with the engine-licensed downgrade records, bundle-scoped
+head capturedAt); diagnostics ruling settled (display-only; hash stays payload-only);
+`components/report-drawer.tsx` sync/props-fed/text-nodes-only; `app/reports/page.tsx`
+via byte-exact `?raw` fixtures; trust-language lint extended to the drawer file set (both
+branches bite-proven). The I6 `.tsx`-import spike LANDED (no fallback needed); I5 born
+green mutation-verified. Recorded smoke: dev `GET /reports` 200 with page hash EQUAL to
+the in-process facade hash (`sha256:7631ec73…bf42`). Two dev pitfalls recorded in the
+charter §8: Tailwind 4 auto-scan RangeError → stale-bundle 404s (fixed: `source(none)` +
+`@source` pins in globals.css) and zombie vinext listeners masking smokes. CSP gap stays
+[[IDEA-5bb4ace0]] (owner triage).
+**Now S7 (byte-identity gate: all four entry paths equal + documented reproduce), then
+the Codex convergence loop before any stamp. Do NOT stamp W5 mid-slice.**
 
 **W0H is DONE.** [[EV-W0H]] at `3bffc19`: the claim-lease clock is fully retired (D-9646fc3c),
 claims remain task/scope bindings with explicit lifecycle, and the instructional-integrity

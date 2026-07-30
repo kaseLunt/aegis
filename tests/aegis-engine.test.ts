@@ -141,9 +141,23 @@ describe("incident replay", () => {
 
 describe("trust language", () => {
   it("does not label modeled product surfaces as live", async () => {
-    const source = await readFile(new URL("../components/aegis-dashboard.tsx", import.meta.url), "utf8");
-    expect(source).not.toMatch(/(?:>|\s)live(?:<|\s|[.,!])/i);
-    expect(source).toContain("REFERENCE_SCENARIO");
-    expect(source).toContain("not a protocol safety score");
+    // W5 S6 extension (charter acceptance W5:106-107): the lint walks a file SET — the M0
+    // dashboard plus every evidence-drawer surface source. Negative scan per file;
+    // positive assertions per file where the honesty text lives (the M0 dashboard keeps
+    // its M0-casing tokens; the reference page carries the canonical casing and the
+    // disclaimer — the loader and component render payload values and hardcode neither).
+    const files: readonly [string, readonly string[]][] = [
+      ["../components/aegis-dashboard.tsx", ["REFERENCE_SCENARIO", "not a protocol safety score"]],
+      ["../components/report-drawer.tsx", []],
+      ["../lib/aegis/surfaces/drawer.ts", []],
+      ["../app/reports/page.tsx", ["reference_scenario", "not a protocol safety score"]],
+    ];
+    for (const [rel, positives] of files) {
+      const source = await readFile(new URL(rel, import.meta.url), "utf8");
+      expect(source, `${rel} labels a modeled surface live`).not.toMatch(/(?:>|\s)live(?:<|\s|[.,!])/i);
+      for (const text of positives) {
+        expect(source, `${rel} must carry "${text}"`).toContain(text);
+      }
+    }
   });
 });
