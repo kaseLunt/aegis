@@ -21,8 +21,13 @@ import { type BoundaryPolicy, establishBoundary } from "../chain/engine";
 import type { ProviderConfig } from "../chain/providers";
 import type { QuorumResult } from "../chain/quorum";
 import type { FinalityDowngrade, PinnedBlock } from "../chain/selection";
-import { type IdentityTarget, compareIdentityTarget } from "../identity/compare";
-import { observeIdentity } from "../identity/observe";
+import {
+  type EvaluatedFreshness,
+  type FreshnessState,
+  type IdentityTarget,
+  compareIdentityTarget,
+} from "../identity/compare";
+import { type ObservedIdentity, observeIdentity } from "../identity/observe";
 import {
   type LoadedManifest,
   type ManifestTrustPolicy,
@@ -50,7 +55,10 @@ export interface DeploymentConfig {
   readonly trustPolicy: ManifestTrustPolicy;
   readonly boundaryPolicy: BoundaryPolicy;
   readonly providers: readonly ProviderConfig[];
-  readonly freshnessPolicyId: string;
+  // The freshness policy is DECLARED config, like confirmationDepth: an id plus the
+  // maximum evidence age (decimal seconds) it accepts as current (W5 round-1 Codex F2 —
+  // freshness is evaluated over evidence timestamps, never fabricated).
+  readonly freshnessPolicy: { readonly policyId: string; readonly maxAgeSeconds: string };
 }
 
 export interface BoundaryDiagnostic {
@@ -243,16 +251,10 @@ export async function runVerification(
       provenanceClass: deployment.provenanceClass,
       manifestHash: policyTrust.manifestHash,
       manifestEvidence: manifestEvidenceOf(policyTrust.manifestHash, deployment, request.sourceMode),
-      freshness: {
-        aggregate: "current",
-        assessments: [
-          {
-            policyId: deployment.freshnessPolicyId,
-            boundary: { kind: "execution_block", block: pinned },
-            state: "current",
-          },
-        ],
-      },
+      // EVALUATED, never fabricated (W5 round-1 Codex F2): the policy is applied to the
+      // observation's own evidence timestamps; the comparator then gates the verdict
+      // (stale evidence can never yield a current pass).
+      freshness: evaluateFreshness(observed, deployment, pinned),
     });
 
     verifications.push(...comparison.verifications);
@@ -338,6 +340,45 @@ function manifestEvidenceOf(manifestHash: string, deployment: DeploymentConfig, 
     // aliasing the injected evaluation clock as a capture time presents a modeled or
     // future clock as source-snapshot acquisition (W5 round-1 Codex F6).
     capturedAt: "unknown",
+  };
+}
+
+// The freshness policy, applied (W5 round-1 Codex F2). The assessable signal is the
+// observation's own per-response capture timestamps versus the injected evaluation clock:
+// every resolved provider read must be younger than the policy's maxAgeSeconds to be
+// current; any older read makes the observation stale; and when nothing is assessable —
+// no resolved reads, an unparseable timestamp, or a capture AFTER the evaluation clock —
+// the state is "unknown", never an optimistic default. Head-lag freshness is the quorum
+// policy's axis (maxHeadLagBlocks), not this one.
+function evaluateFreshness(
+  observed: ObservedIdentity,
+  deployment: DeploymentConfig,
+  pinned: PinnedBlock,
+): EvaluatedFreshness {
+  const evaluatedAt = Date.parse(deployment.evaluationTime);
+  const maxAgeMs = Number(deployment.freshnessPolicy.maxAgeSeconds) * 1000;
+  const captures = observed.reads.flatMap((read) =>
+    read.observations
+      .filter((o) => o.status === "ok")
+      .map((o) => (typeof o.capturedAt === "string" ? Date.parse(o.capturedAt) : Number.NaN)),
+  );
+  let state: FreshnessState;
+  if (captures.length === 0 || captures.some((c) => Number.isNaN(c) || c > evaluatedAt)) {
+    state = "unknown";
+  } else if (captures.some((c) => evaluatedAt - c > maxAgeMs)) {
+    state = "stale";
+  } else {
+    state = "current";
+  }
+  return {
+    aggregate: state,
+    assessments: [
+      {
+        policyId: deployment.freshnessPolicy.policyId,
+        boundary: { kind: "execution_block", block: pinned },
+        state,
+      },
+    ],
   };
 }
 

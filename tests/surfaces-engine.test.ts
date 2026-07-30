@@ -42,7 +42,7 @@ const deployment = () => ({
     maxHeadLagBlocks: "1000",
   },
   providers: [PROVIDERS.alchemy, PROVIDERS.quicknode],
-  freshnessPolicyId: "fp-reference",
+  freshnessPolicy: { policyId: "fp-reference", maxAgeSeconds: "604800" },
 });
 
 describe("W5 S0 — runVerification", () => {
@@ -379,6 +379,35 @@ describe("W5 Codex round 1 — F5/F6 payload honesty", () => {
     expect(texts.length).toBeGreaterThan(0);
     for (const text of texts) {
       expect(text, `payload text must not attest review: "${text}"`).not.toMatch(/\breviewed\b/i);
+    }
+  });
+
+  test("F2a: unassessable freshness is unknown — never a fabricated current", async () => {
+    // The shipped targets have no resolvable recorded reads: freshness CANNOT be assessed
+    // from evidence timestamps, so every assessment must say so. Before this fix the
+    // engine hardcoded "current" for every comparison regardless of anything.
+    const run = await runVerification(
+      {
+        manifestBytes: manifestBytes(),
+        recordings: [
+          { role: "heads", bytes: headsBytes() },
+          { role: "identity", bytes: identityBytes() },
+        ],
+      },
+      SELECTOR,
+      deployment(),
+    );
+    const p = run.payload as {
+      verifications: readonly {
+        freshness: { aggregate: string; assessments: readonly { state: string }[] };
+      }[];
+    };
+    expect(p.verifications.length).toBeGreaterThan(0);
+    for (const v of p.verifications) {
+      expect(v.freshness.aggregate).toBe("unknown");
+      for (const a of v.freshness.assessments) {
+        expect(a.state).toBe("unknown");
+      }
     }
   });
 

@@ -796,6 +796,36 @@ describe("W5 Codex round 1 — K. edge-validation teeth", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  test("K4 (F2): stale evidence yields a stale verdict — the pass-capable run past the freshness window exits 3", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "aegis-cli-k4-"));
+    try {
+      const sealedPath = join(dir, "manifest.json");
+      writeFileSync(sealedPath, sealedManifestBytes([COVERED_PROXY_TARGET]));
+      const base = REFERENCE_ARGS.map((a) => (a === MANIFEST ? sealedPath : a));
+
+      // Control (B5's row): at the reference clock the covered manifest earns exit 0 —
+      // the identity reads are ~3 days old, inside fp-reference's 7-day window.
+      const current = await run([...base, "--json"]);
+      expect(current.exit).toBe(0);
+
+      // Same bytes, a clock past the window: the evidence is STALE — never a pass (the
+      // values still match!), never a fail; exit 3 with the state visible per row.
+      const late = base.map((a) => (a === "2026-07-24T00:00:00Z" ? "2026-08-15T00:00:00Z" : a));
+      const staleRun = await run([...late, "--json"]);
+      expect(staleRun.exit).toBe(3);
+      const payload = JSON.parse(staleRun.stdout).payload as {
+        verifications: readonly { state: string; freshness: { aggregate: string } }[];
+      };
+      expect(payload.verifications.length).toBeGreaterThan(0);
+      for (const v of payload.verifications) {
+        expect(v.state).toBe("stale");
+        expect(v.freshness.aggregate).toBe("stale");
+      }
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 // Read the fixture bytes once here so a future refactor of the helper cannot silently point

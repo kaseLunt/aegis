@@ -73,6 +73,9 @@ export function referenceDeployment(
       maxHeadLagBlocks: "1000",
     },
     providers: [PROVIDERS.alchemy, PROVIDERS.quicknode],
-    freshnessPolicyId: "fp-reference",
+    // 7 days: the reference identity reads are ~3 days old at the reference clock —
+    // current inside the window, stale past it (the K4/J5 rows). A declared policy
+    // parameter, like confirmationDepth — never a fabricated assessment.
+    freshnessPolicy: { policyId: "fp-reference", maxAgeSeconds: "604800" },
   };
 }

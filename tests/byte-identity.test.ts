@@ -3,11 +3,14 @@
 // paths yields four reportHash values equal to each other and to the facade's direct
 // output — and the canonical payload BYTES are identical everywhere, with delivery
 // metadata excluded from identity (ENGINEERING_SPEC:846, :879).
-import { readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { main } from "../bin/aegis";
 import { POST } from "../app/api/v1/verify/route";
+import { manifestContentHash } from "../lib/aegis/manifest/trust";
 import { jcsSerialize } from "../lib/aegis/report/canonical";
 import { runCiVerification } from "../lib/aegis/surfaces/ci";
 import { loadEvidenceDrawer } from "../lib/aegis/surfaces/drawer";
@@ -195,5 +198,97 @@ describe("W5 S7 — J. cross-surface byte identity", () => {
       const match = forbidden.exec(source);
       expect(match, `${f} references evaluator "${match?.[0] ?? ""}"`).toBeNull();
     }
+  });
+
+  test("J5 (F2): the stale pass-capable run agrees across all four surfaces — state stale, API 200, one hash", async () => {
+    // The B5 covered manifest (values MATCH the shipped identity reads) evaluated at a
+    // clock past fp-reference's freshness window: every comparison is gated to `stale`,
+    // the classification is 3 on every surface, the API still delivers a completed 200
+    // envelope, and all four reportHash values equal the facade's.
+    const manifest = JSON.parse(readFileSync(MANIFEST, "utf-8")) as Record<string, unknown>;
+    manifest.targets = [
+      {
+        targetId: "reference-eip1967-proxy",
+        chainId: 1,
+        address: `0x${"a1".repeat(20)}`,
+        identityStrategy: "eip1967",
+        expectedImplementation: `0x${"b2".repeat(20)}`,
+        expectedRuntimeCodeHash: `sha256:${createHash("sha256")
+          .update(Buffer.from("608060405f", "hex"))
+          .digest("hex")}`,
+      },
+    ];
+    manifest.contentHash = manifestContentHash(manifest);
+    const manifestText = jcsSerialize(manifest);
+    const staleManifestBytes = new TextEncoder().encode(manifestText);
+    const LATE = "2026-08-15T00:00:00Z";
+    const staleInputs = {
+      manifestBytes: staleManifestBytes,
+      recordings: [
+        { role: "heads", bytes: HEADS_BYTES },
+        { role: "identity", bytes: IDENTITY_BYTES },
+      ],
+    } as const;
+    const staleDeployment = () =>
+      referenceDeployment(staleManifestBytes, { evaluationTime: LATE });
+
+    const run = await runVerification(staleInputs, REFERENCE_SELECTOR, staleDeployment());
+    const p = run.payload as { verifications: readonly { state: string }[] };
+    expect(p.verifications.length).toBeGreaterThan(0);
+    for (const v of p.verifications) {
+      expect(v.state).toBe("stale");
+    }
+
+    // CLI (files).
+    const dir = mkdtempSync(join(tmpdir(), "aegis-j5-"));
+    try {
+      const mPath = join(dir, "manifest.json");
+      writeFileSync(mPath, manifestText);
+      const cliRun = await cli([
+        "verify",
+        "--manifest", mPath,
+        "--heads", HEADS,
+        "--identity", IDENTITY,
+        "--chain", "1",
+        "--chain", "10",
+        "--at", "finalized",
+        "--evaluation-time", LATE,
+        "--profile", "reference",
+        "--json",
+      ]);
+      expect(cliRun.exit).toBe(3);
+      expect(cliRun.stdout).toBe(`${renderJson(run)}\n`);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+
+    // API: a completed stale report is a 200 — delivery channel, not verdict.
+    const res = await POST(
+      new Request("http://aegis.test/api/v1/verify", {
+        method: "POST",
+        body: JSON.stringify({
+          manifest: b64(staleManifestBytes),
+          recordings: [
+            { role: "heads", bytes: b64(HEADS_BYTES) },
+            { role: "identity", bytes: b64(IDENTITY_BYTES) },
+          ],
+          chainIds: [1, 10],
+          at: "finalized",
+          evaluationTime: LATE,
+          profile: "reference",
+        }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    const envelope = JSON.parse(await res.text()) as { reportHash: string };
+    expect(envelope.reportHash).toBe(run.reportHash);
+
+    // CI + drawer.
+    const ci = await runCiVerification(staleInputs, REFERENCE_SELECTOR, staleDeployment());
+    expect(ci.exitCode).toBe(3);
+    expect(ci.reportHash).toBe(run.reportHash);
+    const drawer = await loadEvidenceDrawer(staleInputs, REFERENCE_SELECTOR, staleDeployment());
+    expect(drawer.classification).toBe(3);
+    expect(drawer.reportHash).toBe(run.reportHash);
   });
 });
